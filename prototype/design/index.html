@@ -1,0 +1,1001 @@
+<meta charset="utf-8">
+<title>SORCERIAN Text v2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Shippori+Mincho:wght@400;600;700&family=BIZ+UDPGothic:wght@400;700&display=swap">
+<style>
+/* Layout: 暗い書見台（desk）の上に羊皮紙のページ。PCは本文＋冒険者パネルの2カラム、スマホは本文＋下部タブ／ボトムシート */
+:root {
+  --desk: #e4e1d8;          /* 昼の書斎：灰みの石板 */
+  --desk-2: #f2efe7;
+  --desk-line: #c9c2b0;
+  --on-desk: #24263a;
+  --on-desk-soft: #5d5f73;
+  --page: #f3e8cc;          /* 羊皮紙（両テーマ共通） */
+  --page-edge: #dcc99c;
+  --ink: #2b2117;
+  --ink-soft: #6b5a44;
+  --gold: #8f6a14;
+  --gold-bright: #b98a23;
+  --lapis: #2f3f8f;         /* 旧メニューの群青を継承 */
+  --lapis-soft: #dfe3f4;
+  --blood: #a8322a;
+  --mana: #2f6fae;
+  --good: #3c7d4a;
+  --shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 18px 40px -18px rgba(30,24,10,.45);
+
+  --star-mon: #9aa3bd; --star-tue: #c0473a; --star-wed: #3a93bf; --star-thu: #7559b8;
+  --star-fri: #3f9a63; --star-sat: #8b7650; --star-sun: #d49b22;
+
+  --f-display: "Cinzel", "Times New Roman", serif;
+  --f-book: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-ui: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+
+  --step--1: .8125rem; --step-0: 1rem; --step-1: 1.1875rem; --step-2: 1.5rem; --step-3: 2rem;
+  --book-size: 1.0625rem;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #0f1120; --desk-2: #171a2e; --desk-line: #2c3050;
+    --on-desk: #e6e2d3; --on-desk-soft: #9a9cb4;
+    --page: #eadcb8; --page-edge: #b99e62;
+    --ink: #271d12; --ink-soft: #66543c;
+    --gold: #d6b062; --gold-bright: #ecc979;
+    --lapis: #8b9be6; --lapis-soft: #262c52;
+    --blood: #d65a4e; --mana: #5d9ee0; --good: #68b47a;
+    --shadow: 0 30px 60px -24px rgba(0,0,0,.8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #0f1120; --desk-2: #171a2e; --desk-line: #2c3050;
+  --on-desk: #e6e2d3; --on-desk-soft: #9a9cb4;
+  --page: #eadcb8; --page-edge: #b99e62;
+  --ink: #271d12; --ink-soft: #66543c;
+  --gold: #d6b062; --gold-bright: #ecc979;
+  --lapis: #8b9be6; --lapis-soft: #262c52;
+  --blood: #d65a4e; --mana: #5d9ee0; --good: #68b47a;
+  --shadow: 0 30px 60px -24px rgba(0,0,0,.8);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--desk); color: var(--on-desk);
+  font-family: var(--f-ui); font-size: var(--step-0); line-height: 1.6;
+  background-image: radial-gradient(ellipse 120% 70% at 50% -10%, var(--desk-2), transparent 70%);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--desk); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+/* ───── Top bar ───── */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in srgb, var(--desk) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--desk-line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.topbar-in { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 16px; padding-block: 10px; flex-wrap: wrap; }
+.brand { font-family: var(--f-display); font-weight: 700; letter-spacing: .14em; font-size: var(--step-1); color: var(--gold); white-space: nowrap; }
+.brand small { font-family: var(--f-ui); font-weight: 400; letter-spacing: .08em; font-size: var(--step--1); color: var(--on-desk-soft); margin-left: 8px; }
+.screens { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.screens button, .chip-btn {
+  background: transparent; border: 1px solid transparent; color: var(--on-desk-soft);
+  padding: 4px 12px; border-radius: 999px; cursor: pointer; font-size: var(--step--1); letter-spacing: .04em;
+}
+.screens button:hover, .chip-btn:hover { color: var(--on-desk); border-color: var(--desk-line); }
+.screens button[aria-current="page"] { color: var(--on-desk); border-color: var(--gold); }
+.tools { display: flex; gap: 4px; }
+
+/* ───── Shell ───── */
+.shell {
+  max-width: 1180px; margin: 0 auto; padding-block: 24px 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow { font-family: var(--f-display); letter-spacing: .22em; font-size: var(--step--1); color: var(--gold); text-transform: uppercase; }
+.lede { color: var(--on-desk-soft); max-width: 60ch; }
+.note {
+  margin-top: 32px; border-top: 1px solid var(--desk-line); padding-top: 16px;
+  color: var(--on-desk-soft); font-size: var(--step--1); max-width: 72ch;
+}
+.note summary { cursor: pointer; color: var(--on-desk); letter-spacing: .06em; }
+.note ul { margin: 8px 0 0; padding-left: 1.2em; }
+
+/* ───── Parchment page ───── */
+.page {
+  position: relative; background: var(--page); color: var(--ink);
+  border-radius: 3px; box-shadow: var(--shadow);
+  padding: clamp(20px, 4vw, 44px) clamp(18px, 4.5vw, 52px);
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(120,80,20,.13), transparent 45%),
+    radial-gradient(ellipse at 100% 100%, rgba(120,80,20,.16), transparent 50%);
+  outline: 1px solid var(--page-edge); outline-offset: -8px;
+}
+.page::after { /* 五芒星の透かし（現行UIの継承） */
+  content: ""; position: absolute; right: 18px; bottom: 18px; width: 140px; height: 140px; opacity: .07; pointer-events: none;
+  background: no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23271d12' stroke-width='3'%3E%3Ccircle cx='50' cy='50' r='46'/%3E%3Cpath d='M50 6 76 86 8 36h84L24 86z'/%3E%3C/g%3E%3C/svg%3E");
+}
+.page-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--page-edge); padding-bottom: 10px; margin-bottom: 22px; }
+.page-head .title { font-family: var(--f-book); font-weight: 700; color: var(--ink-soft); font-size: var(--step--1); letter-spacing: .1em; }
+.para { font-family: var(--f-display); font-weight: 700; color: var(--ink); font-size: var(--step-2); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.para small { font-family: var(--f-book); font-size: var(--step--1); color: var(--ink-soft); margin-right: 6px; letter-spacing: .1em; }
+.prose { font-family: var(--f-book); font-size: var(--book-size); line-height: 2; max-width: 34em; }
+.prose p { margin: 0 0 1em; }
+.prose p:first-child::first-letter { font-size: 2.1em; font-weight: 700; color: var(--ink); float: left; line-height: 1; margin: .12em .12em 0 0; }
+.prose .speech { color: var(--ink-soft); }
+.rule { display: flex; align-items: center; gap: 12px; color: var(--page-edge); margin: 26px 0 18px; }
+.rule::before, .rule::after { content: ""; flex: 1; height: 1px; background: currentColor; }
+.rule svg { width: 18px; height: 18px; fill: var(--ink-soft); opacity: .6; }
+
+/* choices */
+.choices { display: grid; gap: 10px; max-width: 34em; }
+.choice {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; width: 100%;
+  text-align: left; cursor: pointer; padding: 12px 14px; border-radius: var(--radius);
+  background: rgba(255,255,255,.35); border: 1px solid var(--page-edge); color: var(--ink);
+  font-family: var(--f-book); font-size: var(--book-size); font-weight: 600;
+  transition: background .15s, transform .15s, border-color .15s;
+}
+.choice:hover { background: rgba(255,255,255,.65); border-color: var(--ink-soft); transform: translateX(3px); }
+.choice .key {
+  width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid var(--ink-soft); font-family: var(--f-display); font-size: var(--step--1); color: var(--ink-soft);
+}
+.choice .arrow { color: var(--ink-soft); font-family: var(--f-display); }
+.cond { display: inline-flex; gap: 4px; align-items: center; margin-left: 8px; font-family: var(--f-ui); font-weight: 400; font-size: .75rem; color: #3c6b45; background: rgba(60,125,74,.12); padding: 1px 8px; border-radius: 999px; vertical-align: middle; }
+.choice.end { border-style: double; border-width: 3px; }
+
+/* enemy card */
+.enemy {
+  margin: 4px 0 24px; max-width: 34em; border: 1px solid var(--ink-soft); border-radius: var(--radius);
+  background: rgba(39,29,18,.06); padding: 14px 16px; display: grid; gap: 10px;
+}
+.enemy-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.enemy h3 { font-family: var(--f-book); font-size: var(--step-1); }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: .75rem; padding: 1px 8px; border-radius: 3px; border: 1px solid var(--page-edge); color: var(--ink-soft); background: rgba(255,255,255,.4); }
+.tag b { color: var(--ink); }
+.enemy-desc { font-family: var(--f-book); color: var(--ink-soft); margin: 0; }
+.battle { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.dice { display: flex; gap: 8px; }
+.die {
+  width: 40px; height: 40px; border-radius: 7px; background: #fbf6e8; border: 1px solid var(--ink-soft);
+  display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 6px; box-shadow: 0 2px 0 var(--page-edge);
+}
+.die i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); place-self: center; visibility: hidden; }
+.die i.on { visibility: visible; }
+.die.left { border-color: var(--blood); }
+.die.rolling { animation: roll .45s ease-out; }
+@keyframes roll { 0% { transform: rotate(-200deg) scale(.6); } 70% { transform: rotate(12deg) scale(1.05); } 100% { transform: none; } }
+.btn {
+  border: 1px solid var(--ink); background: var(--ink); color: var(--page); border-radius: var(--radius);
+  padding: 8px 16px; cursor: pointer; font-family: var(--f-ui); font-weight: 700; letter-spacing: .06em;
+}
+.btn:hover { background: transparent; color: var(--ink); }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.ghost:hover { background: rgba(39,29,18,.08); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.verdict { font-size: var(--step--1); color: var(--ink-soft); }
+.verdict b { color: var(--blood); font-size: var(--step-1); font-variant-numeric: tabular-nums; }
+.verdict b.win { color: #3c6b45; }
+
+/* ───── Play layout ───── */
+.play { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
+.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); display: grid; gap: 14px; }
+.card {
+  background: var(--desk-2); border: 1px solid var(--desk-line); border-radius: 10px; padding: 16px;
+}
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--desk-line); border-radius: 8px; overflow: hidden; }
+.tabs button { background: transparent; border: 0; border-right: 1px solid var(--desk-line); padding: 8px 4px; cursor: pointer; color: var(--on-desk-soft); font-size: var(--step--1); }
+.tabs button:last-child { border-right: 0; }
+.tabs button[aria-selected="true"] { background: var(--lapis-soft); color: var(--on-desk); font-weight: 700; }
+
+.hero { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; }
+.sigil { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--gold); display: grid; place-items: center; background: var(--desk); }
+.sigil svg { width: 40px; height: 40px; fill: none; stroke: var(--gold); stroke-width: 2; }
+.hero .epithet { font-family: var(--f-book); color: var(--gold); font-size: var(--step--1); }
+.hero .name { font-family: var(--f-book); font-size: var(--step-2); font-weight: 700; line-height: 1.2; }
+.hero .meta { color: var(--on-desk-soft); font-size: .75rem; letter-spacing: .06em; }
+.gauges { display: grid; gap: 8px; margin-top: 14px; }
+.gauge { display: grid; grid-template-columns: 30px 1fr 64px; gap: 8px; align-items: center; font-size: var(--step--1); }
+.gauge .lbl { font-family: var(--f-display); font-weight: 700; color: var(--on-desk-soft); }
+.gauge .val { text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; border-radius: 4px; background: var(--desk); border: 1px solid var(--desk-line); overflow: hidden; }
+.bar > span { display: block; height: 100%; transition: width .5s ease; }
+.bar.hp > span { background: var(--blood); }
+.bar.mp > span { background: var(--mana); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 14px; }
+.stat { text-align: center; border: 1px solid var(--desk-line); border-radius: 6px; padding: 6px 0 4px; }
+.stat .k { font-family: var(--f-display); font-size: .7rem; letter-spacing: .12em; color: var(--on-desk-soft); }
+.stat .v { font-size: var(--step-1); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.state { margin-top: 12px; font-size: var(--step--1); color: var(--on-desk-soft); display: flex; justify-content: space-between; }
+.state b { color: var(--good); font-weight: 700; }
+
+.stars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.star { text-align: center; font-size: .7rem; color: var(--on-desk-soft); }
+.star .orb {
+  width: 30px; height: 30px; margin: 0 auto 2px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 700; font-size: var(--step--1); color: #fff; font-variant-numeric: tabular-nums;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), transparent 45%), var(--c);
+  box-shadow: 0 0 0 2px var(--desk-2), 0 0 0 3px var(--c);
+}
+.star.zero .orb { opacity: .3; }
+.spells { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; }
+.spell { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px 10px; border-radius: 6px; border: 1px solid transparent; }
+.spell.ok { border-color: var(--desk-line); background: var(--desk); }
+.spell .sn { font-family: var(--f-display); font-weight: 700; letter-spacing: .06em; font-size: var(--step--1); }
+.spell .sd { grid-column: 1 / -1; font-size: .75rem; color: var(--on-desk-soft); }
+.spell .cost { display: flex; gap: 3px; align-items: center; }
+.spell .cost i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
+.spell:not(.ok) .sn, .spell:not(.ok) .cost { opacity: .45; }
+.cast { font-size: .75rem; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; }
+.cast:hover { background: var(--gold); color: var(--desk); }
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; }
+.list li { padding: 8px 0; border-bottom: 1px dashed var(--desk-line); display: grid; gap: 2px; }
+.list li:last-child { border-bottom: 0; }
+.list .n { font-weight: 700; }
+.list .d { font-size: .75rem; color: var(--on-desk-soft); }
+.journal li { font-family: var(--f-book); font-style: italic; }
+.section-h { font-size: .75rem; letter-spacing: .14em; color: var(--on-desk-soft); margin: 14px 0 4px; text-transform: uppercase; display: flex; justify-content: space-between; }
+.section-h:first-child { margin-top: 0; }
+.progress { height: 6px; background: var(--desk); border-radius: 3px; overflow: hidden; border: 1px solid var(--desk-line); margin: 4px 0 10px; }
+.progress span { display: block; height: 100%; background: var(--gold); }
+.locked .n { color: var(--on-desk-soft); font-weight: 400; }
+.log li { font-size: var(--step--1); grid-template-columns: 52px 1fr; display: grid; }
+.log .t { font-family: var(--f-display); color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.readset { display: flex; align-items: center; gap: 8px; font-size: var(--step--1); color: var(--on-desk-soft); flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--desk-line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 2px 10px; cursor: pointer; color: var(--on-desk-soft); }
+.seg button[aria-pressed="true"] { background: var(--lapis-soft); color: var(--on-desk); }
+
+/* mobile tabs & sheet */
+.mtabs { display: none; }
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(5,6,14,.55); z-index: 40; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: 78vh; overflow: auto;
+  background: var(--desk-2); border-top: 1px solid var(--gold); border-radius: 16px 16px 0 0;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  animation: up .25s ease-out;
+}
+.sheet .grab { width: 44px; height: 4px; border-radius: 2px; background: var(--desk-line); margin: 0 auto 12px; }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+
+@media (max-width: 900px) {
+  .play { grid-template-columns: minmax(0, 1fr); }
+  .panel { display: none; }
+  .mtabs {
+    display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    background: var(--desk-2); border-top: 1px solid var(--desk-line);
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+  }
+  .mtabs button { background: none; border: 0; display: grid; justify-items: center; gap: 2px; color: var(--on-desk-soft); font-size: .7rem; padding: 4px 0; cursor: pointer; }
+  .mtabs button b { font-size: var(--step--1); color: var(--on-desk); font-variant-numeric: tabular-nums; }
+  .mtabs svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+}
+
+/* ───── Toasts ───── */
+.toasts { position: fixed; z-index: 50; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 72px); display: grid; gap: 8px; width: min(320px, calc(100vw - 32px)); }
+.toast {
+  background: var(--desk-2); color: var(--on-desk); border: 1px solid var(--desk-line); border-left: 3px solid var(--gold);
+  border-radius: 8px; padding: 10px 14px; box-shadow: 0 10px 30px -10px rgba(0,0,0,.4); animation: slide .3s ease-out;
+}
+.toast .k { font-size: .7rem; letter-spacing: .14em; color: var(--gold); }
+.toast.dmg { border-left-color: var(--blood); }
+.toast.dmg .k { color: var(--blood); }
+.toast.item { border-left-color: var(--good); }
+.toast.item .k { color: var(--good); }
+@keyframes slide { from { transform: translateX(20px); opacity: 0; } }
+
+/* ───── Library ───── */
+.lib-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.lib-head h1 { font-family: var(--f-book); font-size: var(--step-3); font-weight: 700; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters .chip-btn[aria-pressed="true"] { border-color: var(--gold); color: var(--on-desk); }
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.book {
+  display: grid; grid-template-rows: auto 1fr auto; gap: 10px; text-align: left; cursor: pointer;
+  background: var(--desk-2); border: 1px solid var(--desk-line); border-radius: 4px 10px 10px 4px; padding: 18px 18px 14px 26px;
+  position: relative; color: var(--on-desk); transition: transform .2s, border-color .2s;
+}
+.book::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 10px; background: var(--spine); border-radius: 4px 0 0 4px; }
+.book:hover { transform: translateY(-3px); border-color: var(--gold); }
+.book h2 { font-family: var(--f-book); font-size: var(--step-1); font-weight: 700; line-height: 1.4; }
+.book .by { font-size: var(--step--1); color: var(--on-desk-soft); }
+.book p { margin: 0; font-family: var(--f-book); font-size: var(--step--1); color: var(--on-desk-soft); }
+.book .foot { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; color: var(--on-desk-soft); border-top: 1px solid var(--desk-line); padding-top: 10px; gap: 8px; }
+.pill { padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; font-size: .7rem; white-space: nowrap; }
+.pill.play { color: var(--gold); }
+.pill.clear { color: var(--good); }
+.pill.new { color: var(--lapis); }
+.continue { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; margin-bottom: 28px; }
+.continue .page { padding: 20px 24px; }
+.continue .page::after { width: 80px; height: 80px; }
+
+/* ───── Create ───── */
+.create { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.field { display: grid; gap: 6px; margin-bottom: 18px; }
+.field > span { font-size: .75rem; letter-spacing: .14em; color: var(--on-desk-soft); }
+.opts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.opts.three { grid-template-columns: repeat(3, 1fr); }
+.opts.two { grid-template-columns: repeat(2, 1fr); }
+.opt { border: 1px solid var(--desk-line); background: var(--desk-2); border-radius: 8px; padding: 10px 6px; cursor: pointer; display: grid; justify-items: center; gap: 4px; color: var(--on-desk-soft); font-size: var(--step--1); }
+.opt svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.opt[aria-pressed="true"] { border-color: var(--gold); color: var(--on-desk); background: var(--lapis-soft); }
+.opt .en { font-family: var(--f-display); font-size: .65rem; letter-spacing: .12em; }
+.create select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--desk-line); background: var(--desk-2); }
+.sheet-preview .prose { font-size: 1rem; }
+.rollrow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+/* ───── Convert ───── */
+.convert { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.drop {
+  border: 2px dashed var(--desk-line); border-radius: 12px; padding: 28px 20px; text-align: center; color: var(--on-desk-soft);
+  display: grid; gap: 8px; justify-items: center; margin-bottom: 16px;
+}
+.drop b { color: var(--on-desk); }
+.code { background: var(--desk); border: 1px solid var(--desk-line); border-radius: 10px; overflow: auto; max-height: 440px; }
+.code pre { margin: 0; padding: 14px 16px; font: .8rem/1.55 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: var(--on-desk); white-space: pre; }
+.code .h { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--desk-line); font-size: .75rem; color: var(--on-desk-soft); position: sticky; top: 0; background: var(--desk); }
+.report { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: var(--step--1); }
+.report li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; padding: 8px 10px; border-radius: 6px; background: var(--desk-2); border: 1px solid var(--desk-line); }
+.report .lv { font-size: .7rem; font-weight: 700; letter-spacing: .08em; }
+.report .ok { color: var(--good); } .report .warn { color: var(--gold); } .report .info { color: var(--lapis); }
+.summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.summary-row div { background: var(--desk-2); border: 1px solid var(--desk-line); border-radius: 8px; padding: 8px 10px; }
+.summary-row b { display: block; font-size: var(--step-1); font-variant-numeric: tabular-nums; }
+.summary-row span { font-size: .7rem; color: var(--on-desk-soft); letter-spacing: .08em; }
+
+@media (max-width: 760px) {
+  .create, .convert { grid-template-columns: minmax(0, 1fr); }
+  .continue { grid-template-columns: minmax(0, 1fr); }
+  .screens { margin-left: 0; width: 100%; order: 3; }
+  .tools { margin-left: auto; }
+  .brand small { display: none; }
+  .summary-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+/*
+ * SORCERIAN Text v2 デザインプロトタイプ
+ * - 画面遷移と見た目の検証用。ゲームロジックはモック（@stext/core 実装前）
+ * - シナリオデータは v2 JSON 形式（docs/migration-plan.md §3）の例
+ */
+const { useState, useEffect, useRef, useCallback } = React;
+const html = htm.bind(React.createElement);
+
+// ───── 基本データ（sgml.js の Common から抜粋） ─────
+const STARS = [
+  { id: 'mon', name: '月',   c: 'var(--star-mon)' },
+  { id: 'tue', name: '火星', c: 'var(--star-tue)' },
+  { id: 'wed', name: '水星', c: 'var(--star-wed)' },
+  { id: 'thu', name: '木星', c: 'var(--star-thu)' },
+  { id: 'fri', name: '金星', c: 'var(--star-fri)' },
+  { id: 'sat', name: '土星', c: 'var(--star-sat)' },
+  { id: 'sun', name: '太陽', c: 'var(--star-sun)' },
+];
+const MAGIC = {
+  'HEAL':        [0, 0, 0, 1, 0, 1, 0, 'HPを15回復'],
+  'PEACE':       [0, 0, 1, 0, 1, 0, 0, 'MPを10回復'],
+  'CURE':        [0, 0, 0, 0, 1, 0, 1, '毒回復'],
+  'PROTECT':     [1, 0, 0, 1, 1, 0, 1, 'HPダメージを半減（1ターンのみ）'],
+  'CHANGE-AIR':  [1, 0, 0, 1, 1, 1, 0, '戦闘を回避（アイテムは得られない）'],
+  'EXPLOSION':   [0, 1, 0, 1, 0, 1, 2, '地属性の敵を全滅'],
+  'NOILA-TEM':   [1, 1, 1, 1, 1, 1, 1, 'すべての属性の敵を全滅'],
+};
+const ELEMENT = { earth: '地', fire: '火', water: '水', wind: '風', spirit: '霊' };
+const ATTACK = { physics: '物理', magic: '魔法', poison: '毒' };
+const RACES = [
+  { id: 'FIGHTER', ja: 'ファイター', icon: 'M6 26 22 10M18 6l8 8M9 19l4 4' },
+  { id: 'WIZARD',  ja: 'ウィザード', icon: 'M16 4 10 26h12L16 4zM13 16h6' },
+  { id: 'DWARF',   ja: 'ドワーフ',   icon: 'M8 12h16v6H8zM16 18v10M10 8l6-4 6 4' },
+  { id: 'ELF',     ja: 'エルフ',     icon: 'M6 22C14 22 22 14 26 6M8 6c0 10 6 16 18 18' },
+];
+
+// ───── v2 シナリオ JSON（例） ─────
+const SCENARIO = {
+  format: 'stext/2',
+  meta: { id: 'scepter', title: '新・消えた王さまの杖', author: 'Rio' },
+  items: [
+    { id: 'i01', name: 'こいし', text: '何の変哲もない、石だ' },
+    { id: 'i04', name: 'リラの貝殻', text: '離れた場所でグーランと会話できる' },
+    { id: 'i31', name: '王さまの杖', text: '本物、かもしれない' },
+  ],
+  flags: [
+    { id: 'f01', text: '凹んだ床の罠を見破った。' },
+    { id: 'f02', text: 'オークの見張りを退けた。' },
+  ],
+  enemies: [
+    { id: 'm01', name: '人面岩', element: 'earth', attack: 'physics', func: 'L-STR', text: '喋るだけで、硬い岩だ。' },
+    { id: 'm04', name: 'オークの見張り', element: 'fire', attack: 'physics', func: 'L+R-STR', drop: 'i31', text: '杖を持ち去った一味の下っ端。妙に律義だ。' },
+  ],
+  results: [
+    { id: 'r01', name: '冒険のはじまり' },
+    { id: 'r02', name: '罠師の勘' },
+    { id: 'r03', name: '石は投げるもの' },
+    { id: 'r04', name: '杖の奪還' },
+    { id: 'r05', name: '五本の杖をすべて見た' },
+    { id: 'r06', name: 'バッドエンド蒐集家' },
+  ],
+  scenes: {
+    '0': {
+      text: [
+        'ペンタウァの王さまが、大切な杖をなくしたのだという。',
+        'なくした、というのは控えめな言い方で、実のところは城の宝物庫からオークの一団に持ち去られたのだそうだ。',
+        '「おぬししかおらんのだ」と玉座から身を乗り出す王さまの目は、すでに少し潤んでいる。',
+      ],
+      effects: { results: ['r01'], items: ['i01', 'i04'] },
+      choices: [{ label: '城の地下へ向かう', to: '1010' }],
+    },
+    '1010': {
+      text: [
+        'ダンジョンの壁はレンガ仕立てだが、至るところで漆喰がはげ落ち、赤黒い岩肌がのぞいている。',
+        'それでも灯りだけはほぼ等間隔に並んでおり、十数ライ先まではそれなりに見通せる。',
+        '君はその時、数歩先の床がわずかに凹んでいることに気付く。どうにも、踏んでくださいと言われている気がするが……さて、どうする。',
+      ],
+      choices: [
+        { label: '構わず踏んでみる', to: '1020' },
+        { label: 'こいしを投げてみる', to: '1030', if: 'i01', hint: 'こいし' },
+        { label: '壁際を慎重に進む', to: '1040', if: 'oDEX6', hint: 'DEX 6以上' },
+      ],
+    },
+    '1020': {
+      text: [
+        'がこん、と鈍い音。床が沈み、壁の一部がずるりと動いた。',
+        '現れたのは、岩肌に浮かぶ巨大な顔だ。「よくぞ踏んだ！」と人面岩は嬉しそうに叫び、君めがけて倒れかかってくる。',
+      ],
+      effects: { hp: -8 },
+      enemies: ['m01'],
+      choices: [{ label: '岩をやり過ごして先へ', to: '1040' }],
+    },
+    '1030': {
+      text: [
+        '放ったこいしが床に当たった瞬間、凹みの周りの石畳がまとめて崩れ落ちた。底は見えない。',
+        '「……ちっ」どこかで誰かが舌打ちをしたような気がする。',
+      ],
+      effects: { flags: ['f01'], results: ['r02', 'r03'], lose: ['i01'] },
+      choices: [{ label: '穴を迂回して先へ', to: '1040' }],
+    },
+    '1040': {
+      text: [
+        '通路の突き当たりに、木の扉。その前で、オークがひとり椅子に座って帳簿をつけている。',
+        '「面会のご予約は？」と顔も上げずにオークは言った。帳簿の脇には、見覚えのある金色の杖が立てかけてある。',
+      ],
+      enemies: ['m04'],
+      choices: [
+        { label: '予約はないと正直に答える', to: '1090' },
+        { label: '杖を奪い返す', to: '1050', if: 'f02', hint: '見張りを倒した' },
+      ],
+    },
+    '1050': {
+      end: 'happy',
+      text: [
+        '君は金色の杖を握りしめ、来た道を駆け戻った。',
+        '玉座の間で杖を受け取った王さまは、「うむ、たぶんこれじゃ」と言った。たぶん、とは。',
+      ],
+      effects: { items: ['i31'], results: ['r04'] },
+      choices: [{ label: '冒険を終える', to: '0', end: true }],
+    },
+    '1090': {
+      end: 'bad',
+      text: [
+        '「では、三か月後のこの時間にお越しください」',
+        'オークは丁寧に予約票を書いてくれた。君はそれを手に、城へ帰った。王さまの目は、もう潤んですらいなかった。',
+      ],
+      effects: { results: ['r06'] },
+      choices: [{ label: '最初からやり直す', to: '0', end: true }],
+    },
+  },
+};
+
+const LIBRARY = [
+  { id: 'scepter', title: '新・消えた王さまの杖', author: 'Rio', scenes: 253, desc: '古臭いゲームブックの世界で、新たな杖の物語。あまたのバッドエンドを回収しつつ、ついでに杖も探してね。', status: 'play', progress: '実績 2 / 6', spine: 'var(--star-sun)', kind: '探索' },
+  { id: 'slayer', title: 'その名はドラゴンスレイヤー', author: 'RYU（ライウ）', scenes: 1893, desc: 'ドラゴンスレイヤー発見騒動から始まる激しい戦いの旅。', status: 'new', spine: 'var(--star-tue)', kind: '長編' },
+  { id: 'avengers', title: 'ソーサリアベンジャーズ', author: 'ちゃな', scenes: 901, desc: 'ソーサリアン史上最大の危機！ 1400万分の1の勝利を掴み取れ。', status: 'clear', progress: 'クリア済', spine: 'var(--star-thu)', kind: '長編' },
+  { id: 'hero', title: '少女は英雄を語りて', author: 'ときのじ', scenes: 338, desc: '「これは、貴方が絵本の世界を旅する物語」', status: 'new', spine: 'var(--star-fri)', kind: '連作' },
+  { id: 'king', title: '終末の双王 - ドラゴンモード -', author: 'ときのじ', scenes: 284, desc: '連作ドラゴンモード、最終章。', status: 'new', spine: 'var(--star-wed)', kind: '連作' },
+  { id: 'captive', title: '新・囚われた魔法使い', author: 'Salvador', scenes: 138, desc: '囚われの魔法使いを救い出せ。', status: 'new', spine: 'var(--star-sat)', kind: '探索' },
+  { id: 'doll', title: 'プレアオブ・ドールズ', author: 'cocotori', scenes: 24, desc: '王都ペンタウァを騒がす、人形が関わる猟奇事件の物語。', status: 'new', spine: 'var(--star-mon)', kind: '短編' },
+  { id: 'mini', title: 'ミニミニソーサリアン Text', author: 'リオ', scenes: 8, desc: 'はじめての方へ。数分で遊べる入門シナリオ。', status: 'clear', progress: 'クリア済', spine: 'var(--star-sun)', kind: '短編' },
+];
+
+const START_CHARA = {
+  name: 'クルトン', epithet: 'いけにえの神官', race: 'FIGHTER', sex: 'MALE', age: 'OLD', job: 'のうふ',
+  hp: 82, hpMax: 90, mp: 48, mpMax: 60, str: 7, int: 3, dex: 6, krm: 4, state: '',
+  stars: [1, 0, 1, 2, 1, 2, 1],
+};
+
+// ───── 小さな部品 ─────
+const Ornament = () => html`<div class="rule" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 1 12.4 7.6 19 10 12.4 12.4 10 19 7.6 12.4 1 10 7.6 7.6z"/></svg></div>`;
+
+const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+function Die({ value, rolling, left }) {
+  return html`<div class=${'die' + (rolling ? ' rolling' : '') + (left ? ' left' : '')} role="img" aria-label=${(left ? '左ダイス ' : '右ダイス ') + value}>
+    ${Array.from({ length: 9 }, (_, i) => html`<i key=${i} class=${PIPS[value].includes(i) ? 'on' : ''}></i>`)}
+  </div>`;
+}
+
+function Sigil({ race }) {
+  const r = RACES.find(r => r.id === race) || RACES[0];
+  return html`<div class="sigil" aria-hidden="true"><svg viewBox="0 0 32 32"><path d=${r.icon}/></svg></div>`;
+}
+
+function Icon({ d }) { return html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d=${d}/></svg>`; }
+const ICONS = {
+  book: 'M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1zM12 6v14',
+  hero: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4-6 8-6s7 2 8 6',
+  star: 'M12 3l2.6 5.6 6 .6-4.5 4 1.3 6-5.4-3.2-5.4 3.2 1.3-6-4.5-4 6-.6z',
+  bag: 'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2',
+  scroll: 'M7 4h11v13a3 3 0 0 1-3 3H6a2 2 0 0 1-2-2v-1h11M7 4a2 2 0 0 0-2 2v11',
+};
+
+// ───── 冒険者パネル ─────
+function HeroPanel({ chara }) {
+  const stat = (k, v) => html`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const pct = (a, b) => Math.max(0, Math.min(100, a / b * 100)) + '%';
+  return html`<div>
+    <div class="hero">
+      <${Sigil} race=${chara.race}/>
+      <div>
+        <div class="epithet">「${chara.epithet}」</div>
+        <div class="name">${chara.name}</div>
+        <div class="meta">${chara.race} · ${chara.sex} · ${chara.age} · ${chara.job}</div>
+      </div>
+    </div>
+    <div class="gauges" aria-live="polite">
+      <div class="gauge"><span class="lbl">HP</span><div class="bar hp"><span style=${{ width: pct(chara.hp, chara.hpMax) }}></span></div><span class="val">${chara.hp} / ${chara.hpMax}</span></div>
+      <div class="gauge"><span class="lbl">MP</span><div class="bar mp"><span style=${{ width: pct(chara.mp, chara.mpMax) }}></span></div><span class="val">${chara.mp} / ${chara.mpMax}</span></div>
+    </div>
+    <div class="stats">${stat('STR', chara.str)}${stat('INT', chara.int)}${stat('DEX', chara.dex)}${stat('KRM', chara.krm)}</div>
+    <div class="state"><span>状態</span><b>${chara.state || '正常'}</b></div>
+  </div>`;
+}
+
+function MagicPanel({ chara, onCast }) {
+  const can = cost => cost.every((n, i) => chara.stars[i] >= n);
+  return html`<div>
+    <div class="section-h"><span>星の加護</span><span>${chara.stars.reduce((a, b) => a + b, 0)} 個</span></div>
+    <div class="stars">
+      ${STARS.map((s, i) => html`<div key=${s.id} class=${'star' + (chara.stars[i] ? '' : ' zero')} style=${{ '--c': s.c }}>
+        <div class="orb">${chara.stars[i]}</div>${s.name}</div>`)}
+    </div>
+    <ul class="spells">
+      ${Object.entries(MAGIC).map(([name, m]) => {
+        const cost = m.slice(0, 7), ok = can(cost);
+        return html`<li key=${name} class=${'spell' + (ok ? ' ok' : '')}>
+          <span class="sn">${name}</span>
+          ${ok ? html`<button class="cast" onClick=${() => onCast(name, cost)}>唱える</button>`
+               : html`<span class="cost" aria-label="必要な星">${cost.flatMap((n, i) => Array.from({ length: n }, (_, k) => html`<i key=${i + '-' + k} style=${{ '--c': STARS[i].c }} title=${STARS[i].name}></i>`))}</span>`}
+          <span class="sd">${m[7]}</span>
+        </li>`;
+      })}
+    </ul>
+  </div>`;
+}
+
+function ItemsPanel({ state }) {
+  const items = SCENARIO.items.filter(i => state.items.includes(i.id));
+  const flags = SCENARIO.flags.filter(f => state.flags.includes(f.id));
+  return html`<div>
+    <div class="section-h"><span>持ち物</span><span>${items.length}</span></div>
+    <ul class="list">
+      ${items.length ? items.map(i => html`<li key=${i.id}><span class="n">${i.name}</span><span class="d">${i.text}</span></li>`)
+        : html`<li><span class="d">何も持っていない。</span></li>`}
+    </ul>
+    <div class="section-h"><span>冒険の手記</span><span>${flags.length}</span></div>
+    <ul class="list journal">
+      ${flags.length ? flags.map(f => html`<li key=${f.id}>${f.text}</li>`)
+        : html`<li><span class="d">まだ書き留めたことはない。</span></li>`}
+    </ul>
+  </div>`;
+}
+
+function RecordPanel({ state }) {
+  const got = SCENARIO.results.filter(r => state.results.includes(r.id)).length;
+  return html`<div>
+    <div class="section-h"><span>実績</span><span>${got} / ${SCENARIO.results.length}</span></div>
+    <div class="progress"><span style=${{ width: got / SCENARIO.results.length * 100 + '%' }}></span></div>
+    <ul class="list">
+      ${SCENARIO.results.map(r => {
+        const has = state.results.includes(r.id);
+        return html`<li key=${r.id} class=${has ? '' : 'locked'}><span class="n">${has ? r.name : '？？？'}</span></li>`;
+      })}
+    </ul>
+    <div class="section-h"><span>辿った節</span><span>${state.log.length}</span></div>
+    <ul class="list log">
+      ${state.log.slice().reverse().slice(0, 8).map((l, i) => html`<li key=${i}><span class="t">§${l.id}</span><span>${l.label}</span></li>`)}
+    </ul>
+  </div>`;
+}
+
+const PANEL_TABS = [
+  { id: 'hero', ja: '冒険者', icon: ICONS.hero },
+  { id: 'magic', ja: '魔法', icon: ICONS.star },
+  { id: 'items', ja: '持ち物', icon: ICONS.bag },
+  { id: 'record', ja: '記録', icon: ICONS.scroll },
+];
+
+function PanelBody({ tab, state, onCast }) {
+  if (tab === 'magic') return html`<${MagicPanel} chara=${state.chara} onCast=${onCast}/>`;
+  if (tab === 'items') return html`<${ItemsPanel} state=${state}/>`;
+  if (tab === 'record') return html`<${RecordPanel} state=${state}/>`;
+  return html`<${HeroPanel} chara=${state.chara}/>`;
+}
+
+// ───── モックエンジン（@stext/core の代役） ─────
+function checkCond(cond, st) {
+  if (!cond) return true;
+  if (cond.startsWith('oDEX')) return st.chara.dex >= Number(cond.slice(4));
+  return st.items.includes(cond) || st.flags.includes(cond);
+}
+function applyEffects(st, eff, push) {
+  if (!eff) return st;
+  const n = { ...st, chara: { ...st.chara }, items: [...st.items], flags: [...st.flags], results: [...st.results] };
+  (eff.items || []).forEach(id => { if (!n.items.includes(id)) { n.items.push(id); push('item', 'アイテム獲得', SCENARIO.items.find(i => i.id === id).name); } });
+  (eff.lose || []).forEach(id => { n.items = n.items.filter(i => i !== id); });
+  (eff.flags || []).forEach(id => { if (!n.flags.includes(id)) n.flags.push(id); });
+  (eff.results || []).forEach(id => { if (!n.results.includes(id)) { n.results.push(id); push('result', '実績獲得', SCENARIO.results.find(r => r.id === id).name); } });
+  if (eff.hp) { n.chara.hp = Math.max(0, Math.min(n.chara.hpMax, n.chara.hp + eff.hp)); push('dmg', eff.hp < 0 ? 'ダメージ' : '回復', `HP ${eff.hp > 0 ? '+' : ''}${eff.hp}`); }
+  return n;
+}
+function initialState() {
+  return { sceneId: '0', chara: { ...START_CHARA, stars: [...START_CHARA.stars] }, items: [], flags: [], results: [], log: [], defeated: [] };
+}
+
+// ───── 敵カード ─────
+function EnemyCard({ enemy, chara, defeated, onResolve }) {
+  const [dice, setDice] = useState([3, 5]);
+  const [rolling, setRolling] = useState(false);
+  const [dmg, setDmg] = useState(null);
+  useEffect(() => { setDmg(null); }, [enemy.id]);
+  const roll = () => {
+    const d = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+    setRolling(true); setDice(d);
+    setTimeout(() => setRolling(false), 450);
+    // func の簡易解釈（L-STR: 左ダイス − STR、L+R-STR: 合計 − STR）
+    const raw = enemy.func.startsWith('L+R') ? d[0] + d[1] : d[0];
+    const v = Math.max(0, raw - chara.str);
+    setDmg(v);
+    onResolve(enemy, v);
+  };
+  return html`<section class="enemy" aria-label=${'敵：' + enemy.name}>
+    <div class="enemy-top">
+      <h3>${enemy.name}</h3>
+      <div class="tags">
+        <span class="tag">属性 <b>${ELEMENT[enemy.element]}</b></span>
+        <span class="tag">攻撃 <b>${ATTACK[enemy.attack]}</b></span>
+        <span class="tag">判定 <b>${enemy.func}</b></span>
+      </div>
+    </div>
+    <p class="enemy-desc">${enemy.text}</p>
+    <div class="battle">
+      <div class="dice"><${Die} value=${dice[0]} rolling=${rolling} left=${true}/><${Die} value=${dice[1]} rolling=${rolling}/></div>
+      ${defeated
+        ? html`<span class="verdict"><b class="win">撃破</b>　${enemy.drop ? '戦利品を得た' : ''}</span>`
+        : html`<button class="btn" onClick=${roll}>ダイスを振る</button>`}
+      ${dmg !== null ? html`<span class="verdict">受けたダメージ <b>${dmg}</b></span>` : null}
+    </div>
+  </section>`;
+}
+
+// ───── 冒険画面 ─────
+function Play({ state, setState, toast, fontScale, setFontScale }) {
+  const [tab, setTab] = useState('hero');
+  const [sheet, setSheet] = useState(null);
+  const scene = SCENARIO.scenes[state.sceneId];
+  const choices = scene.choices.filter(c => checkCond(c.if, state));
+
+  const go = useCallback((choice) => {
+    if (choice.end) { setState(initialState()); toast('result', '新たな冒険', '最初の節に戻りました'); window.scrollTo({ top: 0 }); return; }
+    const next = SCENARIO.scenes[choice.to];
+    setState(st => {
+      let n = { ...st, sceneId: choice.to, log: [...st.log, { id: choice.to, label: choice.label }] };
+      n = applyEffects(n, next.effects, toast);
+      return n;
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [setState, toast]);
+
+  useEffect(() => { // 番号キーで選択
+    const onKey = e => {
+      if (e.target.closest('input, textarea, select')) return;
+      const i = Number(e.key) - 1;
+      if (i >= 0 && i < choices.length) go(choices[i]);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [choices, go]);
+
+  const onResolve = (enemy, dmg) => {
+    setState(st => {
+      let n = { ...st, chara: { ...st.chara, hp: Math.max(0, st.chara.hp - dmg) }, defeated: [...st.defeated, enemy.id] };
+      if (dmg) toast('dmg', 'ダメージ', `${enemy.name}から HP −${dmg}`);
+      if (enemy.id === 'm04') n.flags = [...n.flags, 'f02'];
+      return n;
+    });
+  };
+  const onCast = (name, cost) => {
+    setState(st => {
+      const chara = { ...st.chara, stars: st.chara.stars.map((v, i) => v - cost[i]) };
+      if (name === 'HEAL') chara.hp = Math.min(chara.hpMax, chara.hp + 15);
+      if (name === 'PEACE') chara.mp = Math.min(chara.mpMax, chara.mp + 10);
+      return { ...st, chara };
+    });
+    toast('result', '魔法', `${name} を唱えた`);
+  };
+
+  const endLabel = scene.end === 'happy' ? 'Happy End' : scene.end === 'bad' ? 'Bad End' : null;
+
+  return html`<div class="play">
+    <article class="page" style=${{ '--book-size': fontScale }}>
+      <header class="page-head">
+        <span class="title">${SCENARIO.meta.title}</span>
+        <span class="para"><small>${endLabel || '節'}</small>${state.sceneId}</span>
+      </header>
+      <div class="prose">
+        ${scene.text.map((p, i) => html`<p key=${state.sceneId + i}>${p}</p>`)}
+      </div>
+      ${(scene.enemies || []).map(id => {
+        const e = SCENARIO.enemies.find(x => x.id === id);
+        return html`<${EnemyCard} key=${id} enemy=${e} chara=${state.chara} defeated=${state.defeated.includes(id)} onResolve=${onResolve}/>`;
+      })}
+      <${Ornament}/>
+      <nav class="choices" aria-label="選択肢">
+        ${choices.map((c, i) => html`<button key=${c.label} class=${'choice' + (c.end ? ' end' : '')} onClick=${() => go(c)}>
+          <span class="key">${i + 1}</span>
+          <span>${c.label}${c.hint ? html`<span class="cond" title="条件を満たしたため表示">✓ ${c.hint}</span>` : null}</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </button>`)}
+      </nav>
+    </article>
+
+    <aside class="panel" aria-label="冒険者パネル">
+      <div class="tabs" role="tablist">
+        ${PANEL_TABS.map(t => html`<button key=${t.id} role="tab" aria-selected=${tab === t.id} onClick=${() => setTab(t.id)}>${t.ja}</button>`)}
+      </div>
+      <div class="card"><${PanelBody} tab=${tab} state=${state} onCast=${onCast}/></div>
+      <div class="readset">
+        <span>文字</span>
+        <span class="seg">
+          ${[['小', '0.9375rem'], ['中', '1.0625rem'], ['大', '1.25rem']].map(([l, v]) =>
+            html`<button key=${l} aria-pressed=${fontScale === v} onClick=${() => setFontScale(v)}>${l}</button>`)}
+        </span>
+        <span>· 数字キー 1–${choices.length} で選択</span>
+      </div>
+    </aside>
+
+    <nav class="mtabs" aria-label="冒険者メニュー">
+      ${PANEL_TABS.map(t => html`<button key=${t.id} onClick=${() => setSheet(t.id)}>
+        <${Icon} d=${t.icon}/>
+        ${t.id === 'hero' ? html`<b>HP ${state.chara.hp}</b>` : html`<span>${t.ja}</span>`}
+      </button>`)}
+    </nav>
+    ${sheet ? html`<div>
+      <div class="sheet-backdrop" onClick=${() => setSheet(null)}></div>
+      <div class="sheet" role="dialog" aria-label=${PANEL_TABS.find(t => t.id === sheet).ja}>
+        <div class="grab"></div>
+        <div class="tabs" role="tablist" style=${{ marginBottom: '14px' }}>
+          ${PANEL_TABS.map(t => html`<button key=${t.id} role="tab" aria-selected=${sheet === t.id} onClick=${() => setSheet(t.id)}>${t.ja}</button>`)}
+        </div>
+        <${PanelBody} tab=${sheet} state=${state} onCast=${onCast}/>
+      </div>
+    </div>` : null}
+  </div>`;
+}
+
+// ───── 書庫 ─────
+function Library({ onOpen }) {
+  const [filter, setFilter] = useState('すべて');
+  const kinds = ['すべて', '短編', '探索', '連作', '長編'];
+  const list = LIBRARY.filter(b => filter === 'すべて' || b.kind === filter);
+  const label = { play: '冒険中', clear: 'クリア', new: '未読' };
+  return html`<div>
+    <div class="continue">
+      <div class="page">
+        <div class="eyebrow" style=${{ color: 'var(--ink-soft)' }}>続きから</div>
+        <div style=${{ fontFamily: 'var(--f-book)', fontSize: 'var(--step-2)', fontWeight: 700, margin: '4px 0' }}>新・消えた王さまの杖</div>
+        <div style=${{ fontFamily: 'var(--f-book)', color: 'var(--ink-soft)', fontSize: 'var(--step--1)' }}>「いけにえの神官」クルトン · 節 1010 · HP 82 / 90</div>
+      </div>
+      <button class="btn" style=${{ background: 'var(--gold)', borderColor: 'var(--gold)', color: 'var(--desk)' }} onClick=${() => onOpen('play')}>冒険を再開</button>
+    </div>
+    <div class="lib-head">
+      <div>
+        <div class="eyebrow">Pentawa Library</div>
+        <h1>ペンタウァの書庫</h1>
+        <p class="lede">43 編のシナリオ。誰でも書けて、誰でも遊べるゲームブック。</p>
+      </div>
+      <div class="filters">
+        ${kinds.map(k => html`<button key=${k} class="chip-btn" aria-pressed=${filter === k} onClick=${() => setFilter(k)}>${k}</button>`)}
+      </div>
+    </div>
+    <div class="shelf">
+      ${list.map(b => html`<button key=${b.id} class="book" style=${{ '--spine': b.spine }} onClick=${() => onOpen(b.status === 'new' ? 'create' : 'play')}>
+        <div><h2>${b.title}</h2><div class="by">${b.author}</div></div>
+        <p>${b.desc}</p>
+        <div class="foot"><span>${b.scenes.toLocaleString()} 節 · ${b.kind}</span><span class=${'pill ' + b.status}>${b.progress || label[b.status]}</span></div>
+      </button>`)}
+    </div>
+  </div>`;
+}
+
+// ───── 冒険者の誕生 ─────
+function Create({ onStart }) {
+  const [race, setRace] = useState('FIGHTER');
+  const [sex, setSex] = useState('MALE');
+  const [age, setAge] = useState('OLD');
+  const [roll, setRoll] = useState({ hp: 90, mp: 60, str: 7, int: 3, dex: 6, krm: 4 });
+  const reroll = () => {
+    const r = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+    setRoll({ hp: r(80, 95), mp: r(55, 65), str: r(6, 9), int: r(3, 5), dex: r(6, 8), krm: r(4, 6) });
+  };
+  const opt = (cur, set, v, label, en, icon) => html`<button key=${v} class="opt" aria-pressed=${cur === v} onClick=${() => set(v)}>
+    ${icon ? html`<svg viewBox="0 0 32 32" aria-hidden="true"><path d=${icon}/></svg>` : null}${label}<span class="en">${en}</span></button>`;
+  return html`<div class="create">
+    <div>
+      <div class="eyebrow">Character</div>
+      <h1 style=${{ fontFamily: 'var(--f-book)', fontSize: 'var(--step-3)', margin: '4px 0 6px' }}>冒険者の誕生</h1>
+      <p class="lede" style=${{ marginBottom: '20px' }}>シナリオ「新・消えた王さまの杖」が許す範囲で選べます。空欄はおまかせ（ランダム）。</p>
+      <div class="field"><span>種族</span><div class="opts">${RACES.map(r => opt(race, setRace, r.id, r.ja, r.id, r.icon))}</div></div>
+      <div class="field"><span>性別</span><div class="opts two">${opt(sex, setSex, 'MALE', '男性', 'MALE')}${opt(sex, setSex, 'FEMALE', '女性', 'FEMALE')}</div></div>
+      <div class="field"><span>年齢</span><div class="opts three">${opt(age, setAge, 'YOUNG', '若年', 'YOUNG')}${opt(age, setAge, 'ADULT', '壮年', 'ADULT')}${opt(age, setAge, 'OLD', '老年', 'OLD')}</div></div>
+      <label class="field"><span>職業</span>
+        <select id="job"><option>のうふ</option><option>かじや</option><option>きこり</option><option>りょうし</option><option>ぼくし</option></select>
+      </label>
+    </div>
+    <div class="page sheet-preview">
+      <div class="page-head"><span class="title">冒険者名簿</span><span class="para"><small>No.</small>0001</span></div>
+      <div class="prose">
+        <p>その者、名を<b>クルトン</b>という。かつては「いけにえの神官」と呼ばれた、${{ YOUNG: '若き', ADULT: '壮年の', OLD: '老いた' }[age]}${RACES.find(r => r.id === race).ja}である。</p>
+      </div>
+      <div class="stats" style=${{ color: 'var(--ink)' }}>
+        ${[['HP', roll.hp], ['MP', roll.mp], ['STR', roll.str], ['INT', roll.int], ['DEX', roll.dex], ['KRM', roll.krm]].map(([k, v]) =>
+          html`<div key=${k} class="stat" style=${{ borderColor: 'var(--page-edge)' }}><div class="k" style=${{ color: 'var(--ink-soft)' }}>${k}</div><div class="v">${v}</div></div>`)}
+      </div>
+      <div class="rollrow">
+        <button class="btn ghost" onClick=${reroll}>能力を振り直す</button>
+        <button class="btn" onClick=${onStart}>この者で冒険に出る</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ───── 変換所（XML → JSON） ─────
+const XML_SAMPLE = `<scene id="1010">
+君はその時、数歩先の床が微妙に凹んでいることに
+気付く。さて、どうする。
+
+[構わず踏んでみる](1020)
+[こいしを投げてみる](1030 "i01")
+[壁際を慎重に進む](1040 "oDEX6")
+</scene>`;
+const JSON_SAMPLE = `{
+  "id": "1010",
+  "text": "君はその時、数歩先の床が微妙に凹んでいることに\\n気付く。さて、どうする。",
+  "choices": [
+    { "label": "構わず踏んでみる",   "to": ["1020"] },
+    { "label": "こいしを投げてみる", "to": ["1030"], "if": "i01" },
+    { "label": "壁際を慎重に進む",   "to": ["1040"], "if": "oDEX6" }
+  ]
+}`;
+function Convert() {
+  return html`<div>
+    <div class="eyebrow">Converter</div>
+    <h1 style=${{ fontFamily: 'var(--f-book)', fontSize: 'var(--step-3)', margin: '4px 0 6px' }}>変換所</h1>
+    <p class="lede" style=${{ marginBottom: '20px' }}>旧形式の scenario.xml を v2 JSON に変換します。変換は一方向で、結果はその場でスキーマ検証されます。</p>
+    <div class="drop">
+      <b>scenario.xml をここにドロップ</b>
+      <span style=${{ fontSize: 'var(--step--1)' }}>または .gbat / Playground の旧 JSON（edges 形式）</span>
+      <button class="chip-btn" style=${{ borderColor: 'var(--desk-line)' }}>ファイルを選ぶ</button>
+    </div>
+    <div class="summary-row">
+      <div><b>253</b><span>シーン</span></div>
+      <div><b>481</b><span>選択肢を抽出</span></div>
+      <div><b>3</b><span>要確認</span></div>
+      <div><b>0</b><span>エラー</span></div>
+    </div>
+    <div class="convert">
+      <div class="code"><div class="h"><span>scenario.xml</span><span>scepter</span></div><pre>${XML_SAMPLE}</pre></div>
+      <div class="code"><div class="h"><span>scenario.json</span><span>stext/2</span></div><pre>${JSON_SAMPLE}</pre></div>
+    </div>
+    <div class="section-h" style=${{ marginTop: '20px' }}><span>変換レポート</span></div>
+    <ul class="report">
+      <li><span class="lv ok">OK</span><span>items 35 / flags 23 / enemies 41 / results 18 件を変換</span></li>
+      <li><span class="lv warn">要確認</span><span>§2040: <code>\${if}</code> 内の選択肢は抽出せず本文に残しました（互換モードで動作します）</span></li>
+      <li><span class="lv warn">要確認</span><span>§3100: 遷移先 3999 が存在しません</span></li>
+      <li><span class="lv warn">要確認</span><span>flag f35 はどのシーンからも参照されていません</span></li>
+      <li><span class="lv info">情報</span><span>シーン属性 x / y はエディタ用として <code>editor</code> に移動しました</span></li>
+    </ul>
+  </div>`;
+}
+
+// ───── アプリ本体 ─────
+const VIEWS = [
+  { id: 'library', ja: '書庫' },
+  { id: 'create', ja: '誕生' },
+  { id: 'play', ja: '冒険' },
+  { id: 'convert', ja: '変換所' },
+];
+const NOTES = {
+  library: ['「続きから」を最上段に置き、セーブのあるシナリオへ1タップで戻れるようにする', '本の背の色は7つの星の配色から割り当て、規模（節数）と状態（未読／冒険中／クリア）を常に表示', '現行の stext.xml の一覧を v2 では scenarios/index.json として生成'],
+  create: ['現行は作成後にサイドバーで種族などをドロップダウン変更していた。v2 では冒険前に一画面で決める', 'シナリオの constraint（種族・年齢の制約）に合わない選択肢は表示しない', '右側は羊皮紙の「名簿」として、選択の結果をその場で文章化する'],
+  play: ['PCは本文と冒険者パネルを並べ、サイドバーで本文を覆わない。900px 未満では下部タブ＋ボトムシート', '選択肢は大きなボタンにし、数字キーでも選べる。条件を満たして現れた選択肢には小さな印を付ける', '戦闘は Battle Sheet を開かず、敵カード上でダイス→ダメージ反映まで完結させる', 'HP・実績・アイテムの変化はトーストで知らせ、「記録」タブに辿った節を残す', '戦闘判定・条件評価はモック。実装は @stext/core が行い、UIは結果を描画するだけにする'],
+  convert: ['XML → JSON の一方向変換。ブラウザでも CLI（stext convert）でも同じ @stext/convert を使う', '抽出できなかった記法は失敗にせず、互換モードで動く形で残し「要確認」として列挙する'],
+};
+
+function App() {
+  const initial = (location.hash || '').slice(1);
+  const [view, setView] = useState(VIEWS.some(v => v.id === initial) ? initial : 'play');
+  const [state, setState] = useState(() => {
+    // 冒険中の様子が伝わるよう、§1010 から開始
+    const s = initialState();
+    return { ...s, sceneId: '1010', items: ['i01', 'i04'], results: ['r01'], log: [{ id: '0', label: '冒険のはじまり' }, { id: '1010', label: '城の地下へ向かう' }] };
+  });
+  const [toasts, setToasts] = useState([]);
+  const [fontScale, setFontScale] = useState('1.0625rem');
+  const [theme, setTheme] = useState(null);
+  const tid = useRef(0);
+
+  const toast = useCallback((kind, k, msg) => {
+    const id = ++tid.current;
+    setToasts(t => [...t.slice(-2), { id, kind, k, msg }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3200);
+  }, []);
+
+  useEffect(() => {
+    const onHash = () => { const h = location.hash.slice(1); if (VIEWS.some(v => v.id === h)) setView(h); };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  const open = v => { setView(v); try { history.replaceState(null, '', '#' + v); } catch (e) {} window.scrollTo({ top: 0 }); };
+  const toggleTheme = () => {
+    const dark = theme ? theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    const next = dark ? 'light' : 'dark';
+    setTheme(next); document.documentElement.setAttribute('data-theme', next);
+  };
+
+  return html`<div>
+    <header class="topbar"><div class="topbar-in">
+      <div class="brand">SORCERIAN Text<small>v2 デザイン試作</small></div>
+      <nav class="screens" aria-label="試作画面">
+        ${VIEWS.map(v => html`<button key=${v.id} aria-current=${view === v.id ? 'page' : null} onClick=${() => open(v.id)}>${v.ja}</button>`)}
+      </nav>
+      <div class="tools"><button class="chip-btn" onClick=${toggleTheme} aria-label="昼と夜を切り替え">昼／夜</button></div>
+    </div></header>
+
+    <main class="shell">
+      ${view === 'library' && html`<${Library} onOpen=${open}/>`}
+      ${view === 'create' && html`<${Create} onStart=${() => { setState(initialState()); open('play'); }}/>`}
+      ${view === 'play' && html`<${Play} state=${state} setState=${setState} toast=${toast} fontScale=${fontScale} setFontScale=${setFontScale}/>`}
+      ${view === 'convert' && html`<${Convert}/>`}
+      <details class="note" open=${view !== 'play'}>
+        <summary>この画面の設計メモ</summary>
+        <ul>${NOTES[view].map((n, i) => html`<li key=${i}>${n}</li>`)}</ul>
+      </details>
+    </main>
+
+    <div class="toasts" aria-live="polite">
+      ${toasts.map(t => html`<div key=${t.id} class=${'toast ' + t.kind}><div class="k">${t.k}</div>${t.msg}</div>`)}
+    </div>
+  </div>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
+</script>
