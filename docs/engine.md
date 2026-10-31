@@ -50,10 +50,14 @@ if (r.kind === 'moved') ({ state, global, events } = r);
 | 関数 | 内容 |
 | --- | --- |
 | `start(global, { memos })` | キャラクターを作り（ボーナスアイテムの適用を含む）、シーン 0 に入る |
+| `newCharacter(global, { constraint, memos })` | キャラクター作成画面用の下書きを作る（制約を絞れば、種族などを選んだ振り直しになる） |
+| `begin(character, global)` | 作ったキャラクターで冒険を始める（開始時のボーナスを適用し、シーン 0 に入る） |
 | `view(state, global)` | 現在のシーンの表示内容（`SceneView`） |
 | `choose(state, global, index, input?)` | 選択肢を選ぶ。`input` は番号入力・文字入力の値 |
 | `enterScene(state, global, id)` | 指定のシーンに直接入る（デバッグ用） |
 | `castMagic(state, global, name)` | 魔法シートから魔法を唱える（星を消費して HP 回復などを反映） |
+| `setParam(state, id, value)` | 本文の `${input?p01}` の入力欄から、パラメーターに値を代入する |
+| `sceneText(state, global, id)` | 指定したシーンの本文を展開する（Battle Sheet のルール表示など） |
 
 `choose` の結果:
 

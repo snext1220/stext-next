@@ -11,8 +11,18 @@ SORCERIAN Text v2 の開発環境の使い方です。全体の方針は [移行
 
 ```bash
 npm install
-npm run dev        # プレイヤーアプリの開発サーバー（apps/player）
+npm run dev        # プレイヤーアプリの開発サーバー（http://localhost:5173）
 ```
+
+- 開発サーバーは `scenarios/` を `/scenarios/` で配信します。
+- 旧リポジトリ（snext1220/stext）をこのリポジトリと同じ階層（`../stext`）に clone しておくと、画像・BGM をそこから配信します（`/legacy-assets/`）。ない場合は既定の配信元（`https://snext1220.github.io/stext/stext/`）を使います。
+
+| 環境変数 | 内容 |
+| --- | --- |
+| `VITE_ASSET_BASE` | 画像・BGM・効果音の配信元（旧リポジトリの `stext/` ディレクトリに当たる URL。末尾は `/`） |
+| `VITE_SCENARIO_BASE` | シナリオ JSON の配信元（既定はビルド結果の `scenarios/`） |
+
+`npm run build` の結果（`apps/player/dist/`）には `scenarios/` も含まれるので、そのまま静的サイトとして公開できます。
 
 ## よく使うコマンド
 
@@ -112,4 +122,18 @@ node scripts/difftest.mjs --walks 5 --steps 80 --text
 - シナリオ ID を並べると、そのシナリオだけを比べます（例: `node scripts/difftest.mjs scepter slayer`）。
 - `--text` を付けると本文も比べます（Markdown の記号・HTML タグ・空白を除いた文字で比べます）。
 - playwright がグローバルにしかない場合は、`PLAYWRIGHT_PATH` にその場所を指定します。
+
+## プレイヤーの動作確認
+
+`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
+
+```bash
+npm run dev
+```
+
+```bash
+node scripts/e2e-player.mjs --shots /tmp/shots
+```
+
+ビルド結果を確かめるときは、`npm run build` のあと `npx vite preview` を `apps/player` で起動し、`--base http://localhost:4173` を付けます。
 
