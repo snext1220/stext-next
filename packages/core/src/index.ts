@@ -56,3 +56,4 @@ export { pick, pickByWeight, randomInt, seededRandom, type RandomSource } from '
 export * from './data.js';
 export { MAGIC, canCast, type Magic, type MagicName } from './magic.js';
 export { evaluateCondition, type ConditionContext } from './condition.js';
+export { LEVEL_POINTS, RANKS, playerRank, type PlayerRank, type RankScenario } from './rank.js';

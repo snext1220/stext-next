@@ -147,8 +147,12 @@ interface IndexEntry {
   level?: number;
   comment?: string;
   scenes: number;
-  /** 実績の数 */
+  /** 実績の数（公開一覧にあれば stext.xml の値） */
   results: number;
+  /** どれかを獲得していればクリアとみなす実績（stext.xml の clears） */
+  clears?: string[];
+  /** 公開前（stext.xml の unpublished） */
+  unpublished?: boolean;
 }
 
 async function convertAll(args: string[], io: Io): Promise<number> {
@@ -198,6 +202,14 @@ async function convertAll(args: string[], io: Io): Promise<number> {
           .map((t) => t.trim())
           .filter(Boolean);
       if (listed['level']) entry.level = Number(listed['level']);
+      if (listed['results'] && !Number.isNaN(Number(listed['results'])))
+        entry.results = Number(listed['results']);
+      if (listed['clears'])
+        entry.clears = listed['clears']
+          .split(',')
+          .map((r) => r.trim())
+          .filter(Boolean);
+      if (listed['unpublished'] !== undefined) entry.unpublished = true;
     }
     index.push(entry);
     const errors = result.issues.filter((i) => i.severity === 'error').length;
