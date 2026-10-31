@@ -17,7 +17,7 @@ const browserOnlyGlobals = [
 }));
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'coverage/**', 'prototype/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', 'coverage/**', 'prototype/**', 'site/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

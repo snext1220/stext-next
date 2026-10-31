@@ -1,6 +1,6 @@
 # ソーサリアンText 次世代化 移行計画（v2 計画書・ドラフト）
 
-> ステータス: **Phase 4（プレイヤーUI）β 完了**。次は Phase 5（並行公開・検証）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
+> ステータス: **Phase 5（並行公開・検証）進行中**。プレイヤーを GitHub Pages で公開する仕組みを用意した（§5.4）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
 > 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
 > デザインプロトタイプ: [`prototype/design/index.html`](../prototype/design/index.html)（ブラウザで直接開けます）
@@ -404,6 +404,15 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - 未確認
   - 公開（デプロイ）の仕組みはまだない
 
+### 5.4 Phase 5：公開
+
+- `main` に入った変更を GitHub Actions（`.github/workflows/pages.yml`）がテスト・ビルドし、GitHub Pages に公開する
+  - プレイヤー：https://snext1220.github.io/stext-next/
+  - デザインプロトタイプと JSON Schema は、これまでと同じ URL（`/prototype/design/index.html`、`/schema/scenario.v2.json`）
+- サイトは `scripts/build-site.mjs` が `site/` に組み立てる。容量は約300MB（GitHub Pages の上限 1GB 以内）
+- 確認：`/stext-next/` 以下に置いた状態を手元で再現し、プレイヤーの操作確認（12項目）、素材・プロトタイプ・JSON Schema・シナリオ一覧の URL がすべて成功
+- 初回のみ、リポジトリの Settings → Pages の Source を「GitHub Actions」に切り替える必要がある
+
 ## 6. 互換性・データ移行
 
 | 対象 | 方針 |
@@ -436,9 +445,10 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
 - 選択肢は各シーンの `choices[]` に持たせる（§3）。Playground のフロー図は `choices` から導出する
 - 画像・BGM・効果音は新リポジトリ（`assets/`）に移設する
+- プレイヤーはこのリポジトリの GitHub Pages で公開する
 - Phase 1〜3 完了、Phase 4 は β 完了
 
 次:
 
 1. `scenarios/REPORT.md` のエラー12件を、旧リポジトリのシナリオで直すかどうかの判断（直す場合は `npm run convert:legacy` で変換し直す）
-2. Phase 5（並行公開・検証）：プレイヤーの公開（GitHub Pages など）、旧版からの導線、§5.3 の未実装機能（ステータスの手入力・バックアップ／リストアなど）の補完、実際に遊んでの確認
+2. Phase 5（並行公開・検証）の残り：旧版からの導線、§5.3 の未実装機能（ステータスの手入力・バックアップ／リストアなど）の補完、実際に遊んでの確認

@@ -21,7 +21,8 @@
     "dev": "npm run dev -w @stext/player",
     "clean": "tsc -b --clean && rm -rf apps/*/dist",
     "schema": "node scripts/write-json-schema.mjs",
-    "convert:legacy": "node packages/cli/dist/bin.js convert-all ../stext/stext -o scenarios"
+    "convert:legacy": "node packages/cli/dist/bin.js convert-all ../stext/stext -o scenarios",
+    "build:site": "npm run build && node scripts/build-site.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
