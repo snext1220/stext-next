@@ -1,6 +1,6 @@
 # ソーサリアンText 次世代化 移行計画（v2 計画書・ドラフト）
 
-> ステータス: **計画段階**（ロジック開発は未着手）
+> ステータス: **Phase 1（基盤整備）完了**。ロジック開発は Phase 2 から（開発手順は [`development.md`](development.md)）
 > 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
 > デザインプロトタイプ: [`prototype/design/index.html`](../prototype/design/index.html)（ブラウザで直接開けます）
@@ -69,22 +69,25 @@
 ### 2.1 パッケージ構成（npm workspaces によるモノレポ）
 
 ```
-stext/
+stext-next/
 ├─ packages/
 │  ├─ schema/        @stext/schema     … JSON Schema / TypeScript型 / バリデータ        [Universal]
 │  ├─ core/          @stext/core       … ゲームエンジン（状態・遷移・条件式・戦闘・マクロ） [Universal]
 │  ├─ convert/       @stext/convert    … XML→JSON変換、旧セーブデータ移行、.gbat変換      [Universal]
 │  ├─ cli/           @stext/cli        … `stext convert` / `stext validate` / `stext play`  [Node]
-│  ├─ ui/            @stext/ui         … Reactコンポーネント・デザイントークン            [Browser]
-│  ├─ player/        apps/player       … プレイヤーアプリ（Vite + React）                  [Browser]
-│  └─ playground/    apps/playground   … 新Playground（第2段階）                           [Browser]
-├─ scenarios/        … 変換済み scenario.json（素材は従来パスを参照）
-└─ legacy/           … 現行 jQuery 版（移行完了までそのまま稼働）
+│  └─ ui/            @stext/ui         … Reactコンポーネント・デザイントークン            [Browser]
+├─ apps/
+│  ├─ player/        @stext/player     … プレイヤーアプリ（Vite + React）                  [Browser]
+│  └─ playground/    （Phase 6）       … 新Playground                                      [Browser]
+├─ scenarios/        … 変換済み scenario.json（Phase 2。素材は従来パスを参照）
+└─ prototype/        … デザインプロトタイプ（GitHub Pages で公開中）
 ```
 
 - 言語: **TypeScript**（出力はESM）。JSで書きたい場合もJSDoc + `checkJs`で型検査
-- ビルド: Vite（アプリ）、tsup もしくは `tsc`（ライブラリ）
-- テスト: Vitest（core/convert は Node 環境、ui は jsdom）、Playwright（E2E）
+- 現行 jQuery 版は別リポジトリ [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を続け、本リポジトリには移さない（旧シナリオXMLは変換器の入力として参照する）
+- ビルド: Vite（アプリ）、`tsc -b`（ライブラリ。プロジェクト参照で依存順にビルド）
+- テスト: Vitest（Node 環境。ui も当面は `react-dom/server` で検証し、操作を伴うテストが必要になった時点で jsdom を導入）、Playwright（E2E）
+- Universal パッケージ（schema / core / convert）は、ESLint で DOM のグローバル変数・`process`・`node:*` の使用をエラーにして境界を守る
 - Lint/Format: ESLint + Prettier
 
 ### 2.2 Universal 化の境界
@@ -171,7 +174,7 @@ view      = engine.resolveBattle(view.state, enemyId, diceRoll);
 
 ### 2.4 UI（React）
 
-- React 18 + Vite。状態は `useReducer` + Context（エンジン状態は単一ストア、UI状態はローカル）で開始し、必要になれば Zustand を検討
+- React 19 + Vite。状態は `useReducer` + Context（エンジン状態は単一ストア、UI状態はローカル）で開始し、必要になれば Zustand を検討
 - jQueryプラグイン群の置き換え
 
 | 現行 | 新 |
@@ -196,7 +199,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 |------|--------------------|-------|
 | バージョン | なし | `"format": "stext/2"` と `$schema` を必須に |
 | メタ情報 | `title` `author` `init.*` に分散 | `meta`（title, author, description, keywords, constraint, bgm, labels）へ集約 |
-| 選択肢 | 別配列 `edges[] {from,to,label,condition}` | シーン内 `choices[]` に保持（`to` は配列でランダム分岐を表現）。Playgroundのフロー図は `choices` から導出 |
+| 選択肢 | 別配列 `edges[] {from,to,label,condition}` | **（決定）** シーン内 `choices[]` に保持（`to` は配列でランダム分岐を表現）。Playgroundのフロー図は `choices` から導出 |
 | 効果 | `items: "i99"` などカンマ区切り文字列 | `effects: { items: ["i99"], flags: ["f99"], hp: -5, ... }` の配列/数値 |
 | 敵の参照 | `enemies: "m99,m98"` | `enemies: ["m99","m98"]` |
 | 条件 | `condition: "f01"`（文字列） | `if`: 文字列記法または条件ASTオブジェクト（§2.3） |
@@ -300,14 +303,14 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 
 | Phase | 内容 | 成果物 | 目安 |
 |-------|------|--------|------|
-| **0. 準備**（本ブランチ） | 現状調査・計画・デザインプロトタイプ | 本書、プロトタイプ | 完了 |
-| **1. 基盤** | モノレポ化、TS/Vite/Vitest/ESLint導入、現行ファイルを `legacy/` へ移動（公開URLは維持）、CI（GitHub Actions） | ビルド・テストが回る空のパッケージ群 | 1〜2週 |
+| **0. 準備** | 現状調査・計画・デザインプロトタイプ | 本書、プロトタイプ | 完了 |
+| **1. 基盤** | モノレポ化、TS/Vite/Vitest/ESLint/Prettier導入、CI（GitHub Actions）。現行版は `snext1220/stext` に残す | ビルド・テストが回る空のパッケージ群 | 完了 |
 | **2. スキーマと変換器** | v2 JSON Schema 確定（条件ASTの定義、`parseCondition` / `formatCondition` を含む）、`@stext/convert` 実装、43シナリオ一括変換、変換レポートの確認と手修正 | `scenarios/*/scenario.json`、`stext convert/validate` | 2〜3週 |
 | **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器 → 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`（Node上でヘッドレスプレイ可） | 4〜6週 |
 | **4. プレイヤーUI** | プロトタイプを元に `@stext/ui` と `apps/player` を実装。BGM/SE、トースト、ダイアログ群 | 新プレイヤー（β） | 4〜6週 |
 | **5. 並行公開・検証** | `?engine=v2` のようなクエリで新旧切り替え。小規模シナリオから順に新版をデフォルト化。旧セーブの自動移行 | 全シナリオ新版対応 | 2〜4週 |
 | **6. Playground刷新** | 新エディタ（React）。vis.js→React Flow 等への置き換え、Ace→Monaco/CodeMirror 6 検討。出力はv2 JSON | 新Playground | 別途 |
-| **7. 旧版撤去** | `legacy/` の凍結・アーカイブ、XMLは変換入力としてのみサポート | — | — |
+| **7. 旧版撤去** | `snext1220/stext` の凍結・アーカイブ、XMLは変換入力としてのみサポート | — | — |
 
 ### 5.1 移行順序（シナリオ）
 
@@ -328,7 +331,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 | バックアップファイル（`.stext`） | 読み込み互換を維持。書き出しは新形式（旧形式での書き出しも一定期間提供） |
 | `.gbat` 変換 | `@stext/convert` に移植し、出力をv2 JSONに |
 | 素材パス（`@field05` などのBGMエイリアス、`scepter.png` の相対参照） | `assetResolver` で現行ディレクトリ構成をそのまま解決。素材の移動は行わない |
-| 埋め込みAPI | `startGame` 互換ラッパーを legacy 撤去まで提供 |
+| 埋め込みAPI | `startGame` 互換ラッパーを旧版撤去まで提供 |
 
 ---
 
@@ -344,9 +347,16 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 
 ---
 
-## 8. 次のアクション（承認待ち）
+## 8. 次のアクション
 
-1. 本計画とプロトタイプのレビュー（特に v2 JSONの `choices` 内包方針）
-   - 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」方針で決定済み（§2.3）
-2. デザイン方向性（「夜の書見台」）の合意、または修正点の指示
-3. 合意後、Phase 1（基盤整備）から着手
+決定済み:
+
+- 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」（§2.3）
+- デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
+- 選択肢は各シーンの `choices[]` に持たせる（§3）。Playground のフロー図は `choices` から導出する
+- Phase 1（基盤整備）完了
+
+次（Phase 2: スキーマと変換器）:
+
+1. `@stext/schema` に JSON Schema・型・条件パーサ（文字列⇔AST）を実装
+2. `@stext/convert` で `snext1220/stext` の43シナリオを一括変換し、変換レポートを確認
