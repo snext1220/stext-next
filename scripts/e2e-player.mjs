@@ -89,6 +89,74 @@ await page.waitForFunction((s) => document.querySelector('.para').textContent !=
 await page.click('text=← 戻る');
 check('数字キーで選び、戻るで元の節に戻る', (await page.textContent('.para')) === scene);
 
+// ステータスの手入力
+await page.click('[role=tab]:has-text("冒険者")');
+await page.click('text=ステータスを編集');
+await page.fill('#edit-hp', '7');
+await page.click('.status-editor button[type=submit]');
+check('ステータスを手入力で変えられる', (await hp()).startsWith('7 /'), await hp());
+
+// 共有ボタン
+const share = await page.getAttribute('a.share-link', 'href');
+check(
+  'X への共有リンクがある',
+  share.startsWith('https://twitter.com/intent/tweet?') &&
+    share.includes('hashtags=falcom%2Cstext'),
+);
+
+// 複数の敵がいるシーン（2020）の撃破チェック
+await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('scepter'));
+  s.scene = '2020';
+  localStorage.setItem('scepter', JSON.stringify(s));
+});
+await page.goto(`${base}/#/library`);
+await page.goto(`${base}/#/play/scepter`);
+await page.waitForSelector('.enemy');
+await page.click('.defeat-check >> nth=0');
+check('撃破チェックで敵に印が付く', (await page.locator('.enemy.defeated').count()) === 1);
+
+// 冒険者の記録：ランク・ボーナス・バックアップとリストア
+await page.goto(`${base}/#/records`);
+await page.waitForSelector('.rank-card');
+check('プレイヤーランクが表示される', (await page.textContent('.rank-card')).includes('RANK'));
+check('ボーナスアイテムが一覧になる', (await page.locator('.bonus-item').count()) === 28);
+const [download] = await Promise.all([
+  page.waitForEvent('download'),
+  page.click('button:has-text("バックアップ")'),
+]);
+const backupPath = await download.path();
+check('全データを .stext で保存できる', /^all-\d+\.stext$/.test(download.suggestedFilename()));
+await page.evaluate(() => localStorage.removeItem('scepter'));
+await page.setInputFiles('#restore-file', {
+  name: download.suggestedFilename(),
+  mimeType: 'application/octet-stream',
+  buffer: (await import('node:fs')).readFileSync(backupPath),
+});
+await page.waitForSelector('text=リストアが完了しました');
+check(
+  'リストアでセーブデータが戻る',
+  await page.evaluate(() => JSON.parse(localStorage.getItem('scepter')).scene === '2020'),
+);
+await shot('5-records');
+
+// 文字の演出（baku03 §21 の ${effect fadeInDown}）
+await page.goto(`${base}/#/create/baku03`);
+await page.click('text=この者で冒険に出る');
+await page.waitForSelector('.choices');
+await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('baku03'));
+  s.scene = '21';
+  localStorage.setItem('baku03', JSON.stringify(s));
+});
+await page.goto(`${base}/#/library`);
+await page.goto(`${base}/#/play/baku03`);
+await page.waitForSelector('.prose');
+check(
+  '${effect} が文字ごとの演出になる',
+  (await page.locator('.stext-letter.fx-fadeInDown').count()) > 5,
+);
+
 // スマホ幅
 await page.setViewportSize({ width: 390, height: 844 });
 await page.waitForTimeout(300);

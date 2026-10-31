@@ -26,6 +26,7 @@ import {
   Parchment,
   RecordPanel,
   SceneText,
+  StatusEditor,
   Toasts,
   statusLabel,
   type HistoryEntry,
@@ -44,6 +45,8 @@ interface EnemyBattle {
   hp: number | undefined;
   drop: { drop: string; name: string } | undefined;
   dropTaken: boolean;
+  /** 撃破チェック */
+  defeated: boolean;
 }
 
 interface Battle {
@@ -102,6 +105,7 @@ export function Play({
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [tab, setTab] = useState<PanelTab>('hero');
   const [sheet, setSheet] = useState<PanelTab | null>(null);
+  const [editing, setEditing] = useState(false);
   const toastId = useRef(0);
 
   const toast = useCallback((kind: Toast['kind'], title: string, message: string) => {
@@ -176,6 +180,7 @@ export function Play({
           hp: enemyHp(enemy, (p) => engine.paramValue(state, p)),
           drop: dropFor(Math.random, enemy),
           dropTaken: false,
+          defeated: false,
         };
       }),
     };
@@ -340,6 +345,8 @@ export function Play({
           ? 'Good End'
           : null;
 
+  const shareUrl = shareLink(view.tweet ?? scenario.meta.description ?? DEFAULT_SHARE_TEXT);
+
   const panelBody = (t: PanelTab) =>
     t === 'magic' ? (
       <MagicPanel state={state} onCast={cast} />
@@ -352,9 +359,28 @@ export function Play({
         global={global}
         history={history.map((h) => h.entry)}
       />
+    ) : editing ? (
+      <StatusEditor
+        scenario={scenario}
+        state={state}
+        onSave={(s) => {
+          setState(s);
+          setEditing(false);
+          toast('info', 'ステータス', '変更を反映しました。');
+        }}
+        onCancel={() => setEditing(false)}
+      />
     ) : (
       <div>
         <HeroPanel scenario={scenario} state={state} />
+        <button
+          type="button"
+          className="chip-btn"
+          style={{ marginTop: 10 }}
+          onClick={() => setEditing(true)}
+        >
+          ステータスを編集
+        </button>
         <label className="section-h" htmlFor="memo" style={{ marginTop: 14 }}>
           <span>冒険メモ</span>
         </label>
@@ -446,6 +472,18 @@ export function Play({
                 onReceive={() => receive(i)}
                 onAttack={() => attack(i)}
                 onDrop={() => takeDrop(i)}
+                defeatedChecked={eb.defeated}
+                {...(battle.enemies.length > 1
+                  ? {
+                      onToggleDefeated: (checked: boolean) =>
+                        setBattle((b) => ({
+                          ...b,
+                          enemies: b.enemies.map((x, k) =>
+                            k === i ? { ...x, defeated: checked } : x,
+                          ),
+                        })),
+                    }
+                  : {})}
                 {...(eb.enemy.attack?.startsWith('free')
                   ? { attackLabel: statusLabel(scenario, eb.enemy.attack) }
                   : {})}
@@ -466,6 +504,16 @@ export function Play({
             resolveImage={resolveImage}
           />
         )}
+        <div className="end-actions" style={{ marginTop: 16 }}>
+          <a
+            className="chip-btn share-link"
+            href={shareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            𝕏 でポスト
+          </a>
+        </div>
         {view.end && (
           <div className="end-actions">
             <a className="btn" href={href({ name: 'create', id })}>
@@ -555,4 +603,18 @@ export function Play({
 
 function plainLabel(markdown: string) {
   return markdown.replace(/<rt>.*?<\/rt>|<rp>.*?<\/rp>|<[^>]+>|[*_]/g, '');
+}
+
+const DEFAULT_SHARE_TEXT =
+  '原作30周年記念企画「SORCERIAN Text」ユーザー参加型のゲームブック版ソーサリアン';
+
+/** X（旧 Twitter）の投稿画面へのリンク（旧エンジンのツイートボタンと同じ文・ハッシュタグ・via） */
+function shareLink(text: string) {
+  const params = new URLSearchParams({
+    text,
+    url: location.href.split('#')[0] ?? '',
+    hashtags: 'falcom,stext',
+    via: 'snext1220',
+  });
+  return `https://twitter.com/intent/tweet?${params.toString()}`;
 }
