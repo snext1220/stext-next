@@ -1,0 +1,634 @@
+import {
+  CONDITION_FUNCTIONS,
+  MAGIC_NAMES,
+  parseCondition,
+  type Choice,
+  type Effects,
+  type Scenario,
+  type Scene,
+} from '@stext/schema';
+import { useState } from 'react';
+import { Field, SelectField, TextArea, TextField, fromList, toList, toValue } from './fields.js';
+import { moveChoice, removeChoice, updateChoice, updateScene, renameScene } from './model.js';
+
+/** 本文に差し込むマクロ（旧 Playground の「カーソル位置にタグを追加」に当たる） */
+const TEXT_TOOLBAR = [
+  {
+    label: '条件',
+    title: '条件を満たすときだけ表示：${if 条件}…${/if}',
+    before: '${if f01}',
+    after: '${/if}',
+  },
+  {
+    label: '読込',
+    title: '別のシーンの本文を読み込む：${import シーンID}',
+    before: '${import 99}',
+  },
+  { label: '名前', title: 'キャラクターの名前：${name}', before: '${name}' },
+  {
+    label: '種族別',
+    title: '種族で文を変える：${race?ファイター:ウィザード:ドワーフ:エルフ}',
+    before: '${race?ファイター:ウィザード:ドワーフ:エルフ}',
+  },
+  { label: '変数', title: 'アイテムなどの名前：${var?i01:name}', before: '${var?i01:name}' },
+  {
+    label: '赤字',
+    title: '文字色：%red%…%/%（blue / red / purple / white）',
+    before: '%red%',
+    after: '%/%',
+  },
+  { label: 'ルビ', title: 'ルビ：${漢字|かんじ}', before: '${', after: '|かな}' },
+  {
+    label: '演出',
+    title: '文字ごとの演出：${effect fadeInDown}…${/effect}',
+    before: '${effect fadeInDown}',
+    after: '${/effect}',
+  },
+  {
+    label: '共有文',
+    title: 'X で共有する文：${tweet}…${/tweet}',
+    before: '${tweet}',
+    after: '${/tweet}',
+  },
+  { label: '入力欄', title: 'パラメーターの入力欄：${input?p01}', before: '${input?p01}' },
+  {
+    label: '画像',
+    title: '挿絵：![説明](ファイル名)。素材は assets/<シナリオID>/capture/',
+    before: '![',
+    after: '](image.png)',
+  },
+  { label: '太字', title: '太字：**…**', before: '**', after: '**' },
+] as const;
+
+const END_OPTIONS = [
+  ['', '（なし）'],
+  ['happy', 'ハッピーエンド'],
+  ['bad', 'バッドエンド'],
+  ['good', 'グッドエンド'],
+] as const;
+
+const STATE_OPTIONS = [
+  ['', '（変えない）'],
+  ['poison', '毒にする'],
+  ['frozen', '凍結にする'],
+  ['stone', '石化にする'],
+  ['curse', '呪いにする'],
+  ['forget', '忘却にする'],
+  ['-poison', '毒を治す'],
+  ['-frozen', '凍結を治す'],
+  ['-stone', '石化を治す'],
+  ['-curse', '呪いを治す'],
+  ['-forget', '忘却を治す'],
+  ['-all', 'すべて治す'],
+] as const;
+
+export interface SceneEditorProps {
+  scenario: Scenario;
+  scene: Scene;
+  onChange: (next: Scenario, mergeKey?: string) => void;
+  onRenamed: (id: string) => void;
+  onDelete: () => void;
+  onAddScene: () => void;
+}
+
+export function SceneEditor({
+  scenario,
+  scene,
+  onChange,
+  onRenamed,
+  onDelete,
+  onAddScene,
+}: SceneEditorProps) {
+  const [newId, setNewId] = useState(scene.id);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const set = (patch: Partial<Scene>, key: string) =>
+    onChange(updateScene(scenario, scene.id, patch), `${scene.id}:${key}`);
+  const setEffects = (patch: Partial<Effects>, key: string) => {
+    const effects = Object.fromEntries(
+      Object.entries({ ...scene.effects, ...patch }).filter(
+        ([, v]) => v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0),
+      ),
+    );
+    set(
+      { effects: Object.keys(effects).length ? (effects as Effects) : undefined },
+      `effects.${key}`,
+    );
+  };
+  const e = scene.effects ?? {};
+
+  const rename = () => {
+    try {
+      onChange(renameScene(scenario, scene.id, newId));
+      setRenameError(null);
+      onRenamed(newId.trim());
+    } catch (err) {
+      setRenameError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  return (
+    <div className="pg-editor">
+      <div className="pg-row">
+        <Field
+          label="シーン ID"
+          hint={renameError ?? '変えると、選択肢の遷移先などの参照もまとめて直します'}
+        >
+          {(id) => (
+            <span className="pg-inline">
+              <input id={id} value={newId} onChange={(ev) => setNewId(ev.target.value)} />
+              <button type="button" onClick={rename} disabled={newId.trim() === scene.id}>
+                変更
+              </button>
+            </span>
+          )}
+        </Field>
+        <TextField
+          label="サマリー"
+          value={scene.summary}
+          onChange={(v) => set({ summary: v }, 'summary')}
+          wide
+        />
+      </div>
+
+      <TextArea
+        label="本文"
+        value={scene.text}
+        onChange={(v) => set({ text: v }, 'text')}
+        toolbar={TEXT_TOOLBAR}
+      />
+
+      <section className="pg-section">
+        <div className="pg-section-head">
+          <h3>選択肢</h3>
+          <button
+            type="button"
+            onClick={() =>
+              onChange(
+                updateScene(scenario, scene.id, {
+                  choices: [...scene.choices, { label: '次へ', to: [scene.id] }],
+                }),
+              )
+            }
+          >
+            ＋ 選択肢
+          </button>
+          <button
+            type="button"
+            onClick={onAddScene}
+            title="新しいシーンを作り、そこへの選択肢を加える"
+          >
+            ＋ 新しいシーンへ
+          </button>
+        </div>
+        {scene.choices.length === 0 && (
+          <p className="pg-hint">
+            選択肢がありません。フロー図でシーンの右の点から別のシーンへ線を引いても作れます。
+          </p>
+        )}
+        {scene.choices.map((c, i) => (
+          <ChoiceEditor
+            key={i}
+            scenario={scenario}
+            choice={c}
+            onChange={(next) =>
+              onChange(updateChoice(scenario, scene.id, i, next), `${scene.id}:choice${i}`)
+            }
+            onMove={(d) => onChange(moveChoice(scenario, scene.id, i, d))}
+            onRemove={() => onChange(removeChoice(scenario, scene.id, i))}
+          />
+        ))}
+        <TextArea
+          label="選択肢の後ろの文章"
+          value={scene.afterText ?? ''}
+          onChange={(v) => set({ afterText: v }, 'afterText')}
+          rows={2}
+        />
+      </section>
+
+      <section className="pg-section">
+        <h3>シーンに入ったときの効果</h3>
+        <div className="pg-grid">
+          <TextField
+            label="アイテム"
+            value={fromList(e.items)}
+            onChange={(v) => setEffects({ items: toList(v) }, 'items')}
+            placeholder="i01, -i02, i03:2"
+            hint="入手 / -で消失 / :で個数"
+          />
+          <TextField
+            label="フラグ"
+            value={fromList(e.flags)}
+            onChange={(v) => setEffects({ flags: toList(v) }, 'flags')}
+            placeholder="f01, -f02"
+          />
+          <TextField
+            label="パラメーター"
+            value={fromList(e.params)}
+            onChange={(v) => setEffects({ params: toList(v) }, 'params')}
+            placeholder="p01:1, p02:@5"
+          />
+          <TextField
+            label="実績"
+            value={e.result}
+            onChange={(v) => setEffects({ result: v }, 'result')}
+            placeholder="r01"
+          />
+          <TextField
+            label="HP"
+            value={e.hp}
+            onChange={(v) => setEffects({ hp: toValue(v) as never }, 'hp')}
+            placeholder="-5 / -5..-1 / full"
+          />
+          <TextField
+            label="MP"
+            value={e.mp}
+            onChange={(v) => setEffects({ mp: toValue(v) as never }, 'mp')}
+            placeholder="-5 / full / half"
+          />
+          {(['str', 'int', 'dex', 'krm'] as const).map((k) => (
+            <TextField
+              key={k}
+              label={k.toUpperCase()}
+              value={e[k]}
+              onChange={(v) => setEffects({ [k]: toValue(v) }, k)}
+              placeholder="1 / @5 / full"
+            />
+          ))}
+          {(['free1', 'free2', 'free3'] as const).map((k) => (
+            <TextField
+              key={k}
+              label={k.toUpperCase()}
+              value={e[k]}
+              onChange={(v) => setEffects({ [k]: toValue(v) }, k)}
+              placeholder="1 / @5 / -3..-1"
+            />
+          ))}
+          <TextField
+            label="星"
+            value={Array.isArray(e.stars) ? e.stars.join(', ') : e.stars}
+            onChange={(v) =>
+              setEffects(
+                {
+                  stars: v.trim().startsWith('div')
+                    ? v.trim()
+                    : v.trim() === ''
+                      ? undefined
+                      : toList(v).map(Number),
+                },
+                'stars',
+              )
+            }
+            placeholder="月,火,水,木,金,土,太 / div2"
+          />
+          <SelectField
+            label="状態異常"
+            value={e.state}
+            options={STATE_OPTIONS}
+            onChange={(v) => setEffects({ state: v }, 'state')}
+          />
+        </div>
+      </section>
+
+      <section className="pg-section">
+        <h3>そのほか</h3>
+        <div className="pg-grid">
+          <TextField
+            label="敵"
+            value={fromList(scene.enemies)}
+            onChange={(v) => set({ enemies: toList(v).length ? toList(v) : undefined }, 'enemies')}
+            placeholder="m01, m02"
+            hint={
+              scenario.enemies.length
+                ? `定義済み：${scenario.enemies.map((m) => m.id).join(', ')}`
+                : '敵は「定義」の「敵」で作ります'
+            }
+          />
+          <SelectField
+            label="エンディング"
+            value={scene.end}
+            options={END_OPTIONS}
+            onChange={(v) => set({ end: (v || undefined) as Scene['end'] }, 'end')}
+          />
+          <TextField
+            label="続編（シナリオ ID）"
+            value={fromList(scene.nexts)}
+            onChange={(v) => set({ nexts: toList(v).length ? toList(v) : undefined }, 'nexts')}
+          />
+          <TextField
+            label="BGM"
+            value={scene.bgm}
+            onChange={(v) => set({ bgm: v === '' ? undefined : v }, 'bgm')}
+            placeholder="@field05"
+            hint="@ で共通の曲"
+          />
+          <TextField label="効果音" value={scene.se} onChange={(v) => set({ se: v }, 'se')} />
+          <TextField
+            label="戦闘ルールのシーン"
+            value={scene.rule}
+            onChange={(v) => set({ rule: v }, 'rule')}
+          />
+          <TextField
+            label="ダイス"
+            value={scene.dice}
+            onChange={(v) => set({ dice: v }, 'dice')}
+            placeholder="6:2（6面を2個）"
+          />
+          <TextField
+            label="フロー図の色"
+            value={scene.editor?.color}
+            onChange={(v) =>
+              set(
+                { editor: { ...scene.editor, color: v || undefined } as Scene['editor'] },
+                'color',
+              )
+            }
+            placeholder="#c0473a"
+          />
+          <Field label="共通フッター">
+            {(id) => (
+              <label className="pg-check">
+                <input
+                  id={id}
+                  type="checkbox"
+                  checked={Boolean(scene.excludeFooter)}
+                  onChange={(ev) =>
+                    set({ excludeFooter: ev.target.checked || undefined }, 'excludeFooter')
+                  }
+                />
+                このシーンには付けない
+              </label>
+            )}
+          </Field>
+        </div>
+      </section>
+
+      <div className="pg-danger">
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={scene.id === '0'}
+          title={scene.id === '0' ? 'シーン 0 は冒険の始まりなので消せません' : undefined}
+        >
+          このシーンを削除
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type Kind = 'go' | 'random' | 'jump' | 'answer';
+
+function kindOf(c: Choice): Kind {
+  if ('kind' in c) return c.kind;
+  return c.to.length > 1 ? 'random' : 'go';
+}
+
+function ChoiceEditor({
+  scenario,
+  choice,
+  onChange,
+  onMove,
+  onRemove,
+}: {
+  scenario: Scenario;
+  choice: Choice;
+  onChange: (c: Choice) => void;
+  onMove: (delta: number) => void;
+  onRemove: () => void;
+}) {
+  const kind = kindOf(choice);
+  const sceneIds = scenario.scenes.map((s) => s.id);
+  const setKind = (k: Kind) => {
+    const target =
+      'kind' in choice ? (choice.kind === 'jump' ? choice.allow[0] : choice.to) : choice.to[0];
+    const t = target ?? sceneIds[0] ?? '0';
+    if (k === 'jump') onChange({ kind: 'jump', allow: [t] });
+    else if (k === 'answer') onChange({ kind: 'answer', answer: '', to: t, else: t });
+    else
+      onChange({
+        label: 'label' in choice ? choice.label : '次へ',
+        to: k === 'random' ? [t, t] : [t],
+      });
+  };
+
+  return (
+    <div className="pg-choice">
+      <div className="pg-choice-head">
+        <select
+          value={kind}
+          onChange={(e) => setKind(e.target.value as Kind)}
+          aria-label="選択肢の種類"
+        >
+          <option value="go">通常</option>
+          <option value="random">ランダム</option>
+          <option value="jump">番号入力</option>
+          <option value="answer">文字入力</option>
+        </select>
+        <span className="pg-spacer" />
+        <button type="button" onClick={() => onMove(-1)} aria-label="上へ">
+          ↑
+        </button>
+        <button type="button" onClick={() => onMove(1)} aria-label="下へ">
+          ↓
+        </button>
+        <button type="button" onClick={onRemove} aria-label="この選択肢を削除">
+          ✕
+        </button>
+      </div>
+      {'kind' in choice && choice.kind === 'jump' ? (
+        <TextField
+          label="移動できる番号"
+          value={fromList(choice.allow)}
+          onChange={(v) => onChange({ ...choice, allow: toList(v) })}
+          wide
+        />
+      ) : 'kind' in choice && choice.kind === 'answer' ? (
+        <div className="pg-grid">
+          <TextField
+            label="正解"
+            value={choice.answer}
+            onChange={(v) => onChange({ ...choice, answer: v })}
+          />
+          <TextField
+            label="正解のとき"
+            value={choice.to}
+            onChange={(v) => onChange({ ...choice, to: v })}
+          />
+          <TextField
+            label="不正解のとき"
+            value={choice.else}
+            onChange={(v) => onChange({ ...choice, else: v })}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="pg-grid">
+            <TextField
+              label="文言"
+              value={choice.label}
+              onChange={(v) => onChange({ ...choice, label: v })}
+              wide
+            />
+            <TextField
+              label={kind === 'random' ? '遷移先（ランダム）' : '遷移先'}
+              value={fromList(choice.to)}
+              onChange={(v) => onChange({ ...choice, to: toList(v).length ? toList(v) : [''] })}
+              hint={
+                kind === 'random'
+                  ? '同じ ID を重ねると選ばれやすくなる。90000 は「戻る」'
+                  : '90000 は「戻る」'
+              }
+            />
+            {kind === 'random' && (
+              <TextField
+                label="結果を保持する日数"
+                value={choice.randomCacheDays}
+                onChange={(v) =>
+                  onChange({
+                    ...choice,
+                    randomCacheDays: Number(v) > 0 ? Number(v) : undefined,
+                  } as Choice)
+                }
+              />
+            )}
+          </div>
+          <ConditionField
+            scenario={scenario}
+            value={
+              typeof choice.if === 'string' ? choice.if : choice.if ? JSON.stringify(choice.if) : ''
+            }
+            onChange={(v) => onChange({ ...choice, if: v === '' ? undefined : v } as Choice)}
+          />
+          <TextField
+            label="選んだときに唱える魔法（星を消費）"
+            value={fromList(choice.cast)}
+            onChange={(v) =>
+              onChange({ ...choice, cast: (toList(v).length ? toList(v) : undefined) as never })
+            }
+            placeholder="HEAL"
+            wide
+          />
+        </>
+      )}
+      <TextField
+        label="選択肢の前に出す文章"
+        value={choice.before}
+        onChange={(v) => onChange({ ...choice, before: v || undefined } as Choice)}
+        wide
+      />
+    </div>
+  );
+}
+
+/** 表示条件の入力欄。旧 Playground の条件ビルダーのように、項目を選んで差し込める */
+function ConditionField({
+  scenario,
+  value,
+  onChange,
+}: {
+  scenario: Scenario;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const parsed =
+    value.trim() === ''
+      ? null
+      : value.trim().startsWith('{')
+        ? { ok: true as const }
+        : parseCondition(value, {
+            flags: scenario.flags.map((f) => f.id),
+            items: scenario.items.map((i) => i.id),
+          });
+  const add = (token: string) => {
+    if (!token) return;
+    const v = value.trim();
+    onChange(v === '' || /[&|!(]$/.test(v) ? v + token : `${v}&${token}`);
+  };
+  const groups: [string, string[]][] = [
+    ['フラグ', scenario.flags.map((f) => f.id)],
+    ['アイテム', scenario.items.map((i) => i.id)],
+    ['パラメーター', scenario.params.map((p) => `${p.id}:@0`)],
+    ['魔法', MAGIC_NAMES.map((m) => `m${m}`)],
+    ['ステータス', ['oHP10', 'oMP10', 'oSTR5', 'oINT5', 'oDEX5', 'oKRM5', 'oFREEI1']],
+    [
+      '基本情報',
+      [
+        'xFIGHTER',
+        'xWIZARD',
+        'xDWARF',
+        'xELF',
+        'xMALE',
+        'xFEMALE',
+        'xYOUNG',
+        'xADULT',
+        'xOLD',
+        'xPOISON',
+      ],
+    ],
+    [
+      '関数',
+      CONDITION_FUNCTIONS.map(
+        (f) =>
+          ({
+            rand: 'fn:rand(50)',
+            include: 'fn:include(2,f01,f02)',
+            range: 'fn:range(str,5,10)',
+            cycle: 'fn:cycle(30,10,1)',
+          })[f],
+      ),
+    ],
+  ];
+  return (
+    <Field
+      label="表示条件"
+      wide
+      hint={
+        parsed === null ? (
+          '空なら常に表示。& かつ / | または / ! でない'
+        ) : parsed.ok ? (
+          <span className="pg-ok">✓ 条件として読めます</span>
+        ) : (
+          <span className="pg-error">{parsed.error}</span>
+        )
+      }
+    >
+      {(id) => (
+        <>
+          <input
+            id={id}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="f01&!i01"
+            spellCheck={false}
+          />
+          <div className="pg-toolbar">
+            {['&', '|', '!', '('].map((op) => (
+              <button key={op} type="button" onClick={() => onChange(value + op)}>
+                {op}
+              </button>
+            ))}
+            <button type="button" onClick={() => onChange(value + ')')}>
+              )
+            </button>
+            {groups.map(([label, tokens]) => (
+              <select
+                key={label}
+                value=""
+                onChange={(e) => add(e.target.value)}
+                aria-label={`${label}を差し込む`}
+                disabled={tokens.length === 0}
+              >
+                <option value="">{label}…</option>
+                {tokens.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            ))}
+          </div>
+        </>
+      )}
+    </Field>
+  );
+}

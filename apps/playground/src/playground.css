@@ -1,0 +1,444 @@
+/* Playground：左にフロー図、右に編集パネル。色と書体は @stext/ui のトークンを使う */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  overflow: hidden;
+}
+.pg {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pg-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px
+    max(16px, env(safe-area-inset-left, 0px));
+  border-bottom: 1px solid var(--desk-line);
+  background: var(--desk-2);
+}
+.pg-title {
+  flex: 1 1 14em;
+  min-width: 0;
+  font: inherit;
+  font-family: var(--f-book);
+  font-weight: 700;
+  font-size: var(--step-1);
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--on-desk);
+}
+.pg-title:hover,
+.pg-title:focus {
+  border-color: var(--desk-line);
+  background: var(--desk);
+}
+.pg-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pg :where(button:not(.react-flow__controls-button)),
+.pg .pg-button,
+.pg select {
+  font: inherit;
+  font-size: var(--step--1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--desk-line);
+  background: var(--desk);
+  color: var(--on-desk);
+  cursor: pointer;
+}
+.pg :where(button:not(.react-flow__controls-button)):hover:not(:disabled),
+.pg .pg-button:hover {
+  border-color: var(--gold);
+}
+.pg button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.pg-message {
+  padding: 6px 16px;
+  font-size: var(--step--1);
+  background: var(--lapis-soft);
+  color: var(--on-desk);
+  border-bottom: 1px solid var(--desk-line);
+}
+.pg-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 44%);
+  min-height: 0;
+}
+.pg-flow-pane {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--desk-line);
+}
+.pg-flow-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--desk-line);
+}
+.flow {
+  min-height: 0;
+  height: 100%;
+}
+.flow .react-flow__renderer {
+  background: var(--desk);
+}
+.flow-node {
+  background: var(--page);
+  color: var(--ink);
+  border: 1px solid var(--page-edge);
+  border-left: 4px solid var(--ink-soft);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  box-shadow: 0 2px 6px rgba(20, 12, 2, 0.25);
+}
+.flow-node.is-selected {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+.flow-node.end-happy {
+  border-left-color: var(--good);
+}
+.flow-node.end-bad {
+  border-left-color: var(--blood);
+}
+.flow-node.end-good {
+  border-left-color: var(--gold);
+}
+.flow-node-id {
+  font-family: var(--f-display);
+  font-weight: 700;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.flow-node-summary {
+  font-family: var(--f-book);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flow-end {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 0 4px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+}
+.flow-problems {
+  margin-left: auto;
+  background: var(--blood);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+.flow-edge.conditional .react-flow__edge-path {
+  stroke-dasharray: 5 4;
+}
+.flow-edge.kind-jump .react-flow__edge-path,
+.flow-edge.kind-answer .react-flow__edge-path {
+  stroke: var(--lapis);
+}
+.flow .react-flow__minimap {
+  background: var(--desk-2);
+}
+.flow .react-flow__minimap-node {
+  fill: var(--page-edge);
+}
+.flow .react-flow__edge-text {
+  font-size: 10px;
+}
+.pg-side {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  min-height: 0;
+}
+.pg-tabs {
+  margin: 8px 12px 0;
+}
+.pg-tabs button {
+  border: 0;
+  border-radius: 0;
+}
+.pg-badge {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--desk);
+  font-size: 0.7rem;
+}
+.pg-badge.error {
+  background: var(--blood);
+  color: #fff;
+}
+.pg-side-body {
+  overflow: auto;
+  padding: 12px 16px 40px;
+  min-height: 0;
+}
+.pg-editor {
+  display: grid;
+  gap: 12px;
+}
+.pg-row {
+  display: grid;
+  grid-template-columns: minmax(0, 14em) minmax(0, 1fr);
+  gap: 10px;
+}
+.pg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11em, 1fr));
+  gap: 8px 10px;
+  align-items: start;
+}
+.pg-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font-size: var(--step--1);
+}
+.pg-field.wide {
+  grid-column: 1 / -1;
+}
+.pg-field > label {
+  color: var(--on-desk-soft);
+  letter-spacing: 0.04em;
+}
+.pg-field input,
+.pg-field select,
+.pg-field textarea,
+.pg-table input {
+  font: inherit;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--desk-line);
+  background: var(--desk-2);
+  color: var(--on-desk);
+  min-width: 0;
+  width: 100%;
+}
+.pg-field textarea {
+  font-family: var(--f-book);
+  font-size: var(--step-0);
+  line-height: 1.7;
+  resize: vertical;
+}
+.pg-inline {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+.pg-inline button {
+  white-space: nowrap;
+  flex: none;
+}
+.pg-hint {
+  color: var(--on-desk-soft);
+  font-size: 0.75rem;
+}
+.pg-ok {
+  color: var(--good);
+}
+.pg-error {
+  color: var(--blood);
+}
+.pg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 4px;
+}
+.pg-toolbar button,
+.pg-toolbar select {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+.pg-section {
+  border-top: 1px solid var(--desk-line);
+  padding-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+.pg-section h3 {
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  color: var(--on-desk-soft);
+  margin: 0;
+}
+.pg-section-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pg-section-head h3 {
+  margin-right: auto;
+}
+.pg-choice {
+  border: 1px solid var(--desk-line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 6px;
+  background: var(--desk-2);
+}
+.pg-choice-head {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.pg-spacer {
+  flex: 1;
+}
+.pg-check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pg-check input {
+  width: auto;
+}
+.pg-danger {
+  border-top: 1px solid var(--desk-line);
+  padding-top: 10px;
+}
+.pg-danger button {
+  color: var(--blood);
+}
+.pg-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.pg-subtabs button[aria-selected='true'] {
+  border-color: var(--gold);
+  background: var(--lapis-soft);
+}
+.pg-subtabs small {
+  margin-left: 4px;
+  color: var(--on-desk-soft);
+}
+.pg-table-wrap {
+  overflow-x: auto;
+}
+.pg-table {
+  border-collapse: collapse;
+  font-size: var(--step--1);
+  min-width: 100%;
+}
+.pg-table th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--on-desk-soft);
+  padding: 4px;
+  white-space: nowrap;
+}
+.pg-table td {
+  padding: 2px 4px;
+  min-width: 6em;
+}
+.pg-table td.wide {
+  min-width: 14em;
+}
+.pg-table input[type='checkbox'] {
+  width: auto;
+}
+.pg-add {
+  margin-top: 8px;
+}
+.pg-problems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--step--1);
+}
+.pg-problems li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--desk-line);
+  background: var(--desk-2);
+}
+.pg-problems .lv {
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+.pg-problems .error .lv {
+  color: var(--blood);
+}
+.pg-problems .warning .lv {
+  color: var(--gold);
+}
+.pg-play {
+  display: grid;
+  gap: 10px;
+}
+.pg-play-page {
+  outline: none;
+  border-radius: 6px;
+  padding: 18px 20px;
+}
+.pg-play-page::after {
+  display: none;
+}
+.pg-play-status summary {
+  cursor: pointer;
+  font-size: var(--step--1);
+  color: var(--on-desk-soft);
+}
+.pg-log {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.75rem;
+  color: var(--on-desk-soft);
+}
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+  .pg {
+    height: auto;
+  }
+  .pg-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pg-flow-pane {
+    height: 60vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--desk-line);
+  }
+  .pg-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .flow .react-flow__minimap {
+    display: none;
+  }
+}

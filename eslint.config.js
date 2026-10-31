@@ -55,11 +55,11 @@ export default tseslint.config(
   },
   {
     // page.evaluate の中はブラウザで動く
-    files: ['scripts/difftest.mjs', 'scripts/e2e-player.mjs'],
+    files: ['scripts/difftest.mjs', 'scripts/e2e-player.mjs', 'scripts/e2e-playground.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
-    files: ['packages/ui/**', 'apps/player/**'],
+    files: ['packages/ui/**', 'apps/player/**', 'apps/playground/**'],
     languageOptions: { globals: globals.browser },
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,

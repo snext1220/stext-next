@@ -1,0 +1,22 @@
+{
+  "name": "@stext/playground",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SORCERIAN Text v2 のシナリオ開発環境（Vite + React）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^3.1.3",
+    "@stext/convert": "0.0.0",
+    "@stext/core": "0.0.0",
+    "@stext/schema": "0.0.0",
+    "@stext/ui": "0.0.0",
+    "@xyflow/react": "^12.12.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}

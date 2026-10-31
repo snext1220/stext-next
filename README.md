@@ -51,7 +51,7 @@ npm run dev
 npm run build
 ```
 
-`apps/player/dist/` に、シナリオと素材を含んだ静的サイトができます。任意の Web サーバーに置けば遊べます。GitHub Pages への公開は GitHub Actions（`.github/workflows/pages.yml`）が自動で行います（[docs/development.md](docs/development.md#公開github-pages)）。手元で確かめるときは、次のコマンドで http://localhost:4173/ に表示されます。
+`apps/player/dist/` に、シナリオと素材を含んだ静的サイトができます（Playground は `apps/playground/dist/`）。任意の Web サーバーに置けば遊べます。GitHub Pages への公開は GitHub Actions（`.github/workflows/pages.yml`）が自動で行います（[docs/development.md](docs/development.md#公開github-pages)）。手元で確かめるときは、次のコマンドで http://localhost:4173/ に表示されます。
 
 ```bash
 npm run preview -w @stext/player
@@ -68,6 +68,25 @@ node packages/cli/dist/bin.js play scenarios/scepter/scenario.json
 ```
 
 番号で選択肢を選び、`s` で状態、`q` で終了します。`--auto 30 --seed 1` を付けると、選択肢を自動で選んで進みます。
+
+## シナリオを書く（Playground）
+
+**公開版：https://snext1220.github.io/stext-next/playground/**
+
+ブラウザで動くシナリオの編集環境（`apps/playground`）です。旧 Playground の代わりに、新しい形式（stext/2 の JSON）のシナリオを作れます。
+
+```bash
+npm run dev:playground
+```
+
+ブラウザで http://localhost:5174/ を開きます。
+
+- 左のフロー図でシーンを選ぶと、右の「シーン」タブで本文・選択肢・効果・敵などを編集できます。シーンの右の点から別のシーンへ線を引くと選択肢になります。
+- 「新規・テンプレート」から、旧 Playground と同じテンプレートや公開中のシナリオを開けます。「開く…」では、新形式の JSON、旧形式の `scenario.xml`、旧 Playground の JSON を読み込めます。
+- 「定義」タブでタイトルなどの基本情報と、アイテム・フラグ・パラメーター・敵・実績・グループ・ライセンスを編集します。
+- 「検査」タブには、つながっていない遷移先や書きかけの条件などの問題が並びます（クリックでそのシーンへ）。
+- 「試遊」タブで、編集中のシナリオをその場で遊べます。
+- 編集内容はブラウザに自動で保存されます。名前を付けて残すときは「マイストレージ」、ファイルにするときは「保存（JSON）」を使います。Ctrl+Z／Ctrl+Shift+Z で元に戻す／やり直すができます。
 
 ## ドキュメント
 

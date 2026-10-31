@@ -339,7 +339,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 | **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器（Phase 2 で前倒し済み）→ 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`、`stext play`、`scripts/difftest.mjs` | 完了（§5.2） |
 | **4. プレイヤーUI** | プロトタイプを元に `@stext/ui` と `apps/player` を実装。BGM/SE、トースト、ダイアログ群 | 新プレイヤー（β） | β 完了（§5.3） |
 | **5. 並行公開・検証** | `?engine=v2` のようなクエリで新旧切り替え。小規模シナリオから順に新版をデフォルト化。旧セーブの自動移行 | 全シナリオ新版対応 | 2〜4週 |
-| **6. Playground刷新** | 新エディタ（React）。vis.js→React Flow 等への置き換え、Ace→Monaco/CodeMirror 6 検討。出力はv2 JSON | 新Playground | 別途 |
+| **6. Playground刷新** | 新エディタ（React）。vis.js→React Flow 等への置き換え、Ace→Monaco/CodeMirror 6 検討。出力はv2 JSON | 新Playground | 別途（§5.6 で実施） |
 | **7. 旧版撤去** | `snext1220/stext` の凍結・アーカイブ、XMLは変換入力としてのみサポート | — | — |
 
 ### 5.1 移行順序（シナリオ）
@@ -426,6 +426,24 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - 確認：`scripts/e2e-player.mjs` に上の機能の確認を加え、21項目すべて成功。単体テストは 94件
 - これで、旧エンジンのプレイヤー向けの機能はすべて新しいプレイヤーにそろった
 
+### 5.6 Phase 6：Playground
+
+新しい Playground（`apps/playground`）を作った。旧 Playground（vis.js・SlickGrid・Ace・jsTree）の代わりに、React と React Flow で作り、stext/2 の JSON を直接編集する。
+
+| 機能 | 新しい Playground での形 |
+|---|---|
+| フロー図 | React Flow。シーンのドラッグ（位置は `editor.x/y` に保存）、線を引いて選択肢を追加、条件付きは破線・ランダムは動く線・番号入力と文字入力は青。dagre で自動で並べる。大きなシナリオは最初のシーンの近くを表示して開く |
+| シーンの編集 | ID の変更（選択肢の遷移先・ルール・共通フッター・`${import}` の参照も直す）、サマリー、本文（マクロ・条件などを差し込むボタン）、選択肢（通常／ランダム／番号入力／文字入力、条件の入力と読めるかの表示、条件に使うフラグなどの差し込み、唱える魔法）、選択肢の後ろの文章、効果、敵・エンディング・BGM などの設定、削除（そのシーンへの選択肢も消す） |
+| 定義 | 基本情報（タイトル・作者・ID・BGM・選べる種族など・共通フッター・FREE の表示名・紹介文）と、アイテム・フラグ・パラメーター・敵・実績・グループ・ライセンスの表 |
+| 検査 | スキーマの検証と `checkScenario` の結果を一覧にし、クリックでそのシーンを開く。フロー図のシーンにも問題の数を出す |
+| 試遊 | `@stext/core` のエンジンと `@stext/ui` の表示で、最初から、または選択中のシーンから遊ぶ（戦闘はプレイヤーで確かめる） |
+| 開く・保存 | テンプレート（旧 Playground の7本を変換）、公開シナリオ、ファイル（stext/2 の JSON、旧 `scenario.xml`、旧 Playground の JSON）。保存は JSON のダウンロード、マイストレージ（ブラウザ内に名前を付けて保存）、編集中の内容の自動保存。元に戻す／やり直す |
+
+作らなかったもの（必要になったら検討する）：サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree のツリー表示）。
+
+- 公開：https://snext1220.github.io/stext-next/playground/ （`scripts/build-site.mjs` が `site/playground/` に置く）
+- 確認：`scripts/e2e-playground.mjs` の21項目が、開発サーバーとビルド結果の両方ですべて成功。編集操作（`src/model.ts`）の単体テストを追加
+
 ## 6. 互換性・データ移行
 
 | 対象 | 方針 |
@@ -460,6 +478,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - 画像・BGM・効果音は新リポジトリ（`assets/`）に移設する
 - プレイヤーはこのリポジトリの GitHub Pages で公開する
 - Phase 1〜3 完了、Phase 4 は β 完了
+- Phase 6 の Playground を作った（§5.6）
 
 次:
 

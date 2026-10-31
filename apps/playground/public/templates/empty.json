@@ -1,0 +1,78 @@
+{
+  "$schema": "https://snext1220.github.io/stext-next/schema/scenario.v2.json",
+  "format": "stext/2",
+  "meta": {
+    "title": "Untitled",
+    "author": "Unnamed"
+  },
+  "items": [
+    {
+      "id": "i01",
+      "name": "Item-01",
+      "text": "Item description..."
+    }
+  ],
+  "flags": [
+    {
+      "id": "f01",
+      "text": "Flag description..."
+    }
+  ],
+  "params": [],
+  "enemies": [
+    {
+      "id": "m01",
+      "name": "Enemy-01",
+      "text": "Enemy description...",
+      "element": "earth",
+      "attack": "physics",
+      "func": "L+R-STR",
+      "drop": "mon/2"
+    }
+  ],
+  "results": [
+    {
+      "id": "r01",
+      "name": "Result-01",
+      "text": "Result description...",
+      "level": 1
+    }
+  ],
+  "groups": [
+    {
+      "title": "導入部",
+      "start": "0",
+      "end": "1"
+    }
+  ],
+  "licence": [
+    {
+      "name": "Bgm-01",
+      "category": "bgm",
+      "creator": "SText",
+      "url": "https://example.com/"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "0",
+      "text": "ここにプロローグを書きます。",
+      "choices": [
+        {
+          "label": "次へ",
+          "to": ["1"]
+        }
+      ],
+      "summary": "プロローグ",
+      "editor": {
+        "group": "prologue"
+      }
+    },
+    {
+      "id": "1",
+      "text": "ここからが本文です。",
+      "choices": [],
+      "summary": "本文"
+    }
+  ]
+}
