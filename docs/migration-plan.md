@@ -199,7 +199,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 |------|--------------------|-------|
 | バージョン | なし | `"format": "stext/2"` と `$schema` を必須に |
 | メタ情報 | `title` `author` `init.*` に分散 | `meta`（title, author, description, keywords, constraint, bgm, labels）へ集約 |
-| 選択肢 | 別配列 `edges[] {from,to,label,condition}` | シーン内 `choices[]` に保持（`to` は配列でランダム分岐を表現）。Playgroundのフロー図は `choices` から導出 |
+| 選択肢 | 別配列 `edges[] {from,to,label,condition}` | **（決定）** シーン内 `choices[]` に保持（`to` は配列でランダム分岐を表現）。Playgroundのフロー図は `choices` から導出 |
 | 効果 | `items: "i99"` などカンマ区切り文字列 | `effects: { items: ["i99"], flags: ["f99"], hp: -5, ... }` の配列/数値 |
 | 敵の参照 | `enemies: "m99,m98"` | `enemies: ["m99","m98"]` |
 | 条件 | `condition: "f01"`（文字列） | `if`: 文字列記法または条件ASTオブジェクト（§2.3） |
@@ -353,10 +353,10 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 
 - 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」（§2.3）
 - デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
+- 選択肢は各シーンの `choices[]` に持たせる（§3）。Playground のフロー図は `choices` から導出する
 - Phase 1（基盤整備）完了
 
 次（Phase 2: スキーマと変換器）:
 
-1. v2 JSONで選択肢を各シーンの `choices[]` に持たせる方針の最終確認
-2. `@stext/schema` に JSON Schema・型・条件パーサ（文字列⇔AST）を実装
-3. `@stext/convert` で `snext1220/stext` の43シナリオを一括変換し、変換レポートを確認
+1. `@stext/schema` に JSON Schema・型・条件パーサ（文字列⇔AST）を実装
+2. `@stext/convert` で `snext1220/stext` の43シナリオを一括変換し、変換レポートを確認
