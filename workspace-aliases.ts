@@ -4,13 +4,13 @@
  */
 import { fileURLToPath } from 'node:url';
 
-const pkg = (name: string, entry = 'index.ts') =>
+const src = (name: string, entry = 'index.ts') =>
   fileURLToPath(new URL(`./packages/${name}/src/${entry}`, import.meta.url));
 
-export const workspaceAliases = {
-  '@stext/schema': pkg('schema'),
-  '@stext/core': pkg('core'),
-  '@stext/convert': pkg('convert'),
-  '@stext/cli': pkg('cli'),
-  '@stext/ui': pkg('ui'),
-};
+export const workspaceAliases = [
+  { find: /^@stext\/ui\/styles\.css$/, replacement: src('ui', 'styles.css') },
+  ...['schema', 'core', 'convert', 'cli', 'ui'].map((name) => ({
+    find: new RegExp(`^@stext/${name}$`),
+    replacement: src(name),
+  })),
+];
