@@ -7,6 +7,7 @@ import parse, {
 } from 'html-react-parser';
 import { marked } from 'marked';
 import { useMemo, type ReactNode } from 'react';
+import { Effect } from './Effect.js';
 
 export interface SceneTextProps {
   /** エンジンが展開した Markdown（SceneView.markdown など） */
@@ -68,6 +69,13 @@ export function SceneText({
             <a href={node.attribs['href']} target="_blank" rel="noopener noreferrer">
               {domToReact(node.children as DOMNode[], options)}
             </a>
+          );
+        }
+        if (node.name === 'div' && node.attribs['class'] === 'stext-effect') {
+          return (
+            <Effect name={node.attribs['data-effect'] ?? 'fadeIn'}>
+              {domToReact(node.children as DOMNode[], options)}
+            </Effect>
           );
         }
         if (node.name === 'stext-input') {

@@ -1664,3 +1664,244 @@ label.drop {
     padding-inline: 8px;
   }
 }
+
+/* ───── ステータスの手入力・撃破チェック・文字の演出 ───── */
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5em, 1fr));
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+.num-field {
+  display: grid;
+  gap: 2px;
+  font-size: var(--step--1);
+  min-width: 0;
+}
+.num-field label {
+  color: var(--on-desk-soft);
+}
+.num-field .param-input input {
+  width: 100%;
+  min-width: 0;
+  background: var(--desk);
+  color: var(--on-desk);
+  border-color: var(--desk-line);
+}
+.num-field .param-input button {
+  color: var(--on-desk);
+  border-color: var(--desk-line);
+}
+.status-editor .end-actions .btn.ghost {
+  color: var(--on-desk);
+  border-color: var(--desk-line);
+}
+.status-editor .btn {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--desk);
+}
+.defeat-check {
+  margin-right: 8px;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: middle;
+  accent-color: var(--ink-soft);
+}
+.enemy.defeated h3 {
+  text-decoration: line-through;
+}
+.stext-effect {
+  animation: none;
+}
+.stext-letter {
+  display: inline-block;
+  animation-duration: 0.6s;
+  animation-fill-mode: both;
+  animation-timing-function: ease-out;
+}
+.fx-fadeIn {
+  animation-name: fx-fade-in;
+}
+.fx-fadeInDown {
+  animation-name: fx-fade-in-down;
+}
+.fx-fadeInUp {
+  animation-name: fx-fade-in-up;
+}
+.fx-fadeInLeft {
+  animation-name: fx-fade-in-left;
+}
+.fx-fadeInRight {
+  animation-name: fx-fade-in-right;
+}
+.fx-bounceIn {
+  animation-name: fx-bounce-in;
+}
+.fx-zoomIn {
+  animation-name: fx-zoom-in;
+}
+.fx-flipInX {
+  animation-name: fx-flip-in-x;
+}
+.fx-rollIn {
+  animation-name: fx-roll-in;
+}
+.fx-flash {
+  animation-name: fx-flash;
+}
+@keyframes fx-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fx-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-0.8em);
+  }
+}
+@keyframes fx-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.8em);
+  }
+}
+@keyframes fx-fade-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-0.8em);
+  }
+}
+@keyframes fx-fade-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(0.8em);
+  }
+}
+@keyframes fx-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  75% {
+    transform: scale(0.95);
+  }
+}
+@keyframes fx-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+@keyframes fx-flip-in-x {
+  from {
+    opacity: 0;
+    transform: perspective(200px) rotateX(90deg);
+  }
+}
+@keyframes fx-roll-in {
+  from {
+    opacity: 0;
+    transform: translateX(-1em) rotate(-120deg);
+  }
+}
+@keyframes fx-flash {
+  0%,
+  50%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0;
+  }
+}
+.share-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.records {
+  display: grid;
+  gap: 24px;
+}
+.rank-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px 20px;
+  align-items: center;
+}
+.rank-card img {
+  width: 96px;
+  height: auto;
+  image-rendering: auto;
+}
+.rank-card .rank-name {
+  font-family: var(--f-book);
+  font-size: var(--step-2);
+  font-weight: 700;
+}
+.rank-card .rank-en {
+  font-family: var(--f-display);
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12em, 1fr));
+  gap: 10px;
+}
+.bonus-item {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--desk-line);
+  border-radius: 8px;
+  background: var(--desk-2);
+  min-width: 0;
+}
+.bonus-item img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.bonus-item.locked {
+  opacity: 0.55;
+}
+.bonus-item .n {
+  font-weight: 700;
+}
+.bonus-item .d {
+  font-size: 0.75rem;
+  color: var(--on-desk-soft);
+}
+.save-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.save-tools select {
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--desk-line);
+  background: var(--desk-2);
+  color: var(--on-desk);
+}
+@media (max-width: 760px) {
+  .rank-card {
+    grid-template-columns: 1fr;
+  }
+}
+.bonus-item.locked img {
+  filter: grayscale(1) brightness(0.35) contrast(0.8);
+}
