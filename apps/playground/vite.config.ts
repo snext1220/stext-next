@@ -27,7 +27,10 @@ function repoDirs(): Plugin {
         server.middlewares.use(`/${name}`, (req, res, next) => {
           const path = normalize(join(dir, decodeURIComponent((req.url ?? '/').split('?')[0]!)));
           if (!path.startsWith(dir) || !existsSync(path) || !statSync(path).isFile()) return next();
-          res.setHeader('Content-Type', TYPES[extname(path)] ?? 'application/octet-stream');
+          res.setHeader(
+            'Content-Type',
+            TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream',
+          );
           createReadStream(path).pipe(res);
         });
       }

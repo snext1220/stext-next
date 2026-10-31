@@ -35,6 +35,7 @@
 | 8 | プレイヤーはこのリポジトリの **GitHub Pages で公開する** |
 | 9 | 旧エンジンの残りの機能（ステータス編集、撃破チェック、バックアップ／リストア、ランク・ボーナス一覧、ツイートボタン、`${effect}`、アイテムの使用）を実装する |
 | 10 | Playground（Phase 6）を作る。サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）は作らない |
+| 11 | シナリオに関係する画像・BGM は、シナリオごとのフォルダー（`scenarios/<id>/capture/`・`bgm/`）にまとめる。`assets/` には共通の素材だけを置く |
 
 ---
 
@@ -79,8 +80,8 @@
 | `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法、記録、変換所） |
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（React Flow、dagre） |
 | `prototype/` | — | — | デザインプロトタイプ |
-| `scenarios/` | — | — | 変換済みの旧シナリオ43本と `REPORT.md`、`index.json` |
-| `assets/` | — | — | 画像・BGM・効果音（旧リポジトリから移したもの） |
+| `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json` |
+| `assets/` | — | — | どのシナリオでも使う共通の画像・BGM・効果音（`assets/common/`） |
 | `schema/` | — | — | JSON Schema（生成物） |
 
 ### シナリオ形式 stext/2 の要点
@@ -98,8 +99,8 @@
 
 | 名前 | 内容 |
 |---|---|
-| `VITE_ASSET_BASE` | 画像・BGM・効果音の配信元 |
-| `VITE_SCENARIO_BASE` | シナリオ JSON の配信元 |
+| `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元 |
+| `VITE_SCENARIO_BASE` | シナリオの配信元（`scenario.json`、挿絵、BGM） |
 
 ---
 

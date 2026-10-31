@@ -1,6 +1,6 @@
 // GitHub Pages に公開するサイトを site/ に組み立てる（npm run build のあとで実行する）。
 //
-//   site/                  プレイヤー（apps/player/dist。scenarios/ と assets/ を含む）
+//   site/                  プレイヤー（apps/player/dist。scenarios/（シナリオと挿絵・BGM）と assets/（共通の素材）を含む）
 //   site/playground/       Playground（シナリオの編集環境。シナリオと素材はプレイヤーのものを使う）
 //   site/prototype/        デザインプロトタイプ（これまでと同じ URL）
 //   site/schema/           シナリオの JSON Schema（各シナリオの $schema が指す URL）

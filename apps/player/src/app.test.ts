@@ -38,11 +38,11 @@ describe('storage', () => {
 
 describe('asset paths', () => {
   it('follows the legacy directory layout', () => {
-    expect(imageUrl('scepter', 'scepter.png')).toBe('/assets/scepter/capture/scepter.png');
+    expect(imageUrl('scepter', 'scepter.png')).toBe('/scenarios/scepter/capture/scepter.png');
     expect(imageUrl('scepter', 'https://example.com/a.png')).toBe('https://example.com/a.png');
     expect(bgmUrl('scepter', '@field05')).toBe('/assets/common/bgm/field05.mp3');
-    expect(bgmUrl('hero', 'hero-room')).toBe('/assets/hero/bgm/hero-room.mp3');
-    expect(seUrl('slayer', 'hit')).toBe('/assets/slayer/bgm/se/hit.mp3');
+    expect(bgmUrl('hero', 'hero-room')).toBe('/scenarios/hero/bgm/hero-room.mp3');
+    expect(seUrl('slayer', 'hit')).toBe('/scenarios/slayer/bgm/se/hit.mp3');
     expect(seUrl('slayer', 'dice', true)).toBe('/assets/common/se/dice.mp3');
   });
 });

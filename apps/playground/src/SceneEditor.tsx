@@ -53,7 +53,7 @@ const TEXT_TOOLBAR = [
   { label: '入力欄', title: 'パラメーターの入力欄：${input?p01}', before: '${input?p01}' },
   {
     label: '画像',
-    title: '挿絵：![説明](ファイル名)。素材は assets/<シナリオID>/capture/',
+    title: '挿絵：![説明](ファイル名)。画像は scenarios/<シナリオID>/capture/',
     before: '![',
     after: '](image.png)',
   },

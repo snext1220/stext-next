@@ -7,7 +7,7 @@ import { workspaceAliases } from '../../workspace-aliases.js';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const scenariosDir = join(repoRoot, 'scenarios');
-/** 画像・BGM・効果音（旧リポジトリから scripts/import-legacy-assets.mjs で取り込んだもの） */
+/** 共通の画像・BGM・効果音（シナリオごとの挿絵・BGM は scenarios/<id>/ にある） */
 const assetsDir = join(repoRoot, 'assets');
 
 const TYPES: Record<string, string> = {
@@ -25,7 +25,10 @@ function serveDir(prefix: string, dir: string): Plugin['configureServer'] {
     server.middlewares.use(prefix, (req, res, next) => {
       const path = normalize(join(dir, decodeURIComponent((req.url ?? '/').split('?')[0]!)));
       if (!path.startsWith(dir) || !existsSync(path) || !statSync(path).isFile()) return next();
-      res.setHeader('Content-Type', TYPES[extname(path)] ?? 'application/octet-stream');
+      res.setHeader(
+        'Content-Type',
+        TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream',
+      );
       createReadStream(path).pipe(res);
     });
   };

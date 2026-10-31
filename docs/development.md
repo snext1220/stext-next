@@ -14,13 +14,13 @@ npm install
 npm run dev        # プレイヤーアプリの開発サーバー（http://localhost:5173）
 ```
 
-- 開発サーバーは `scenarios/` を `/scenarios/` で配信します。
-- 画像・BGM・効果音（`assets/`）も `/assets/` で配信します。`assets/` は旧リポジトリから `scripts/import-legacy-assets.mjs` で取り込んだものです（[assets/README.md](../assets/README.md)）。
+- 開発サーバーは `scenarios/` を `/scenarios/` で配信します。シナリオごとのフォルダー（`scenarios/<id>/`）に、`scenario.json` とそのシナリオの挿絵（`capture/`）・BGM（`bgm/`）があります。
+- 共通の画像・BGM・効果音（`assets/common/`）は `/assets/` で配信します。画像・BGM は旧リポジトリから `scripts/import-legacy-assets.mjs` で取り込んだものです（[assets/README.md](../assets/README.md)）。
 
 | 環境変数 | 内容 |
 | --- | --- |
-| `VITE_ASSET_BASE` | 画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときに、旧リポジトリの `stext/` と同じ構成の URL を末尾 `/` 付きで指定） |
-| `VITE_SCENARIO_BASE` | シナリオ JSON の配信元（既定はビルド結果の `scenarios/`） |
+| `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときは、`common/` を含む URL を末尾 `/` 付きで指定） |
+| `VITE_SCENARIO_BASE` | シナリオの配信元（既定はビルド結果の `scenarios/`。`<id>/scenario.json` と、挿絵・BGM もここから読む） |
 
 `npm run build` の結果（`apps/player/dist/`）には `scenarios/` と `assets/` も含まれるので、そのまま静的サイトとして公開できます。
 
@@ -51,7 +51,8 @@ CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への p
 | `apps/player`     | `@stext/player`  | Browser   | プレイヤーアプリ（Vite + React）                 |
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（Vite + React + React Flow）  |
 | `prototype/`      | —                | Browser   | デザインプロトタイプ（GitHub Pages で公開）      |
-| `scenarios/`      | —                | —         | 変換済みの旧シナリオ（`stext convert-all` の出力） |
+| `scenarios/`      | —                | —         | 旧シナリオ。シナリオごとに `scenario.json`（`stext convert-all` の出力）と挿絵・BGM |
+| `assets/`         | —                | —         | 共通の画像・BGM・効果音（`assets/common/`） |
 | `schema/`         | —                | —         | エディター補完用の JSON Schema（生成物、GitHub Pages で公開） |
 
 依存の向き: `schema` ← `core` / `convert` ← `cli`、`ui` ← `player` / `playground`。逆向きの依存は作りません。
@@ -99,7 +100,7 @@ node packages/cli/dist/bin.js --help
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
 | `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます |
-| `assets/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます） |
+| `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` は消しません |
 
 `scenarios/`・`schema/`・`assets/` は生成物なので Prettier の対象外です。
 
