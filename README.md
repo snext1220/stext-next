@@ -5,6 +5,8 @@ https://snext1220.github.io/stext-next/prototype/design/index.html
 
 ## ゲームを遊ぶ
 
+**公開版：https://snext1220.github.io/stext-next/** （インストール不要。`main` に変更が入るたびに自動で更新されます）
+
 ブラウザで動くプレイヤー（`apps/player`）で、旧ソーサリアンText（[snext1220/stext](https://github.com/snext1220/stext)）の43シナリオを遊べます。シナリオ（`scenarios/`）と画像・BGM（`assets/`）はこのリポジトリに含まれているので、ほかに用意するものはありません。
 
 ### 必要なもの
@@ -47,7 +49,7 @@ npm run dev
 npm run build
 ```
 
-`apps/player/dist/` に、シナリオと素材を含んだ静的サイトができます。任意の Web サーバーや GitHub Pages に置けば遊べます。手元で確かめるときは、次のコマンドで http://localhost:4173/ に表示されます。
+`apps/player/dist/` に、シナリオと素材を含んだ静的サイトができます。任意の Web サーバーに置けば遊べます。GitHub Pages への公開は GitHub Actions（`.github/workflows/pages.yml`）が自動で行います（[docs/development.md](docs/development.md#公開github-pages)）。手元で確かめるときは、次のコマンドで http://localhost:4173/ に表示されます。
 
 ```bash
 npm run preview -w @stext/player

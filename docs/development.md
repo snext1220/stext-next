@@ -138,3 +138,19 @@ node scripts/e2e-player.mjs --shots /tmp/shots
 
 ビルド結果を確かめるときは、`npm run build` のあと `npx vite preview` を `apps/player` で起動し、`--base http://localhost:4173` を付けます。
 
+## 公開（GitHub Pages）
+
+`main` に push されると、GitHub Actions（`.github/workflows/pages.yml`）がテスト・ビルドを行い、https://snext1220.github.io/stext-next/ に公開します。手動で公開し直すときは、Actions の「Pages」から「Run workflow」を実行します。
+
+公開するサイトは `scripts/build-site.mjs` が `site/` に組み立てます。
+
+| URL | 中身 |
+| --- | --- |
+| `/stext-next/` | プレイヤー（`apps/player/dist`。`scenarios/` と `assets/` を含む） |
+| `/stext-next/prototype/design/index.html` | デザインプロトタイプ（これまでと同じ URL） |
+| `/stext-next/schema/scenario.v2.json` | シナリオの JSON Schema（各シナリオの `$schema` が指す URL） |
+
+手元で同じものを作るには `npm run build:site` を実行します。
+
+**初回だけ必要な設定**：リポジトリの Settings → Pages → Build and deployment の Source を「GitHub Actions」にします。これまでの「Deploy from a branch」のままだと、ワークフローの公開の段階が失敗します。
+
