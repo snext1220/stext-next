@@ -68,7 +68,12 @@ export function toV2(legacy: LegacyScenario, options: ConvertOptions = {}): Conv
     const path = `scenes[${i}]`;
     const { text, afterText, choices } = extractChoices(trimText(node.text), path, warn, condition);
     stats.choices += choices.length;
-    const a = node.attrs;
+    // 旧エンジンは属性値を読むときに空白をすべて取り除いていた（nsAttr）。表示用の summary 以外は同じにする
+    const a = { ...stripSpaces(node.attrs), summary: node.attrs['summary'] } as Record<
+      string,
+      string
+    >;
+    if (a['summary'] === undefined) delete a['summary'];
     const scene: Scene = { id: a['id'] ?? '', text, choices };
     setIf(scene, 'summary', a['summary']);
     setIf(scene, 'afterText', afterText);
@@ -80,7 +85,8 @@ export function toV2(legacy: LegacyScenario, options: ConvertOptions = {}): Conv
       else warn(path, `不明な end「${a['end']}」は無視しました`);
     }
     if (a['nexts']) scene.nexts = splitList(a['nexts']);
-    setIf(scene, 'bgm', a['bgm']);
+    // bgm="" はメインテーマに戻す指定なので、空文字も残す
+    if (a['bgm'] !== undefined) scene.bgm = a['bgm'];
     setIf(scene, 'se', a['se']);
     setIf(scene, 'rule', a['rule']);
     setIf(scene, 'dice', a['dice']);
@@ -126,8 +132,8 @@ export function toV2(legacy: LegacyScenario, options: ConvertOptions = {}): Conv
         name: n.attrs['name'] ?? '',
       };
       setIf(item, 'text', trimBlock(n.text));
-      setIf(item, 'target', n.attrs['target']);
-      setIf(item, 'effect', n.attrs['effect']);
+      setIf(item, 'target', n.attrs['target']?.replace(/\s+/g, ''));
+      setIf(item, 'effect', n.attrs['effect']?.replace(/\s+/g, ''));
       if (n.attrs['shared'] === 'true') item.shared = true;
       return item;
     }),
@@ -148,7 +154,7 @@ export function toV2(legacy: LegacyScenario, options: ConvertOptions = {}): Conv
       return param;
     }),
     enemies: legacy.enemies.map((n) => {
-      const a = n.attrs;
+      const a = { ...stripSpaces(n.attrs), name: n.attrs['name'] } as Record<string, string>;
       const enemy: Scenario['enemies'][number] = { id: a['id'] ?? '', name: a['name'] ?? '' };
       setIf(enemy, 'text', trimBlock(n.text));
       setIf(enemy, 'element', a['element']);
@@ -156,6 +162,7 @@ export function toV2(legacy: LegacyScenario, options: ConvertOptions = {}): Conv
       setIf(enemy, 'func', a['func']);
       setIf(enemy, 'funcOpp', a['func_opp']);
       if (a['hp'] !== undefined && isNumber(a['hp'])) enemy.hp = Number(a['hp']);
+      else if (a['hp']?.startsWith('p')) enemy.hp = a['hp'];
       setIf(enemy, 'drop', a['drop']);
       return enemy;
     }),
@@ -356,6 +363,10 @@ function sceneEffects(
 }
 
 // ───── 小物 ─────
+
+function stripSpaces(attrs: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(attrs).map(([k, v]) => [k, v.replace(/\s+/g, '')]));
+}
 
 function splitList(v: string): string[] {
   return v

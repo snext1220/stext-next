@@ -221,7 +221,15 @@
             "type": "string"
           },
           "hp": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^p"
+              }
+            ]
           },
           "drop": {
             "type": "string"

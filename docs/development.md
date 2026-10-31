@@ -77,9 +77,9 @@ node packages/cli/dist/bin.js --help
 | `stext convert <scenario.xml\|playground.json> [-o out.json] [--structure-conditions]` | 旧形式を stext/2 に変換する |
 | `stext convert-all <旧リポジトリの stext ディレクトリ> -o <出力先>` | 全シナリオを変換し、`index.json` と `REPORT.md` を作る |
 | `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
-| `stext play` | Phase 3 で実装予定 |
+| `stext play <scenario.json> [--auto <手数>] [--seed <数値>]` | シナリオをコマンドラインで遊ぶ（`--auto` は選択肢を自動で選ぶ） |
 
-シナリオ形式の詳細は [scenario-format.md](scenario-format.md) を参照してください。
+シナリオ形式の詳細は [scenario-format.md](scenario-format.md)、エンジンの使い方は [engine.md](engine.md) を参照してください。
 
 ## 生成物の更新
 
@@ -94,3 +94,22 @@ node packages/cli/dist/bin.js --help
 
 - `packages/schema/test/legacy-conditions.txt` は、旧43シナリオに現れる条件（1,517種類）です。条件パーサの往復テストに使います。
 - `packages/core/src/legacy-condition.test-helper.ts` は、旧エンジンの条件判定をそのまま移植したテスト専用のコードです。新しい評価器と結果が一致することを確かめます。
+
+## 旧エンジンとの差分テスト
+
+`scripts/difftest.mjs` は、旧エンジン（jQuery 版）をヘッドレス Chromium で動かし、新エンジンと同じ選択を続けて毎手比べます。Chromium と playwright が必要なので CI では動かしません。エンジンや変換器を変えたときに手元で実行してください。
+
+```bash
+# 旧リポジトリを ../stext に clone し、そこで HTTP サーバーを起動しておく
+cd ../stext && python3 -m http.server 8765
+```
+
+```bash
+npm run build
+node scripts/difftest.mjs --walks 5 --steps 80 --text
+```
+
+- シナリオ ID を並べると、そのシナリオだけを比べます（例: `node scripts/difftest.mjs scepter slayer`）。
+- `--text` を付けると本文も比べます（Markdown の記号・HTML タグ・空白を除いた文字で比べます）。
+- playwright がグローバルにしかない場合は、`PLAYWRIGHT_PATH` にその場所を指定します。
+

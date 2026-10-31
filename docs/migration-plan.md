@@ -1,6 +1,6 @@
 # ソーサリアンText 次世代化 移行計画（v2 計画書・ドラフト）
 
-> ステータス: **Phase 2（スキーマと変換器）完了**。次は Phase 3（コアエンジン）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)
+> ステータス: **Phase 3（コアエンジン）完了**。次は Phase 4（プレイヤーUI）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
 > 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
 > デザインプロトタイプ: [`prototype/design/index.html`](../prototype/design/index.html)（ブラウザで直接開けます）
@@ -336,7 +336,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 | **0. 準備** | 現状調査・計画・デザインプロトタイプ | 本書、プロトタイプ | 完了 |
 | **1. 基盤** | モノレポ化、TS/Vite/Vitest/ESLint/Prettier導入、CI（GitHub Actions）。現行版は `snext1220/stext` に残す | ビルド・テストが回る空のパッケージ群 | 完了 |
 | **2. スキーマと変換器** | v2 JSON Schema 確定（条件ASTの定義、`parseCondition` / `formatCondition` を含む）、`@stext/convert` 実装、43シナリオ一括変換、変換レポートの作成 | `scenarios/*/scenario.json`、`stext convert/convert-all/validate`、`schema/scenario.v2.json` | 完了（旧シナリオ側の手修正は未実施） |
-| **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器（Phase 2 で前倒し済み）→ 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`（Node上でヘッドレスプレイ可） | 4〜6週 |
+| **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器（Phase 2 で前倒し済み）→ 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`、`stext play`、`scripts/difftest.mjs` | 完了（§5.2） |
 | **4. プレイヤーUI** | プロトタイプを元に `@stext/ui` と `apps/player` を実装。BGM/SE、トースト、ダイアログ群 | 新プレイヤー（β） | 4〜6週 |
 | **5. 並行公開・検証** | `?engine=v2` のようなクエリで新旧切り替え。小規模シナリオから順に新版をデフォルト化。旧セーブの自動移行 | 全シナリオ新版対応 | 2〜4週 |
 | **6. Playground刷新** | 新エディタ（React）。vis.js→React Flow 等への置き換え、Ace→Monaco/CodeMirror 6 検討。出力はv2 JSON | 新Playground | 別途 |
@@ -352,6 +352,31 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 4. 大規模: `avengers`（901シーン）、`slayer`（1,893シーン）
 
 ---
+
+### 5.2 Phase 3 の検証（旧エンジンとの差分テスト）
+
+`scripts/difftest.mjs` で、旧エンジン（jQuery 版）をヘッドレス Chromium で動かし、新エンジンと同じ選択を続けて毎手比べた。
+
+- 方法
+  - 両方の乱数を同じ固定値にする（キャラ生成・ランダム遷移・`${rand}` などの結果をそろえるため。固定値は 0.5 / 0.25 / 0.75 / 0.1 / 0.9 の5通り）
+  - 選べる選択肢から、別の乱数で一つ選ぶ。これを1シナリオにつき5回、最大80手まで続ける
+  - 毎手、セーブデータ（キャラクター・星・アイテム・フラグ・パラメーター・シーン・経過シーン数・BGM など）、全シナリオの実績、表示される選択肢の文言、本文（記号と空白を除いた文字）を比べる
+- 結果：**43シナリオ・7,115手で、すべて一致**
+- この過程で分かり、変換器を直した旧エンジンの挙動
+  - 属性値を読むときに空白をすべて取り除いていた（`nsAttr`）。例えば `bgm=" n30j004"` は `n30j004`
+  - `bgm=""` はメインテーマに戻す指定だった
+  - 続編が同じシナリオのとき、エンディングで現在のセーブデータが引き継ぎ用のデータで上書きされる
+- 差分テストで見ていないもの（単体テストで確認）
+  - Battle Sheet の操作（ダメージ式・回避判定・敵 HP・戦利品）、魔法シート
+  - 番号入力・文字入力の選択肢、ボーナスアイテムの効果、ランダム遷移の保持（旧エンジンの Cookie）
+  - 固定値の乱数では、乱数に左右される分岐の一部にしか進まない
+- 意図的に旧エンジンと変えた点
+  - 呪い状態でも UN-CURCE（呪いを解く魔法）を条件として満たし、唱えられる。旧エンジンでは魔法名を渡し忘れていたため、呪い中は常に唱えられなかった
+  - 存在しないシーンへの移動は、旧エンジンでは空のページになっていた。新エンジンは `missingScene` として移動しない
+  - 旧シナリオの8個目以降の星（データの誤り）は変換時に取り除く
+- UI（Phase 4）に任せたもの
+  - URL の自動リンク、画像のパスの解決、演出（`${effect}`）、BGM・効果音の再生
+  - Markdown の描画。旧エンジンの Markdown は改行や画像の扱いに独自の癖があるので、Phase 4 で表示を突き合わせる
 
 ## 6. 互換性・データ移行
 
@@ -384,9 +409,9 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」（§2.3）
 - デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
 - 選択肢は各シーンの `choices[]` に持たせる（§3）。Playground のフロー図は `choices` から導出する
-- Phase 1（基盤整備）、Phase 2（スキーマと変換器）完了
+- Phase 1（基盤整備）、Phase 2（スキーマと変換器）、Phase 3（コアエンジン）完了
 
 次:
 
 1. `scenarios/REPORT.md` のエラー12件を、旧リポジトリのシナリオで直すかどうかの判断（直す場合は `npm run convert:legacy` で変換し直す）
-2. Phase 3（コアエンジン）：状態とセーブデータの型、シーン遷移と効果の適用、マクロ展開、戦闘、旧エンジンとの差分テスト
+2. Phase 4（プレイヤーUI）：プロトタイプをもとに `@stext/ui` と `apps/player` を実装する。Markdown の描画を旧エンジンの表示と突き合わせ、Battle Sheet・魔法シート・ステータスを `@stext/core` の関数でつなぐ

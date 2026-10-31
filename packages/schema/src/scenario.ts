@@ -244,7 +244,8 @@ export const EnemySchema = z.strictObject({
   func: z.string().optional(),
   /** こちらから攻撃するときの式 */
   funcOpp: z.string().optional(),
-  hp: num.optional(),
+  /** HP（数値、またはパラメーター ID。パラメーターなら戦闘で現在値を更新する） */
+  hp: z.union([num, z.string().regex(/^p/)]).optional(),
   /** ドロップ（旧形式のまま） */
   drop: z.string().optional(),
 });
