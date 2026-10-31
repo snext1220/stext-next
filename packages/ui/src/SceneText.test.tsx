@@ -36,11 +36,11 @@ describe('SceneText', () => {
     const { container } = render(
       <SceneText
         markdown={'![杖](scepter.png)\n\nhttps://example.com/'}
-        resolveImage={(src) => `/assets/scepter/capture/${src}`}
+        resolveImage={(src) => `/scenarios/scepter/capture/${src}`}
       />,
     );
     expect(container.querySelector('img')!.getAttribute('src')).toBe(
-      '/assets/scepter/capture/scepter.png',
+      '/scenarios/scepter/capture/scepter.png',
     );
     const a = container.querySelector('a')!;
     expect(a.getAttribute('target')).toBe('_blank');

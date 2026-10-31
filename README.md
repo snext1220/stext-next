@@ -7,7 +7,17 @@ https://snext1220.github.io/stext-next/prototype/design/index.html
 
 **公開版：https://snext1220.github.io/stext-next/** （インストール不要。`main` に変更が入るたびに自動で更新されます）
 
-ブラウザで動くプレイヤー（`apps/player`）で、旧ソーサリアンText（[snext1220/stext](https://github.com/snext1220/stext)）の43シナリオを遊べます。シナリオ（`scenarios/`）と画像・BGM（`assets/`）はこのリポジトリに含まれているので、ほかに用意するものはありません。
+ブラウザで動くプレイヤー（`apps/player`）で、旧ソーサリアンText（[snext1220/stext](https://github.com/snext1220/stext)）の43シナリオを遊べます。シナリオ（`scenarios/`）と画像・BGM はこのリポジトリに含まれているので、ほかに用意するものはありません。
+
+シナリオに関係するデータは、シナリオごとに一つのフォルダーにまとめています。
+
+```
+scenarios/<シナリオID>/
+  scenario.json   シナリオ本体
+  capture/        挿絵
+  bgm/            シナリオ独自の BGM（bgm/se/ は効果音）
+assets/common/    どのシナリオでも使う BGM・効果音・画像
+```
 
 ### 必要なもの
 
@@ -93,7 +103,8 @@ npm run dev:playground
 | 文書 | 内容 |
 | --- | --- |
 | [docs/migration-plan.md](docs/migration-plan.md) | 移行計画と各フェーズの結果 |
+| [docs/project-notes.md](docs/project-notes.md) | 決定事項・開発ルール・進捗のまとめ |
 | [docs/scenario-format.md](docs/scenario-format.md) | シナリオ JSON（stext/2）の書き方 |
 | [docs/engine.md](docs/engine.md) | ゲームエンジン（`@stext/core`）の使い方 |
 | [docs/development.md](docs/development.md) | 開発の手順（テスト、変換、差分テストなど） |
-| [assets/README.md](assets/README.md) | 画像・BGM・効果音の出どころ |
+| [assets/README.md](assets/README.md) | 画像・BGM・効果音の置き場所と出どころ |

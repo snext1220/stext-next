@@ -274,7 +274,7 @@ function MetaEditor({
           label="シナリオ ID"
           value={m.id}
           onChange={(v) => set({ id: v }, 'id')}
-          hint="試遊で画像を assets/<ID>/capture/ から読むときに使う"
+          hint="試遊で画像を scenarios/<ID>/capture/ から読むときに使う"
         />
         <TextField
           label="キーワード"
