@@ -36,3 +36,8 @@ export function seUrl(scenarioId: string, name: string, common = false): string 
     ? `${ASSET_BASE}common/se/${name}.mp3`
     : `${SCENARIO_BASE}${scenarioId}/bgm/se/${name}.mp3`;
 }
+
+/** 実績レベルのトロフィー（trophy1〜5.png。0 は未獲得） */
+export function trophyUrl(level: number): string {
+  return `${ASSET_BASE}common/trophy${level}.png`;
+}

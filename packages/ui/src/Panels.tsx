@@ -275,19 +275,33 @@ export interface HistoryEntry {
   label: string;
 }
 
+/** 実績レベルのトロフィー名（旧エンジンと同じ。0 は未獲得） */
+const TROPHY_NAMES = ['実績未達', 'ノーマル', 'ブロンズ', 'シルバー', 'ゴールド', 'プラチナ'];
+
 export function RecordPanel({
   scenario,
   scenarioId,
   global,
   history,
+  trophyUrl,
 }: {
   scenario: Scenario;
   scenarioId: string;
   global: GlobalState;
   history: HistoryEntry[];
+  /** 実績レベルのアイコン（0 は未獲得）。省略時はアイコンを出さない */
+  trophyUrl?: (level: number) => string;
 }) {
   const got = new Set(global.results[scenarioId] ?? []);
   const all = scenario.results;
+  const trophy = (level: number) => {
+    const name = TROPHY_NAMES[level];
+    return trophyUrl && name ? (
+      <img className="trophy" src={trophyUrl(level)} alt={name} title={name} />
+    ) : (
+      <span className="trophy" />
+    );
+  };
   return (
     <div>
       <div className="section-h">
@@ -303,12 +317,28 @@ export function RecordPanel({
           }}
         />
       </div>
-      <ul className="list">
-        {all.map((r) => (
-          <li key={r.id} className={got.has(r.id) ? '' : 'locked'}>
-            <span className="n">{got.has(r.id) ? r.name : '？？？'}</span>
-          </li>
-        ))}
+      <ul className={`list results${trophyUrl ? ' with-trophy' : ''}`}>
+        {all.map((r) =>
+          got.has(r.id) ? (
+            <li key={r.id}>
+              {trophyUrl && trophy(r.level || -1)}
+              <div>
+                <span className="n">
+                  {r.name}
+                  {r.level !== undefined && <span className="lv">Lv.{r.level}</span>}
+                </span>
+                {r.text ? <span className="d">{r.text}</span> : null}
+              </div>
+            </li>
+          ) : (
+            <li key={r.id} className="locked">
+              {trophyUrl && trophy(0)}
+              <div>
+                <span className="n">？？？</span>
+              </div>
+            </li>
+          ),
+        )}
       </ul>
       <div className="section-h">
         <span>辿った節</span>

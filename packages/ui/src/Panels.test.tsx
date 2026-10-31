@@ -18,8 +18,8 @@ const scenario: Scenario = {
   params: [],
   enemies: [],
   results: [
-    { id: 'r01', name: 'はじまり' },
-    { id: 'r02', name: 'おわり' },
+    { id: 'r01', name: 'はじまり', text: '冒険を始めた', level: 3 },
+    { id: 'r02', name: 'おわり', text: '冒険を終えた', level: 5 },
   ],
   groups: [],
   licence: [],
@@ -93,13 +93,35 @@ describe('panels', () => {
     expect(onCast).toHaveBeenCalledWith('HEAL');
   });
 
-  it('hides the names of results not yet unlocked', () => {
+  it('shows the reasons and levels of unlocked results and hides the locked ones', () => {
     const global = { ...emptyGlobalState(), results: { demo: ['r01'] } };
-    const { getByText, getAllByText } = render(
-      <RecordPanel scenario={scenario} scenarioId="demo" global={global} history={[]} />,
+    const { getByText, getAllByText, getByRole, queryByText } = render(
+      <RecordPanel
+        scenario={scenario}
+        scenarioId="demo"
+        global={global}
+        history={[]}
+        trophyUrl={(level) => `/trophy${level}.png`}
+      />,
     );
     expect(getByText('1 / 2')).toBeTruthy();
-    expect(getByText('はじまり')).toBeTruthy();
+    expect(getByText('はじまり', { exact: false })).toBeTruthy();
+    expect(getByText('Lv.3')).toBeTruthy();
+    expect(getByText('冒険を始めた')).toBeTruthy();
+    expect(getByRole('img', { name: 'シルバー' }).getAttribute('src')).toBe('/trophy3.png');
     expect(getAllByText('？？？')).toHaveLength(1);
+    expect(getByRole('img', { name: '実績未達' }).getAttribute('src')).toBe('/trophy0.png');
+    expect(queryByText('おわり', { exact: false })).toBeNull();
+    expect(queryByText('冒険を終えた')).toBeNull();
+    expect(queryByText('Lv.5')).toBeNull();
+  });
+
+  it('omits the trophies when no icon is given', () => {
+    const global = { ...emptyGlobalState(), results: { demo: ['r01'] } };
+    const { queryByRole, getByText } = render(
+      <RecordPanel scenario={scenario} scenarioId="demo" global={global} history={[]} />,
+    );
+    expect(getByText('Lv.3')).toBeTruthy();
+    expect(queryByRole('img')).toBeNull();
   });
 });

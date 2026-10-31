@@ -952,6 +952,26 @@ h3 {
   color: var(--on-desk-soft);
   font-weight: 400;
 }
+.results li > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.results.with-trophy li {
+  grid-template-columns: 40px 1fr;
+  column-gap: 10px;
+  align-items: center;
+}
+.trophy {
+  width: 40px;
+  height: 40px;
+}
+.results .lv {
+  margin-left: 6px;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--on-desk-soft);
+}
 .log li {
   font-size: var(--step--1);
   grid-template-columns: 52px 1fr;
@@ -1723,6 +1743,41 @@ span.level {
 }
 .stext-effect {
   animation: stext-fade 1.2s ease-out both;
+}
+/* %secret%…%/% の伏せ字。閉じている間は墨で塗りつぶし、タップで表示する */
+.stext-secret {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 0.3em;
+  background: color-mix(in srgb, var(--ink) 72%, transparent);
+  color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.stext-secret:not([data-open='true']) *,
+.stext-secret:not([data-open='true'])::selection,
+.stext-secret:not([data-open='true']) *::selection {
+  color: transparent !important;
+}
+.stext-secret[data-open='true'] {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: inherit;
+}
+.stext-secret:focus-visible {
+  outline: 2px solid var(--lapis);
+  outline-offset: 2px;
+}
+/* %white%…%/% の見えない文字。背景の色に関係なく透明にし、選択したときだけ見える */
+.stext-hidden,
+.stext-hidden * {
+  color: transparent !important;
+}
+.stext-hidden::selection,
+.stext-hidden *::selection {
+  color: var(--ink) !important;
 }
 @keyframes stext-fade {
   from {

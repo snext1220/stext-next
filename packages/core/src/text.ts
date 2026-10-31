@@ -4,6 +4,8 @@
  *
  * Markdown の中には次の HTML が入ることがある（UI 側で描画する）:
  * - <span style="color:..."> … %blue% など文字色
+ * - <span class="stext-secret"> … %secret% の伏せ字（タップで表示）
+ * - <span class="stext-hidden"> … %white% の見えない文字（選択すると見える）
  * - <ruby> … ${漢字|かんじ}
  * - <div class="stext-effect" data-effect="..."> … ${effect ...} の演出
  * - <stext-input param="p01"> / <stext-input value="..."> … ${input?...} の入力欄
@@ -66,9 +68,7 @@ function importScenes(text: string, ctx: TextContext) {
 export function expandText(source: string, ctx: TextContext): ExpandedText {
   let tweet: string | undefined;
   let t = source;
-  // 文字色
-  t = t.replace(/%(blue|red|purple|white)%/gi, '&nbsp;<span style="color:$1">');
-  t = t.replace(/%\/%/gi, '</span>&nbsp;');
+  t = decorate(t);
   // 条件付きの文章
   t = t.replace(/\$\{if[\s]+(.+?)\}([\s\S]+?)\$\{\/if\}/gi, (_, cond: string, body: string) =>
     judge(cond, ctx.condition) ? body : '',
@@ -89,6 +89,37 @@ export function expandText(source: string, ctx: TextContext): ExpandedText {
   // ルビ
   t = t.replace(/\$\{(.+?)\|(.+?)\}/gi, '<ruby>$1<rp>（</rp><rt>$2</rt><rp>）</rp></ruby>');
   return tweet === undefined ? { markdown: t } : { markdown: t, tweet };
+}
+
+/**
+ * 文字色（%blue%…%/%）と伏せ字（%secret%…%/%）。
+ * %white% は背景の色に関係なく見えない文字（選択すると見える）にする。
+ * 伏せ字の中の空行は段落を分けず、伏せ字がひとまとまりのまま改行されるようにする。
+ */
+function decorate(source: string): string {
+  const stack: string[] = [];
+  let out = '';
+  let last = 0;
+  for (const m of source.matchAll(/%(blue|red|purple|white|secret)%|%\/%/gi)) {
+    let chunk = source.slice(last, m.index);
+    if (stack.includes('secret')) chunk = chunk.replace(/\n[ \t]*(?=\n)/g, '\n&nbsp;');
+    out += chunk;
+    last = m.index + m[0].length;
+    const kind = m[1]?.toLowerCase();
+    if (kind === undefined) {
+      stack.pop();
+      out += '</span>&nbsp;';
+    } else {
+      stack.push(kind);
+      out +=
+        kind === 'secret'
+          ? '&nbsp;<span class="stext-secret">'
+          : kind === 'white'
+            ? '&nbsp;<span class="stext-hidden">'
+            : `&nbsp;<span style="color:${kind}">`;
+    }
+  }
+  return out + source.slice(last);
 }
 
 function interpolate(match: string, sub: string, ctx: TextContext): string {

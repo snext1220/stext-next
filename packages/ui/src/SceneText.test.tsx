@@ -68,4 +68,23 @@ describe('SceneText', () => {
     expect(container.querySelector('p')).toBeNull();
     expect(container.textContent).toBe('森の主ぬしへ');
   });
+
+  it('toggles a %secret% spoiler by click and keyboard, and keeps %white% as hidden text', () => {
+    const { container, getByRole } = render(
+      <SceneText
+        markdown={
+          '「&nbsp;<span class="stext-secret">20 Gold<br>&nbsp;<span style="color:red">だ</span></span>」<span class="stext-hidden">裏</span>'
+        }
+      />,
+    );
+    const secret = getByRole('button', { name: '伏せ字（タップで表示）' });
+    expect(secret.getAttribute('aria-pressed')).toBe('false');
+    expect(secret.querySelector('span')!.style.color).toBe('red');
+    fireEvent.click(secret);
+    expect(secret.getAttribute('data-open')).toBe('true');
+    expect(secret.getAttribute('aria-label')).toBeNull();
+    fireEvent.keyDown(secret, { key: 'Enter' });
+    expect(secret.getAttribute('data-open')).toBe('false');
+    expect(container.querySelector('.stext-hidden')!.textContent).toBe('裏');
+  });
 });

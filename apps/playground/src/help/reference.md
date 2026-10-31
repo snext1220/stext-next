@@ -478,13 +478,13 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 
 @legacy results/result/text
 
-実績を得る条件です（例：隧道でネズミに食い殺された）。
+実績を得る条件です（例：隧道でネズミに食い殺された）。プレイヤーの［記録］タブで、獲得した実績の名前の下に表示されます（未獲得の実績では表示しません）。
 
 ## results.level | レベル
 
 @legacy results/result/level
 
-難しさです。1〜5 で指定します。
+難しさです。1〜5 で指定します。プレイヤーの［記録］タブでは、獲得した実績に「Lv.3」のようなレベルと、レベルに応じたトロフィー（1 ノーマル／2 ブロンズ／3 シルバー／4 ゴールド／5 プラチナ。旧エンジンと同じ）が表示されます。
 
 ## groups | グループ
 
@@ -600,7 +600,7 @@ ID を変えると、選択肢の遷移先などの参照もまとめて直し�
 ## scene.text | 本文
 
 @legacy scene/text
-@related text.macro, text.if, text.import, text.color, text.ruby, text.effect, text.tweet, text.input, scene.choices
+@related text.macro, text.if, text.import, text.color, text.secret, text.ruby, text.effect, text.tweet, text.input, scene.choices
 @mark 変更: 選択肢は本文に書かず、「選択肢」の欄で作ります。旧形式の `[文言](番号)` は本文には書きません。
 @mark 誤り: 旧版は水平線を `====` としていましたが、`====` は直前の行を見出しにします。水平線は `---`（または `--` だけの行）です。
 @mark 要確認: 旧版の「空行を続けるには『空白＋改行』を空行の数だけ書く」は、新しいプレイヤー（marked）では空行が一つにまとまるため効きません。
@@ -627,7 +627,7 @@ Markdown に加えて、文字色・ルビ・条件付きの文章・変数な�
 ## text.macro | 本文で使える式
 
 @legacy scene/text
-@related text.if, text.import, text.input, text.ruby, text.color, text.effect, text.tweet
+@related text.if, text.import, text.input, text.ruby, text.color, text.secret, text.effect, text.tweet
 @mark 誤り: 旧版は `${state?正常:毒:凍結:石化:忘却}` としていましたが、呪いが抜けていました。正しくは「正常:毒:凍結:石化:呪い:忘却」の6つです。
 @mark 未実装: `${result?id}`・`${result_rate?id}` は、新しいプレイヤーと試遊ではまだ他のシナリオの実績を受け取らないため、常に「?????」になります。
 
@@ -709,6 +709,8 @@ ${/if}
 ## text.color | 文字色
 
 @legacy scene/text
+@related text.secret
+@mark 変更: 旧版の white は「白い背景の上で見えない文字」でしたが、新しいプレイヤーはページが白くないため、背景の色に関係なく透明な文字にしました。読み手に見せたい隠し文字（ヒントなど）には [伏せ字](#help/text.secret) を使ってください。
 
 `%blue%…%/%` で囲むと、文字に色を付けられます。
 
@@ -716,8 +718,23 @@ ${/if}
 みんな、%blue%ソーサリアン%/%だ！
 ```
 
-- 使える色は blue、red、purple、white だけです（white は選択したときだけ見える隠し文字に使います）。
+- 使える色は blue、red、purple、white だけです。
+- white は見えない文字になります（選択したときだけ見えます）。行間を空けるための文字などに使います。
 - 色を付けた文字の前後には、半角スペースが入ります。
+
+## text.secret | 伏せ字
+
+@related text.color
+
+`%secret%…%/%` で囲むと、塗りつぶした伏せ字になります。読み手がタップ（クリック）すると中身が見え、もう一度タップすると隠れます。謎解きのヒントや、ダイスを振った後に見る相手の出目などに使います。
+
+```
+「%secret%背景の模様を数えてみな。%/%」
+```
+
+- 伏せ字の前後には、半角スペースが入ります。
+- 伏せ字の中で改行・空行をしても、ひとまとまりの伏せ字のままです（空行は段落を分けず、空いた行になります）。
+- 伏せ字の中では、見出し・箇条書きなどの行単位の Markdown は使えません。文字色・ルビ・`${…}` の式は使えます。
 
 ## text.tweet | 共有する文
 

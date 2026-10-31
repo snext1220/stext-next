@@ -6,7 +6,7 @@ import parse, {
   type HTMLReactParserOptions,
 } from 'html-react-parser';
 import { marked } from 'marked';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Effect } from './Effect.js';
 
 export interface SceneTextProps {
@@ -78,6 +78,9 @@ export function SceneText({
             </Effect>
           );
         }
+        if (node.name === 'span' && node.attribs['class'] === 'stext-secret') {
+          return <Secret>{domToReact(node.children as DOMNode[], options)}</Secret>;
+        }
         if (node.name === 'stext-input') {
           return (
             <ParamInput
@@ -96,6 +99,32 @@ export function SceneText({
     <span className={className}>{content as ReactNode}</span>
   ) : (
     <div className={className}>{content as ReactNode}</div>
+  );
+}
+
+/** %secret%…%/% の伏せ字。タップ（クリック、Enter、Space）で表示と非表示を切り替える */
+function Secret({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const toggle = () => setOpen((v) => !v);
+  return (
+    <span
+      className="stext-secret"
+      data-open={open}
+      role="button"
+      tabIndex={0}
+      aria-pressed={open}
+      {...(open ? {} : { 'aria-label': '伏せ字（タップで表示）' })}
+      title={open ? 'タップで隠す' : 'タップで表示'}
+      onClick={toggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      }}
+    >
+      {children}
+    </span>
   );
 }
 

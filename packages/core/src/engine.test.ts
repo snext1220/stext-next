@@ -103,6 +103,25 @@ describe('createEngine', () => {
     expect(e.choose(state, global, 0)).toEqual({ kind: 'rejected', reason: 'hidden' });
   });
 
+  it('turns colours, %white% and %secret% into spans, keeping a secret in one paragraph', () => {
+    const e = createEngine(
+      scenario([
+        {
+          id: '0',
+          text: '%red%赤%/%と%White%透明%/%\n「%secret%一行目\n\n　%blue%二行目%/%%/%」',
+          choices: [],
+          end: 'bad',
+        },
+      ]),
+      { random: fixed(0) },
+    );
+    const { state, global } = e.start(emptyGlobalState());
+    expect(e.view(state, global).markdown).toBe(
+      '&nbsp;<span style="color:red">赤</span>&nbsp;と&nbsp;<span class="stext-hidden">透明</span>&nbsp;\n' +
+        '「&nbsp;<span class="stext-secret">一行目\n&nbsp;\n　&nbsp;<span style="color:blue">二行目</span>&nbsp;</span>&nbsp;」',
+    );
+  });
+
   it('applies effects in the legacy order and clamps parameters', () => {
     const e = createEngine(
       scenario([

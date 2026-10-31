@@ -34,7 +34,7 @@ import {
 } from '@stext/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AudioDirector } from '../audio.js';
-import { bgmUrl, charaImageUrl, imageUrl, seUrl } from '../config.js';
+import { bgmUrl, charaImageUrl, imageUrl, seUrl, trophyUrl } from '../config.js';
 import { href } from '../router.js';
 import { saveGame, saveGlobal, type Settings } from '../storage.js';
 
@@ -369,6 +369,7 @@ export function Play({
         scenarioId={id}
         global={global}
         history={history.map((h) => h.entry)}
+        trophyUrl={trophyUrl}
       />
     ) : editing ? (
       <StatusEditor

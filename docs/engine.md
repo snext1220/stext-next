@@ -87,6 +87,8 @@ if (r.kind === 'moved') ({ state, global, events } = r);
 | HTML | 元の記法 | 内容 |
 | --- | --- | --- |
 | `<span style="color:blue">` | `%blue%`…`%/%` | 文字色 |
+| `<span class="stext-secret">` | `%secret%`…`%/%` | 伏せ字（タップで表示。中の空行は `&nbsp;` の行にして段落を分けない） |
+| `<span class="stext-hidden">` | `%white%`…`%/%` | 見えない文字（選択すると見える） |
 | `<ruby>主<rp>（</rp><rt>ぬし</rt><rp>）</rp></ruby>` | `${主\|ぬし}` | ルビ |
 | `<div class="stext-effect" data-effect="fadeInDown">` | `${effect fadeInDown}`…`${/effect}` | 文字の演出 |
 | `<stext-input param="p01" value="3">` | `${input?p01}` | パラメーターを増減する入力欄 |

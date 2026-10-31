@@ -34,8 +34,14 @@ const TEXT_TOOLBAR = [
   { label: '変数', title: 'アイテムなどの名前：${var?i01:name}', before: '${var?i01:name}' },
   {
     label: '赤字',
-    title: '文字色：%red%…%/%（blue / red / purple / white）',
+    title: '文字色：%red%…%/%（blue / red / purple、white は見えない文字）',
     before: '%red%',
+    after: '%/%',
+  },
+  {
+    label: '伏せ字',
+    title: 'タップで表示する伏せ字：%secret%…%/%',
+    before: '%secret%',
     after: '%/%',
   },
   { label: 'ルビ', title: 'ルビ：${漢字|かんじ}', before: '${', after: '|かな}' },
