@@ -1,0 +1,42 @@
+{
+  "$schema": "https://snext1220.github.io/stext-next/schema/scenario.v2.json",
+  "format": "stext/2",
+  "meta": {
+    "title": "シナリオタイトル",
+    "id": "apart",
+    "author": "著者名",
+    "description": "サンプルシナリオ紹介",
+    "constraint": {
+      "race": [
+        "FIGHTER",
+        "WIZARD",
+        "DWARF",
+        "ELF"
+      ],
+      "age": [
+        "YOUNG",
+        "ADULT",
+        "OLD"
+      ]
+    },
+    "bgm": {
+      "main": "@field05",
+      "happy": "@field04",
+      "bad": "@town01"
+    }
+  },
+  "items": [],
+  "flags": [],
+  "params": [],
+  "enemies": [],
+  "results": [],
+  "groups": [],
+  "licence": [],
+  "scenes": [
+    {
+      "id": "0",
+      "text": "  プロローグ",
+      "choices": []
+    }
+  ]
+}
