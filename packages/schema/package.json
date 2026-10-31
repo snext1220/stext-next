@@ -1,0 +1,16 @@
+{
+  "name": "@stext/schema",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SORCERIAN Text シナリオ JSON（stext/2）のスキーマと型（Universal）",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ]
+}

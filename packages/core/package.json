@@ -1,0 +1,19 @@
+{
+  "name": "@stext/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SORCERIAN Text ゲームエンジン（Universal、DOM 非依存）",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@stext/schema": "0.0.0"
+  }
+}

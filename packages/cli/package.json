@@ -1,0 +1,24 @@
+{
+  "name": "@stext/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "stext コマンド（convert / validate / play）",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "stext": "./dist/bin.js"
+  },
+  "dependencies": {
+    "@stext/convert": "0.0.0",
+    "@stext/core": "0.0.0",
+    "@stext/schema": "0.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@stext/convert",
+  "version": "0.0.0",
+  "private": true,
+  "description": "旧形式（scenario.xml / .gbat / Playground JSON）から stext/2 への変換（Universal）",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@stext/schema": "0.0.0"
+  }
+}
