@@ -164,9 +164,19 @@ export function MagicPanel({
   );
 }
 
-export function ItemsPanel({ scenario, state }: { scenario: Scenario; state: GameState }) {
+export function ItemsPanel({
+  scenario,
+  state,
+  onUse,
+}: {
+  scenario: Scenario;
+  state: GameState;
+  /** 使えるアイテム（target を持つもの）を使う */
+  onUse?: (id: string) => void;
+}) {
   const items = state.items.map(
-    (id) => scenario.items.find((i) => i.id === id) ?? { id, name: id },
+    (id): { id: string; name: string; text?: string; target?: string } =>
+      scenario.items.find((i) => i.id === id) ?? { id, name: id },
   );
   const flags = state.flags
     .map((id) => scenario.flags.find((f) => f.id === id))
@@ -181,12 +191,23 @@ export function ItemsPanel({ scenario, state }: { scenario: Scenario; state: Gam
       <ul className="list">
         {items.length ? (
           items.map((i) => (
-            <li key={i.id}>
+            <li key={i.id} className={i.target ? 'usable' : ''}>
               <span className="n">
+                {i.target ? '★ ' : ''}
                 {i.name}
                 {Number(count(i.id)) > 0 ? ` ×${count(i.id)}` : ''}
+                {i.target && onUse && (
+                  <button
+                    type="button"
+                    className="cast use-item"
+                    onClick={() => onUse(i.id)}
+                    aria-label={`${i.name}を使う`}
+                  >
+                    使う
+                  </button>
+                )}
               </span>
-              {'text' in i && i.text ? <span className="d">{i.text}</span> : null}
+              {i.text ? <span className="d">{i.text}</span> : null}
             </li>
           ))
         ) : (

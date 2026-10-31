@@ -313,6 +313,17 @@ export function Play({
     toast('result', '魔法の行使', `${name} を唱えた。`);
     setSheet(null);
   };
+  const consumeItem = (itemId: string) => {
+    const r = engine.useItem(state, global, itemId);
+    const item = scenario.items.find((i) => i.id === itemId);
+    if (r.events.some((e) => e.type === 'itemNotUsable')) {
+      toast('warn', `${item?.name ?? itemId}を使った。`, '...しかし、なにも起こらなかった...');
+      return;
+    }
+    setState(r.state, r.global);
+    toast('item', `${item?.name ?? itemId}を使った。`, item?.text ?? '');
+    showEvents(r.events);
+  };
   const onParamChange = useCallback(
     (pid: string, value: string) => setState(engine.setParam(state, pid, value)),
     [engine, state, setState],
@@ -351,7 +362,7 @@ export function Play({
     t === 'magic' ? (
       <MagicPanel state={state} onCast={cast} />
     ) : t === 'items' ? (
-      <ItemsPanel scenario={scenario} state={state} />
+      <ItemsPanel scenario={scenario} state={state} onUse={consumeItem} />
     ) : t === 'record' ? (
       <RecordPanel
         scenario={scenario}

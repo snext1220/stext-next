@@ -1905,3 +1905,7 @@ label.drop {
 .bonus-item.locked img {
   filter: grayscale(1) brightness(0.35) contrast(0.8);
 }
+.use-item {
+  margin-left: 8px;
+  vertical-align: middle;
+}

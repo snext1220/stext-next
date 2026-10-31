@@ -288,6 +288,63 @@ describe('createEngine', () => {
   });
 });
 
+describe('useItem', () => {
+  const items: Scenario['items'] = [
+    { id: 'i01', name: '薬草', target: 'hp', effect: '20' },
+    { id: 'i02', name: '毒消し', target: 'state', effect: '-poison' },
+    { id: 'i03', name: '力の実', target: 'str', effect: '1' },
+    { id: 'i04', name: '金貨', target: 'free1', effect: '@100' },
+    { id: 'i05', name: '鍵', target: 'param', effect: 'p01:1' },
+    { id: 'i06', name: '石ころ', target: 'none' },
+    { id: 'i07', name: '手紙' },
+  ];
+  function setup(effects: Scenario['scenes'][number]['effects']) {
+    const sc = scenario([{ id: '0', text: '', choices: [], effects }]);
+    const e = createEngine({ ...sc, items }, { random: fixed(0) });
+    return { e, ...e.start(emptyGlobalState()) };
+  }
+
+  it('applies the effect and consumes the item like the legacy item sheet', () => {
+    const { e, state, global } = setup({
+      items: ['i01', 'i02', 'i03', 'i04', 'i05', 'i06'],
+      hp: -30,
+      state: 'poison',
+    });
+    let s = e.useItem(state, global, 'i01').state;
+    expect(s.chara.hp).toBe(state.chara.hp + 20);
+    s = e.useItem(s, global, 'i02').state;
+    expect(s.chara.state).toBe('');
+    s = e.useItem(s, global, 'i03').state;
+    expect(s.chara.str).toBe(state.chara.str + 1);
+    s = e.useItem(s, global, 'i04').state;
+    expect(s.chara.free1).toBe(100);
+    s = e.useItem(s, global, 'i05').state;
+    expect(s.params['p01']).toBe(1);
+    const r = e.useItem(s, global, 'i06');
+    expect(r.events).toEqual([{ type: 'itemUsed', id: 'i06' }]);
+    expect(r.state.items).toEqual([]);
+  });
+
+  it('uses up counted items one by one', () => {
+    const { e, state, global } = setup({ items: ['i01:2'], hp: -30 });
+    expect(state.params['pi01']).toBe(2);
+    const once = e.useItem(state, global, 'i01').state;
+    expect(once).toMatchObject({ items: ['i01'], params: { pi01: 1 } });
+    const twice = e.useItem(once, global, 'i01').state;
+    expect(twice.items).toEqual([]);
+  });
+
+  it('does nothing for items without a target or not owned', () => {
+    const { e, state, global } = setup({ items: ['i07'] });
+    expect(e.useItem(state, global, 'i07')).toEqual({
+      state,
+      global,
+      events: [{ type: 'itemNotUsable', id: 'i07' }],
+    });
+    expect(e.useItem(state, global, 'i01').events).toEqual([{ type: 'itemNotUsable', id: 'i01' }]);
+  });
+});
+
 describe('readLegacySave', () => {
   it('reads the save data written by the legacy engine as is', () => {
     const legacy = {

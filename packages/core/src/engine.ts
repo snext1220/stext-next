@@ -13,9 +13,12 @@ import {
   applyStartBonus,
   paramDefinitions,
   paramValue,
+  updateFrees,
+  updateItems,
   updateParams,
   updateHpMp,
   updateState,
+  updateStats,
   type EffectContext,
   type GameEvent,
 } from './effects.js';
@@ -342,6 +345,56 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
     }
   }
 
+  /**
+   * 持ち物を使う（旧エンジンの持ち物シートの USE）。
+   * target のあるアイテムは effect を反映して1つ消費する（個数付きなら1減らし、なければ消す）。
+   * target が "none" のアイテムは効果なしで消費し、target のないアイテムは何も起こらない。
+   */
+  function useItem(current: GameState, global: GlobalState, id: string): Step {
+    const item = scenario.items.find((i) => i.id === id);
+    if (!item || !current.items.includes(id))
+      return { state: current, global, events: [{ type: 'itemNotUsable', id }] };
+    if (!item.target) return { state: current, global, events: [{ type: 'itemNotUsable', id }] };
+    const state = clone(current);
+    const g = clone(global);
+    const events: GameEvent[] = [];
+    const ctx = effectContext(state, g, events);
+    const effect = item.effect ?? '';
+    switch (item.target) {
+      case 'hp':
+        updateHpMp(ctx, effect, undefined);
+        break;
+      case 'mp':
+        updateHpMp(ctx, undefined, effect);
+        break;
+      case 'state':
+        updateState(ctx, effect);
+        break;
+      case 'str':
+      case 'int':
+      case 'dex':
+      case 'krm':
+        updateStats(ctx, { [item.target]: effect });
+        break;
+      case 'free1':
+      case 'free2':
+      case 'free3':
+        updateFrees(ctx, { [item.target]: effect });
+        break;
+      case 'param':
+        updateParams(ctx, [effect]);
+        break;
+    }
+    // 個数を持つアイテム（p<アイテムID> が 1 以上）は1つ減らし、そうでなければ消す
+    const counted = Number(paramValue({ state, params }, `p${id}`)) > 0;
+    updateItems(ctx, [counted ? `${id}:-1` : `-${id}`]);
+    return {
+      state,
+      global: g,
+      events: [{ type: 'itemUsed', id }, ...events.filter((e) => e.type !== 'itemLost')],
+    };
+  }
+
   /** 魔法シートから魔法を唱える（星を消費して効果を反映する） */
   function castMagic(current: GameState, global: GlobalState, name: MagicName): Step {
     const state = clone(current);
@@ -404,6 +457,7 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
     scenarioId,
     setParam,
     sceneText,
+    useItem,
     newCharacter,
     begin,
     start,
