@@ -22,6 +22,8 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ['packages/schema/**', 'packages/core/**', 'packages/convert/**'],
+    // テストは Node でだけ動かすので対象外
+    ignores: ['**/*.test.{ts,tsx}', '**/*.test-helper.ts'],
     rules: {
       'no-restricted-globals': [
         'error',
@@ -42,7 +44,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ['packages/cli/**', '*.config.{js,ts}', 'workspace-aliases.ts', 'apps/*/vite.config.ts'],
+    files: [
+      'packages/cli/**',
+      'scripts/**',
+      '*.config.{js,ts}',
+      'workspace-aliases.ts',
+      'apps/*/vite.config.ts',
+    ],
     languageOptions: { globals: globals.node },
   },
   {
