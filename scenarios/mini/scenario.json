@@ -1,0 +1,223 @@
+{
+  "$schema": "https://snext1220.github.io/stext-next/schema/scenario.v2.json",
+  "format": "stext/2",
+  "meta": {
+    "title": "ミニミニソーサリアン Text",
+    "id": "mini",
+    "author": "リオ"
+  },
+  "items": [
+    {
+      "id": "i01",
+      "name": "Item-01",
+      "text": "Item description..."
+    }
+  ],
+  "flags": [
+    {
+      "id": "f01",
+      "text": "Flag description..."
+    },
+    {
+      "id": "f02",
+      "text": "Flag2"
+    },
+    {
+      "id": "f03",
+      "text": "Flag3"
+    }
+  ],
+  "params": [],
+  "enemies": [
+    {
+      "id": "m01",
+      "name": "Enemy-01",
+      "text": "Enemy description...",
+      "element": "earth",
+      "attack": "physics",
+      "func": "L+R-STR",
+      "drop": "mon/2"
+    }
+  ],
+  "results": [
+    {
+      "id": "r01",
+      "name": "Result-01",
+      "text": "Result description...",
+      "level": 1
+    }
+  ],
+  "groups": [
+    {
+      "title": "Introduction",
+      "start": "0",
+      "end": "1"
+    }
+  ],
+  "licence": [
+    {
+      "name": "Bgm-01",
+      "category": "bgm",
+      "creator": "SText",
+      "url": "https://example.com/"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "0",
+      "text": "分岐テスト",
+      "choices": [
+        {
+          "label": "次へ",
+          "to": [
+            "100"
+          ]
+        }
+      ],
+      "summary": "プロローグ",
+      "effects": {
+        "flags": [
+          "f01",
+          "f02",
+          "f03"
+        ]
+      },
+      "editor": {
+        "group": "prologue"
+      }
+    },
+    {
+      "id": "100",
+      "text": "分岐として、\nf01&f02&f03、\nf01,f02,f03、\n!f01&f02&f03\n\nが用意してあります。\n\nフラグ入手でf01～f03を入手した後、\n\nボタンが出現するか確認してもらえますか。",
+      "choices": [
+        {
+          "label": "f01&f02&f03",
+          "to": [
+            "1"
+          ],
+          "if": "f01&f02&f03"
+        },
+        {
+          "label": "f01,f02,f03",
+          "to": [
+            "2"
+          ],
+          "if": "f01,f02,f03"
+        },
+        {
+          "label": "！f01&f02&f03",
+          "to": [
+            "3"
+          ],
+          "if": "!(f01&f02&f03)"
+        },
+        {
+          "label": "フラグ入手f01",
+          "to": [
+            "4"
+          ]
+        },
+        {
+          "label": "フラグ入手f02",
+          "to": [
+            "5"
+          ]
+        },
+        {
+          "label": "フラグ入手f03",
+          "to": [
+            "6"
+          ]
+        }
+      ],
+      "summary": "プロローグ",
+      "editor": {
+        "group": "prologue"
+      }
+    },
+    {
+      "id": "1",
+      "text": "ここからが本文です。",
+      "choices": [],
+      "summary": "分岐1"
+    },
+    {
+      "id": "2",
+      "text": "",
+      "choices": [],
+      "summary": "分岐2",
+      "editor": {
+        "x": 12.300003051757812
+      }
+    },
+    {
+      "id": "3",
+      "text": "",
+      "choices": [],
+      "summary": "分岐3",
+      "editor": {
+        "x": 66.96846008300781
+      }
+    },
+    {
+      "id": "4",
+      "text": "",
+      "choices": [],
+      "summary": "フラグ入手1",
+      "effects": {
+        "flags": [
+          "f01"
+        ]
+      },
+      "end": "happy",
+      "nexts": [
+        "test"
+      ],
+      "editor": {
+        "x": 182.3000030517578
+      }
+    },
+    {
+      "id": "5",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "summary": "フラグ入手2",
+      "effects": {
+        "flags": [
+          "f02"
+        ]
+      },
+      "editor": {
+        "x": 133.6315460205078
+      }
+    },
+    {
+      "id": "6",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "summary": "フラグ入手3",
+      "effects": {
+        "flags": [
+          "f03"
+        ]
+      },
+      "editor": {
+        "x": 6.6315460205078125
+      }
+    }
+  ]
+}

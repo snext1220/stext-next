@@ -34,11 +34,13 @@ CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への p
 | ----------------- | ---------------- | --------- | ------------------------------------------------ |
 | `packages/schema` | `@stext/schema`  | Universal | シナリオ JSON（stext/2）のスキーマ・型・条件パーサ |
 | `packages/core`   | `@stext/core`    | Universal | ゲームエンジン                                   |
-| `packages/convert`| `@stext/convert` | Universal | 旧形式（XML / .gbat / Playground JSON）からの変換 |
+| `packages/convert`| `@stext/convert` | Universal | 旧形式（scenario.xml / Playground JSON）からの変換 |
 | `packages/cli`    | `@stext/cli`     | Node      | `stext` コマンド                                 |
 | `packages/ui`     | `@stext/ui`      | Browser   | React コンポーネント                             |
 | `apps/player`     | `@stext/player`  | Browser   | プレイヤーアプリ（Vite + React）                 |
 | `prototype/`      | —                | Browser   | デザインプロトタイプ（GitHub Pages で公開）      |
+| `scenarios/`      | —                | —         | 変換済みの旧シナリオ（`stext convert-all` の出力） |
+| `schema/`         | —                | —         | エディター補完用の JSON Schema（生成物、GitHub Pages で公開） |
 
 依存の向き: `schema` ← `core` / `convert` ← `cli`、`ui` ← `player`。逆向きの依存は作りません。
 
@@ -70,4 +72,25 @@ npm run build
 node packages/cli/dist/bin.js --help
 ```
 
-`convert` / `validate` は Phase 2、`play` は Phase 3 で実装します。現時点では「未実装」と表示して終了コード 1 を返します。
+| コマンド | 内容 |
+| --- | --- |
+| `stext convert <scenario.xml\|playground.json> [-o out.json] [--structure-conditions]` | 旧形式を stext/2 に変換する |
+| `stext convert-all <旧リポジトリの stext ディレクトリ> -o <出力先>` | 全シナリオを変換し、`index.json` と `REPORT.md` を作る |
+| `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
+| `stext play` | Phase 3 で実装予定 |
+
+シナリオ形式の詳細は [scenario-format.md](scenario-format.md) を参照してください。
+
+## 生成物の更新
+
+| 生成物 | 更新方法 | いつ |
+| --- | --- | --- |
+| `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
+| `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます |
+
+`scenarios/` と `schema/` は生成物なので Prettier の対象外です。
+
+## テストの補足
+
+- `packages/schema/test/legacy-conditions.txt` は、旧43シナリオに現れる条件（1,517種類）です。条件パーサの往復テストに使います。
+- `packages/core/src/legacy-condition.test-helper.ts` は、旧エンジンの条件判定をそのまま移植したテスト専用のコードです。新しい評価器と結果が一致することを確かめます。

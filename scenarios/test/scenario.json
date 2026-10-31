@@ -1,0 +1,569 @@
+{
+  "$schema": "https://snext1220.github.io/stext-next/schema/scenario.v2.json",
+  "format": "stext/2",
+  "meta": {
+    "title": "Untitled",
+    "id": "test",
+    "author": "Unnamed",
+    "constraint": {
+      "race": [
+        "FIGHTER"
+      ],
+      "age": [
+        "YOUNG",
+        "ADULT"
+      ],
+      "sex": "MALE"
+    },
+    "labels": {
+      "hp": "生命力",
+      "mp": "魔力",
+      "state": "状態",
+      "str": "強さ",
+      "int": "賢さ",
+      "dex": "器用",
+      "krm": "善良",
+      "free1": "ほげ",
+      "free2": "ふー",
+      "free3": "ばー"
+    },
+    "imageSet": "custom",
+    "showSummary": true
+  },
+  "items": [
+    {
+      "id": "i01",
+      "name": "Item-01",
+      "text": "Item description...",
+      "target": "param",
+      "effect": "p01:5"
+    },
+    {
+      "id": "i02",
+      "name": "Item-02",
+      "text": "2Item description...",
+      "target": "param",
+      "effect": "p02:3"
+    },
+    {
+      "id": "i03",
+      "name": "Item-03",
+      "text": "3Item description..."
+    }
+  ],
+  "flags": [
+    {
+      "id": "f01",
+      "text": "フラグ1"
+    },
+    {
+      "id": "f02",
+      "text": "フラグ2"
+    },
+    {
+      "id": "f03",
+      "text": "フラグ3"
+    }
+  ],
+  "params": [
+    {
+      "id": "p01",
+      "text": "Param description",
+      "initial": 30,
+      "min": 0,
+      "max": 50
+    },
+    {
+      "id": "p02",
+      "text": "Param description",
+      "initial": 0
+    },
+    {
+      "id": "p10",
+      "text": "敵の生命力",
+      "initial": 80,
+      "min": 40,
+      "max": 80
+    }
+  ],
+  "enemies": [
+    {
+      "id": "m01",
+      "name": "Enemy-01",
+      "text": "Enemy description...",
+      "element": "earth",
+      "attack": "physics",
+      "func": "L+2LM+M+RM+R-STR",
+      "drop": "param/p01:10/TEST"
+    },
+    {
+      "id": "m02",
+      "name": "Param Test",
+      "text": "Enemy description...",
+      "element": "earth",
+      "attack": "physics",
+      "func": "L+2LM+M+RM+R-STR",
+      "funcOpp": "L+R+STR",
+      "drop": "param/p01:10/TEST"
+    }
+  ],
+  "results": [
+    {
+      "id": "r01",
+      "name": "Result-01",
+      "text": "Result description...",
+      "level": 1
+    }
+  ],
+  "groups": [
+    {
+      "title": "Introduction",
+      "start": "0",
+      "end": "1"
+    }
+  ],
+  "licence": [
+    {
+      "name": "Bgm-01",
+      "category": "bgm",
+      "creator": "SText",
+      "url": "https://example.com/"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "0",
+      "text": "分岐テスト\n\n${input?p01}\n\n${var?i01:name}：${var?i01:text}\n${var?m01:name}：${var?m01:element}：${var?m01:text}\n${var?r01:name}：${var?r01:level}：${var?r01:text}\n${var?p01:text}：${var?p01:value}\n${var?p02:text}：${var?p02:value}",
+      "choices": [
+        {
+          "label": "次へ（ステータステスト）",
+          "to": [
+            "17"
+          ]
+        },
+        {
+          "label": "日数テスト",
+          "to": [
+            "100"
+          ],
+          "if": "e7"
+        },
+        {
+          "label": "rangeテスト",
+          "to": [
+            "100"
+          ],
+          "if": "fn:range(e,1,5)"
+        },
+        {
+          "label": "randテスト",
+          "to": [
+            "100"
+          ],
+          "if": "fn:rand(50)"
+        },
+        {
+          "label": "includeテスト（f01）",
+          "to": [
+            "17"
+          ]
+        },
+        {
+          "label": "includeテスト（f02）",
+          "to": [
+            "18"
+          ]
+        },
+        {
+          "label": "includeテスト（f03）",
+          "to": [
+            "19"
+          ]
+        },
+        {
+          "label": "includeテスト",
+          "to": [
+            "100"
+          ],
+          "if": "fn:include(2,f01,f02,f03)"
+        },
+        {
+          "label": "経過日数テスト",
+          "to": [
+            "50"
+          ]
+        },
+        {
+          "label": "次へ",
+          "to": [
+            "100"
+          ]
+        },
+        {
+          "label": "バッドエンド",
+          "to": [
+            "101"
+          ]
+        },
+        {
+          "label": "戻るテスト",
+          "to": [
+            "6"
+          ]
+        }
+      ],
+      "summary": "プロローグ",
+      "effects": {
+        "items": [
+          "i01:@10",
+          "i02",
+          "i03"
+        ],
+        "params": [
+          "p01:10"
+        ]
+      },
+      "enemies": [
+        "m01",
+        "m02"
+      ],
+      "dice": "8:5",
+      "editor": {
+        "level": 1,
+        "group": "prologue"
+      }
+    },
+    {
+      "id": "17",
+      "text": "",
+      "choices": [
+        {
+          "label": "次へ（oSTR5）",
+          "to": [
+            "17"
+          ],
+          "if": "oSTR5"
+        },
+        {
+          "label": "次へ（oSTR5+）",
+          "to": [
+            "17"
+          ],
+          "if": "oSTR5+"
+        },
+        {
+          "label": "次へ（oSTR5-）",
+          "to": [
+            "17"
+          ],
+          "if": "oSTR5-"
+        },
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "effects": {
+        "flags": [
+          "f01"
+        ]
+      }
+    },
+    {
+      "id": "18",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "effects": {
+        "flags": [
+          "f02"
+        ]
+      }
+    },
+    {
+      "id": "19",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "effects": {
+        "flags": [
+          "f03"
+        ]
+      }
+    },
+    {
+      "id": "50",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        },
+        {
+          "label": "1日未経過",
+          "to": [
+            "100"
+          ],
+          "if": "!e15"
+        },
+        {
+          "label": "1日経過",
+          "to": [
+            "100"
+          ],
+          "if": "e15"
+        },
+        {
+          "label": "朝",
+          "to": [
+            "100"
+          ],
+          "if": "fn:cycle(15,5,1)"
+        },
+        {
+          "label": "昼",
+          "to": [
+            "100"
+          ],
+          "if": "fn:cycle(15,5,2)"
+        },
+        {
+          "label": "晩",
+          "to": [
+            "100"
+          ],
+          "if": "fn:cycle(15,5,3)"
+        }
+      ],
+      "enemies": [
+        "m02"
+      ]
+    },
+    {
+      "id": "100",
+      "text": "${result?scepter}\n${result_rate?scepter}\n\n分岐として、\nf01&f02&f03、\nf01,f02,f03、\n!f01&f02&f03\n\nが用意してあります。\n\nフラグ入手でf01～f03を入手した後、\n\nボタンが出現するか確認してもらえますか。\n\n${var?p01:text}：${var?p01:value}\n${var?p02:text}：${var?p02:value}\n\n---",
+      "choices": [
+        {
+          "label": "次へ",
+          "to": [
+            "200"
+          ],
+          "if": "p01:10"
+        },
+        {
+          "label": "次へ（数値未満）",
+          "to": [
+            "200"
+          ],
+          "if": "!p01:60"
+        },
+        {
+          "label": "次へ（数値===）",
+          "to": [
+            "200"
+          ],
+          "if": "p01:@40"
+        },
+        {
+          "label": "次へ（文字列）",
+          "to": [
+            "300"
+          ],
+          "if": "p02:Rio"
+        },
+        {
+          "label": "次へ（文字列not）",
+          "to": [
+            "400"
+          ],
+          "if": "!p02:Suzuki"
+        },
+        {
+          "label": "f01&f02&f03",
+          "to": [
+            "1"
+          ],
+          "if": "f01&f02&f03"
+        },
+        {
+          "label": "f01,f02,f03",
+          "to": [
+            "2"
+          ],
+          "if": "f01,f02,f03"
+        },
+        {
+          "label": "！f01&f02&f03",
+          "to": [
+            "3"
+          ],
+          "if": "!(f01&f02&f03)"
+        },
+        {
+          "label": "フラグ入手f01",
+          "to": [
+            "4"
+          ]
+        },
+        {
+          "label": "フラグ入手f02",
+          "to": [
+            "5"
+          ]
+        },
+        {
+          "label": "フラグ入手f03",
+          "to": [
+            "6"
+          ]
+        }
+      ],
+      "summary": "本文",
+      "effects": {
+        "items": [
+          "-i01"
+        ],
+        "str": "full"
+      },
+      "rule": "999",
+      "editor": {
+        "level": 2,
+        "group": "prologue"
+      }
+    },
+    {
+      "id": "1",
+      "text": "ここからが本文です。",
+      "choices": [],
+      "summary": "分岐1",
+      "editor": {
+        "level": 3
+      }
+    },
+    {
+      "id": "2",
+      "text": "",
+      "choices": [],
+      "summary": "分岐2",
+      "editor": {
+        "x": 12.300003051757812,
+        "level": 3
+      }
+    },
+    {
+      "id": "3",
+      "text": "",
+      "choices": [],
+      "summary": "分岐3",
+      "editor": {
+        "x": 66.96846008300781,
+        "level": 3
+      }
+    },
+    {
+      "id": "4",
+      "text": "",
+      "choices": [],
+      "summary": "フラグ入手1",
+      "effects": {
+        "flags": [
+          "f01"
+        ]
+      },
+      "end": "happy",
+      "nexts": [
+        "scepter"
+      ],
+      "editor": {
+        "x": 182.3000030517578,
+        "level": 3,
+        "group": "happy"
+      }
+    },
+    {
+      "id": "5",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "summary": "フラグ入手2",
+      "effects": {
+        "flags": [
+          "f02"
+        ]
+      },
+      "editor": {
+        "x": 133.6315460205078,
+        "level": 3
+      }
+    },
+    {
+      "id": "6",
+      "text": "",
+      "choices": [
+        {
+          "label": "戻るテスト",
+          "to": [
+            "90000"
+          ]
+        },
+        {
+          "label": "戻る",
+          "to": [
+            "0"
+          ]
+        }
+      ],
+      "summary": "フラグ入手3",
+      "effects": {
+        "flags": [
+          "f03"
+        ]
+      },
+      "editor": {
+        "x": 6.6315460205078125,
+        "level": 3
+      }
+    },
+    {
+      "id": "101",
+      "text": "bad",
+      "choices": [],
+      "summary": "分岐2",
+      "end": "bad",
+      "nexts": [
+        "test"
+      ],
+      "editor": {
+        "x": 12.300003051757812
+      }
+    },
+    {
+      "id": "999",
+      "text": "+ ${title}\n+ ${name}\n\n![幕末ソーサリアン](add3.gif)",
+      "choices": [],
+      "summary": "ルール"
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "$schema": "https://snext1220.github.io/stext-next/schema/scenario.v2.json",
+  "format": "stext/2",
+  "meta": {
+    "title": "STextデータブック",
+    "id": "material",
+    "author": "STextチーム",
+    "description": "サンプルシナリオ紹介",
+    "bgm": {
+      "main": "@field05",
+      "happy": "@field04",
+      "bad": "@town01"
+    }
+  },
+  "items": [],
+  "flags": [],
+  "params": [],
+  "enemies": [
+    {
+      "id": "m7010",
+      "name": "グリーンスライムLv1",
+      "text": "本文を参照",
+      "element": "earth",
+      "attack": "physics",
+      "func": "2L+2R+10-STR-FREE1-10FREE2"
+    }
+  ],
+  "results": [],
+  "groups": [],
+  "licence": [],
+  "scenes": [
+    {
+      "id": "0",
+      "text": "# SORCERIAN Text Data Book\n\nプロトタイプ版です。\n\n現時点では、緩い形での賛同（参加表明）があった方のシナリオのみを暫定的に入れていますが、もちろん、同じ要領で対応シナリオはどんどん増やしていければと。\n\nフォーマットも最低限揃えていきたいとは思いますが、あまり無理をしても仕方がないので、様子を見つつ。\nまずは、ご参考までに。\n\n現在は、ドラスレのスライムデータのみ入れています。\n\n\n```\nA long time ago,so long ago that memories did not exist.\n\nLove was not wide spread among the people\nand it was magic or might that ruled the lands.\n\nThere were men that set our on precarious adventures\nin order to test their strength and courage.\n\nPeople called these men.....\n\n\nSorcerian.\n```",
+      "choices": [
+        {
+          "label": "新・消えた王様の杖",
+          "to": [
+            "1000"
+          ]
+        },
+        {
+          "label": "災厄の夜 - テンペスト・ナイト",
+          "to": [
+            "4000"
+          ]
+        },
+        {
+          "label": "少女は英雄を語りて",
+          "to": [
+            "5000"
+          ]
+        },
+        {
+          "label": "その名はドラゴンスレイヤー",
+          "to": [
+            "7000"
+          ]
+        },
+        {
+          "label": "魂の選択",
+          "to": [
+            "10000"
+          ]
+        },
+        {
+          "label": "トラベラーズ☆イン",
+          "to": [
+            "13000"
+          ]
+        },
+        {
+          "label": "終焉のゼロ - ドラゴンモード0 -",
+          "to": [
+            "14000"
+          ]
+        },
+        {
+          "label": "常闇から来たる影",
+          "to": [
+            "15000"
+          ]
+        },
+        {
+          "label": "金竜の陰謀",
+          "to": [
+            "18000"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1000",
+      "text": "## 新・消えた王様の杖",
+      "choices": []
+    },
+    {
+      "id": "4000",
+      "text": "## 災厄の夜 - テンペスト・ナイト",
+      "choices": []
+    },
+    {
+      "id": "5000",
+      "text": "## 少女は英雄を語りて",
+      "choices": []
+    },
+    {
+      "id": "7000",
+      "text": "## その名はドラゴンスレイヤー\n\nシナリオ単位に、インデックスページを設けます。\n\nモンスター以外を扱う場合には、以下のように見出しで区切ってください。\n＃モンスターのみの場合は見出しは付けません。\nもちろん、「舞台」「実績」など、ここで挙げた以外の見出しも可能です。\n\n### モンスター\n\n%red%紹介文は1項目／シーンにて%/%\n\n#### フィールド",
+      "choices": [
+        {
+          "label": "グリーンスライムLv1",
+          "to": [
+            "7010"
+          ]
+        },
+        {
+          "label": "ほげほげ",
+          "to": [
+            "7010"
+          ],
+          "before": "#### 森林\n\n#### ＊＊＊＊＊＊＊＊＊\n\n### 登場人物"
+        },
+        {
+          "label": "ほげほげ",
+          "to": [
+            "7010"
+          ],
+          "before": "### アイテム"
+        }
+      ]
+    },
+    {
+      "id": "7010",
+      "text": "## グリーンスライムLv1\n\n### 特性\n\n…知能が無いためか緊張感無く街の近くに現れるスライム…\nのどかさが増すだけだが一応倒しておくべきか。\n趣味がスライムいじめとは言われない程度に。\n\n%red%図などを加えるならば、ここで%/%\n\n### 想定パラメータ\n\nここはドラスレ固有？他シナでの設置は難しいかも。\n\n| パラメーター | 値 |\n| -- | -- |\n| HP | 75 |\n| MP | 75 |\n| STR | 6 |\n| INT | 6 |\n| DEX | 7 |\n| KRM | 5 |\n| FREE1 | 0 |\n| FREE2 | 1 |\n\n%red%enemy番号は競合を防ぐため、idと一致させること。%/%",
+      "choices": [
+        {
+          "label": "戻る",
+          "to": [
+            "7000"
+          ]
+        }
+      ],
+      "enemies": [
+        "m7010"
+      ]
+    },
+    {
+      "id": "10000",
+      "text": "## 魂の選択",
+      "choices": []
+    },
+    {
+      "id": "13000",
+      "text": "## トラベラーズ☆イン",
+      "choices": []
+    },
+    {
+      "id": "14000",
+      "text": "## 終焉のゼロ - ドラゴンモード0 -",
+      "choices": []
+    },
+    {
+      "id": "15000",
+      "text": "## 常闇から来たる影",
+      "choices": []
+    },
+    {
+      "id": "18000",
+      "text": "## 金竜の陰謀",
+      "choices": []
+    }
+  ]
+}

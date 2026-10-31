@@ -1,14 +1,14 @@
 /**
- * @stext/schema — シナリオ JSON（stext/2）のスキーマと型。
+ * @stext/schema — シナリオ JSON（stext/2）のスキーマ・型・条件式。
  *
  * Universal パッケージ: DOM・Node 固有 API に依存しない。
- * JSON Schema 本体と条件 AST の型は Phase 2 で追加する（docs/migration-plan.md §2.3, §3）。
+ * 設計は docs/migration-plan.md §2.3（条件式）、§3（シナリオ JSON）。
  */
+export * from './condition.js';
+export * from './scenario.js';
+export * from './check.js';
 
-/** シナリオ JSON の `format` フィールドに入る値 */
-export const SCENARIO_FORMAT = 'stext/2';
-
-export type ScenarioFormat = typeof SCENARIO_FORMAT;
+import { SCENARIO_FORMAT, type ScenarioFormat } from './scenario.js';
 
 /** `format` フィールドの値が、このパッケージが扱う形式かどうか */
 export function isScenarioFormat(value: unknown): value is ScenarioFormat {

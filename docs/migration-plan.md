@@ -1,6 +1,6 @@
 # ソーサリアンText 次世代化 移行計画（v2 計画書・ドラフト）
 
-> ステータス: **Phase 1（基盤整備）完了**。ロジック開発は Phase 2 から（開発手順は [`development.md`](development.md)）
+> ステータス: **Phase 2（スキーマと変換器）完了**。次は Phase 3（コアエンジン）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)
 > 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
 > デザインプロトタイプ: [`prototype/design/index.html`](../prototype/design/index.html)（ブラウザで直接開けます）
@@ -200,7 +200,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 | バージョン | なし | `"format": "stext/2"` と `$schema` を必須に |
 | メタ情報 | `title` `author` `init.*` に分散 | `meta`（title, author, description, keywords, constraint, bgm, labels）へ集約 |
 | 選択肢 | 別配列 `edges[] {from,to,label,condition}` | **（決定）** シーン内 `choices[]` に保持（`to` は配列でランダム分岐を表現）。Playgroundのフロー図は `choices` から導出 |
-| 効果 | `items: "i99"` などカンマ区切り文字列 | `effects: { items: ["i99"], flags: ["f99"], hp: -5, ... }` の配列/数値 |
+| 効果 | `items: "i99"` などカンマ区切り文字列 | `effects: { items: ["i99"], flags: ["f99"], hp: -5, ... }` の配列/数値。値の書き方（`"full"`、`"-5..-1"`、`"@3"` など）は旧形式を引き継ぐ |
 | 敵の参照 | `enemies: "m99,m98"` | `enemies: ["m99","m98"]` |
 | 条件 | `condition: "f01"`（文字列） | `if`: 文字列記法または条件ASTオブジェクト（§2.3） |
 | エディタ専用情報 | `label`, `x`, `y`, `group` がシーンに混在 | `editor: { x, y, label }` に分離（エンジンは無視） |
@@ -229,7 +229,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
       "id": "1000",
       "summary": "王さまの依頼",
       "text": "……嗚呼、誉れ高き勇者よ…！\n\n![王さまの杖](scepter.png)",
-      "effects": { "results": ["r01"] },
+      "effects": { "result": "r01" },
       "choices": [{ "label": "君のぼやきは止まらない", "to": ["1010"] }]
     },
     {
@@ -253,12 +253,42 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 
 ### 3.1 XML → JSON 変換器（`@stext/convert`）
 
-- 入力: `scenario.xml`（ブラウザでは `DOMParser`、Node では `fast-xml-parser` などを差し替え注入）
-- 出力: v2 JSON ＋ 変換レポート（警告: 未定義ID参照、抽出できなかった選択肢、未知の属性 等）
+- 入力: `scenario.xml`、Playground の JSON（`edges` 形式。Playground が XML を書き出すときと同じ規則で選択肢にする）
+- XML の解析には pure JavaScript の `fast-xml-parser` を使う。ブラウザでも Node でも同じコードで動くため、当初案のパーサの差し替え注入は不要になった
+- 出力: v2 JSON ＋ 変換時の指摘（エラー／警告）。`stext convert-all` は旧リポジトリの全シナリオを `scenarios/<id>/scenario.json` に書き出し、`index.json`（一覧）と `REPORT.md`（指摘の一覧）も作る
 - 一方向のみ（JSON→XMLは提供しない）
 - 条件は**既定では文字列のまま出力**する（変換の確実性を優先）。`--structure-conditions` 指定時は条件ASTで出力する。どちらの場合も変換時に全条件をパースし、構文エラーや未定義IDの参照をレポートに出す
-- 検証方法: **43シナリオ全件**を変換し、①スキーマ検証 ②旧エンジンと新エンジンで同一シード・同一選択列を流して到達シーン列・状態が一致すること（差分テスト）を確認
-- Playgroundの既存JSON（`edges`形式）からv2への変換も同パッケージで提供
+
+#### 変換の規則（Phase 2 で確定）
+
+旧エンジンの挙動を調べたうえで、次のとおり変換する。詳細は [`scenario-format.md`](scenario-format.md)。
+
+| 旧形式 | stext/2 |
+|---|---|
+| 本文中の `[ラベル](遷移先 "条件")` | `choices[]`。43シナリオでは、リンクが `${if}` の中や `${import}` で読み込まれる本文に現れることはなく、すべて抜き出せた |
+| 選択肢の間・後ろの文章（22シーン） | 次の選択肢の `before`、または `afterText` |
+| `[..](X)` / `[..](Q)` | `{ kind: "jump" }` / `{ kind: "answer" }` |
+| `6700,6700,6701;7` | `to` の配列と `randomCacheDays` |
+| 魔法の条件（`mHEAL`）を持つ選択肢を選ぶと星を消費 | `cast: ["HEAL"]` として明示 |
+| シーン 99998 の自動付加 | `meta.footerScene` と `excludeFooter` |
+| フラグ説明の先頭の `*`（隠しフラグ） | `hidden: true` |
+| `x` `y` `level` `color` `group` | `editor`（エンジンは使わない） |
+
+#### 検証（Phase 2 で実施）
+
+- **43シナリオ全件**（6,563シーン、13,396選択肢、3,848条件）を変換し、スキーマ検証と、生成した JSON Schema を別実装（Ajv）で検証した結果が一致することをテストで確認
+- 条件：43シナリオに現れる1,517種類の条件のうち1,514種類を AST に変換でき、文字列→AST→文字列→AST の往復で一致する。残る3件はシナリオ側の誤り（下記）
+- 条件の意味：旧エンジンの判定処理をテスト内に移植し、ランダムな60通りの状態で全条件を新しい評価器（`@stext/core` の `evaluateCondition`）と比べ、約9万回の判定がすべて一致することを確認。このため条件の評価器は Phase 3 から前倒しで実装した
+  - 唯一の意図的な差：旧エンジンでは呪い状態のとき、条件の `mUN-CURCE`（呪いを解く魔法）が常に偽になっていた。新しい評価器では唱えられる
+- 旧エンジンとの差分テスト（同じ乱数・同じ選択でシーン列と状態が一致すること）は、エンジン本体ができる Phase 3 で行う
+
+#### 変換で見つかった旧シナリオの誤り
+
+`scenarios/REPORT.md` にエラー12件・警告96件をまとめた。エラーはいずれも旧エンジンでも正しく動いていなかった箇所で、元のシナリオで直して変換し直すのが望ましい。
+
+- 存在しない遷移先：9件（`test`・`playground` のサンプル、`slayer`）
+- 解釈できない条件：3件。`f05,-f06` のようにカンマ区切りの途中に `-` を書いたもの（旧エンジンでは常に偽になり、選択肢が出なかった）2件、`%amp;` が混入したもの1件
+- 主な警告：解釈できない効果の値（`hp="@0"` など。旧エンジンでは HP が NaN になっていた）、定義のない ID の参照、ID が空の定義
 
 ---
 
@@ -305,8 +335,8 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 |-------|------|--------|------|
 | **0. 準備** | 現状調査・計画・デザインプロトタイプ | 本書、プロトタイプ | 完了 |
 | **1. 基盤** | モノレポ化、TS/Vite/Vitest/ESLint/Prettier導入、CI（GitHub Actions）。現行版は `snext1220/stext` に残す | ビルド・テストが回る空のパッケージ群 | 完了 |
-| **2. スキーマと変換器** | v2 JSON Schema 確定（条件ASTの定義、`parseCondition` / `formatCondition` を含む）、`@stext/convert` 実装、43シナリオ一括変換、変換レポートの確認と手修正 | `scenarios/*/scenario.json`、`stext convert/validate` | 2〜3週 |
-| **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器 → 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`（Node上でヘッドレスプレイ可） | 4〜6週 |
+| **2. スキーマと変換器** | v2 JSON Schema 確定（条件ASTの定義、`parseCondition` / `formatCondition` を含む）、`@stext/convert` 実装、43シナリオ一括変換、変換レポートの作成 | `scenarios/*/scenario.json`、`stext convert/convert-all/validate`、`schema/scenario.v2.json` | 完了（旧シナリオ側の手修正は未実施） |
+| **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器（Phase 2 で前倒し済み）→ 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`（Node上でヘッドレスプレイ可） | 4〜6週 |
 | **4. プレイヤーUI** | プロトタイプを元に `@stext/ui` と `apps/player` を実装。BGM/SE、トースト、ダイアログ群 | 新プレイヤー（β） | 4〜6週 |
 | **5. 並行公開・検証** | `?engine=v2` のようなクエリで新旧切り替え。小規模シナリオから順に新版をデフォルト化。旧セーブの自動移行 | 全シナリオ新版対応 | 2〜4週 |
 | **6. Playground刷新** | 新エディタ（React）。vis.js→React Flow 等への置き換え、Ace→Monaco/CodeMirror 6 検討。出力はv2 JSON | 新Playground | 別途 |
@@ -354,9 +384,9 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」（§2.3）
 - デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
 - 選択肢は各シーンの `choices[]` に持たせる（§3）。Playground のフロー図は `choices` から導出する
-- Phase 1（基盤整備）完了
+- Phase 1（基盤整備）、Phase 2（スキーマと変換器）完了
 
-次（Phase 2: スキーマと変換器）:
+次:
 
-1. `@stext/schema` に JSON Schema・型・条件パーサ（文字列⇔AST）を実装
-2. `@stext/convert` で `snext1220/stext` の43シナリオを一括変換し、変換レポートを確認
+1. `scenarios/REPORT.md` のエラー12件を、旧リポジトリのシナリオで直すかどうかの判断（直す場合は `npm run convert:legacy` で変換し直す）
+2. Phase 3（コアエンジン）：状態とセーブデータの型、シーン遷移と効果の適用、マクロ展開、戦闘、旧エンジンとの差分テスト
