@@ -54,6 +54,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // page.evaluate の中はブラウザで動く
+    files: ['scripts/difftest.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  {
     files: ['packages/ui/**', 'apps/player/**'],
     languageOptions: { globals: globals.browser },
     plugins: { 'react-hooks': reactHooks },
