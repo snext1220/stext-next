@@ -93,6 +93,7 @@ npm run dev:playground
 | 文書 | 内容 |
 | --- | --- |
 | [docs/migration-plan.md](docs/migration-plan.md) | 移行計画と各フェーズの結果 |
+| [docs/project-notes.md](docs/project-notes.md) | 決定事項・開発ルール・進捗のまとめ |
 | [docs/scenario-format.md](docs/scenario-format.md) | シナリオ JSON（stext/2）の書き方 |
 | [docs/engine.md](docs/engine.md) | ゲームエンジン（`@stext/core`）の使い方 |
 | [docs/development.md](docs/development.md) | 開発の手順（テスト、変換、差分テストなど） |
