@@ -15,14 +15,14 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 ```
 
 - 開発サーバーは `scenarios/` を `/scenarios/` で配信します。
-- 旧リポジトリ（snext1220/stext）をこのリポジトリと同じ階層（`../stext`）に clone しておくと、画像・BGM をそこから配信します（`/legacy-assets/`）。ない場合は既定の配信元（`https://snext1220.github.io/stext/stext/`）を使います。
+- 画像・BGM・効果音（`assets/`）も `/assets/` で配信します。`assets/` は旧リポジトリから `scripts/import-legacy-assets.mjs` で取り込んだものです（[assets/README.md](../assets/README.md)）。
 
 | 環境変数 | 内容 |
 | --- | --- |
-| `VITE_ASSET_BASE` | 画像・BGM・効果音の配信元（旧リポジトリの `stext/` ディレクトリに当たる URL。末尾は `/`） |
+| `VITE_ASSET_BASE` | 画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときに、旧リポジトリの `stext/` と同じ構成の URL を末尾 `/` 付きで指定） |
 | `VITE_SCENARIO_BASE` | シナリオ JSON の配信元（既定はビルド結果の `scenarios/`） |
 
-`npm run build` の結果（`apps/player/dist/`）には `scenarios/` も含まれるので、そのまま静的サイトとして公開できます。
+`npm run build` の結果（`apps/player/dist/`）には `scenarios/` と `assets/` も含まれるので、そのまま静的サイトとして公開できます。
 
 ## よく使うコマンド
 
@@ -97,8 +97,9 @@ node packages/cli/dist/bin.js --help
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
 | `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます |
+| `assets/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます） |
 
-`scenarios/` と `schema/` は生成物なので Prettier の対象外です。
+`scenarios/`・`schema/`・`assets/` は生成物なので Prettier の対象外です。
 
 ## テストの補足
 

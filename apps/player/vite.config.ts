@@ -7,8 +7,8 @@ import { workspaceAliases } from '../../workspace-aliases.js';
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const scenariosDir = join(repoRoot, 'scenarios');
-/** 旧リポジトリ（snext1220/stext）の素材。../stext に clone してあれば開発サーバーで使う */
-const legacyAssets = join(repoRoot, '..', 'stext', 'stext');
+/** 画像・BGM・効果音（旧リポジトリから scripts/import-legacy-assets.mjs で取り込んだもの） */
+const assetsDir = join(repoRoot, 'assets');
 
 const TYPES: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
@@ -31,37 +31,26 @@ function serveDir(prefix: string, dir: string): Plugin['configureServer'] {
   };
 }
 
-/** scenarios/ を開発サーバーで配信し、ビルド結果にも含める */
-function scenarios(): Plugin {
+/** リポジトリのディレクトリを開発サーバーで配信し、ビルド結果にも含める（scenarios/、assets/） */
+function publish(name: string, dir: string): Plugin {
   let outDir = 'dist';
   return {
-    name: 'stext-scenarios',
+    name: `stext-${name}`,
     configResolved(config) {
       outDir = config.build.outDir;
     },
-    configureServer: serveDir('/scenarios', scenariosDir),
+    configureServer: serveDir(`/${name}`, dir),
     closeBundle() {
-      cpSync(scenariosDir, join(outDir, 'scenarios'), { recursive: true });
+      if (existsSync(dir)) cpSync(dir, join(outDir, name), { recursive: true });
     },
   };
 }
 
-function legacy(): Plugin {
-  return { name: 'stext-legacy-assets', configureServer: serveDir('/legacy-assets', legacyAssets) };
-}
-
-export default defineConfig(({ command }) => ({
-  plugins: [react(), scenarios(), legacy()],
+export default defineConfig(() => ({
+  plugins: [react(), publish('scenarios', scenariosDir), publish('assets', assetsDir)],
   resolve: { alias: workspaceAliases },
   base: './',
   // 本体は React・zod（シナリオの検証）・Markdown の描画で約 500 kB（gzip で約 160 kB）。変換所は別に読み込む
-  build: { chunkSizeWarningLimit: 600 },
-  define: {
-    // 画像・BGM の配信元。開発時に ../stext があればそれを使う
-    __DEFAULT_ASSET_BASE__: JSON.stringify(
-      command === 'serve' && existsSync(legacyAssets)
-        ? '/legacy-assets/'
-        : 'https://snext1220.github.io/stext/stext/',
-    ),
-  },
+  // ビルドした JS・CSS は _app/ に置き、素材の assets/ と混ざらないようにする
+  build: { chunkSizeWarningLimit: 600, assetsDir: '_app' },
 }));

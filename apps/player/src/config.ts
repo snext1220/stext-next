@@ -1,5 +1,5 @@
-/** 画像・BGM・効果音の配信元（末尾は /）。旧リポジトリの stext/ ディレクトリと同じ構成 */
-export const ASSET_BASE = import.meta.env.VITE_ASSET_BASE ?? __DEFAULT_ASSET_BASE__;
+/** 画像・BGM・効果音の配信元（末尾は /）。既定はビルド結果の assets/（旧リポジトリの stext/ と同じ構成） */
+export const ASSET_BASE = import.meta.env.VITE_ASSET_BASE ?? `${import.meta.env.BASE_URL}assets/`;
 
 /** シナリオ JSON の配信元（末尾は /） */
 export const SCENARIO_BASE =
