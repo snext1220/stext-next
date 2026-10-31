@@ -4,13 +4,14 @@ export type Route =
   | { name: 'library' }
   | { name: 'create'; id: string }
   | { name: 'play'; id: string }
-  | { name: 'convert' };
+  | { name: 'convert' }
+  | { name: 'records' };
 
 /** #/play/scepter のようなハッシュを読む */
 export function parseRoute(hash: string): Route {
   const [, name, id] = hash.replace(/^#/, '').split('/');
   if ((name === 'play' || name === 'create') && id) return { name, id: decodeURIComponent(id) };
-  if (name === 'convert') return { name };
+  if (name === 'convert' || name === 'records') return { name };
   return { name: 'library' };
 }
 

@@ -15,6 +15,10 @@ export interface ScenarioEntry {
   comment?: string;
   scenes: number;
   results: number;
+  /** どれかを獲得していればクリアとみなす実績 */
+  clears?: string[];
+  /** 公開前 */
+  unpublished?: boolean;
 }
 
 let indexPromise: Promise<ScenarioEntry[]> | undefined;

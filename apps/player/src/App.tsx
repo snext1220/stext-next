@@ -8,6 +8,7 @@ import { href, navigate, useRoute } from './router.js';
 import { Create } from './screens/Create.js';
 import { Library } from './screens/Library.js';
 import { Play } from './screens/Play.js';
+import { Records } from './screens/Records.js';
 import {
   loadGame,
   loadGlobal,
@@ -73,6 +74,13 @@ export function App() {
             </a>
             <a
               className="chip-btn"
+              aria-current={route.name === 'records' ? 'page' : undefined}
+              href={href({ name: 'records' })}
+            >
+              記録
+            </a>
+            <a
+              className="chip-btn"
               aria-current={route.name === 'convert' ? 'page' : undefined}
               href={href({ name: 'convert' })}
             >
@@ -103,6 +111,7 @@ export function App() {
         {route.name === 'library' && (
           <Library global={global} settings={settings} onSettings={setSettings} />
         )}
+        {route.name === 'records' && <Records global={global} onGlobal={setGlobal} />}
         {route.name === 'convert' && (
           <Suspense fallback={<p className="empty-state">変換所を開いています…</p>}>
             <Convert />

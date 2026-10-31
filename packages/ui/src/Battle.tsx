@@ -53,6 +53,9 @@ export interface EnemyCardProps {
   /** 戦利品の表示名 */
   dropName?: string;
   dropTaken?: boolean;
+  /** 撃破チェック（旧 Battle Sheet のチェックボックス。複数の敵がいるときの目印） */
+  defeatedChecked?: boolean;
+  onToggleDefeated?: (checked: boolean) => void;
   onReceive?: () => void;
   onAttack?: () => void;
   onDrop?: () => void;
@@ -66,16 +69,30 @@ export function EnemyCard({
   hp,
   dropName,
   dropTaken,
+  defeatedChecked,
+  onToggleDefeated,
   onReceive,
   onAttack,
   onDrop,
   attackLabel,
 }: EnemyCardProps) {
-  const defeated = hp !== undefined && hp <= 0;
+  const defeated = (hp !== undefined && hp <= 0) || Boolean(defeatedChecked);
   return (
     <section className={'enemy' + (defeated ? ' defeated' : '')} aria-label={`敵：${enemy.name}`}>
       <div className="enemy-top">
-        <h3>{enemy.name}</h3>
+        <h3>
+          {onToggleDefeated && (
+            <input
+              type="checkbox"
+              className="defeat-check"
+              checked={Boolean(defeatedChecked)}
+              onChange={(e) => onToggleDefeated(e.target.checked)}
+              aria-label={`${enemy.name}を撃破した`}
+              title="撃破した"
+            />
+          )}
+          {enemy.name}
+        </h3>
         <div className="tags">
           <span className="tag">
             属性 <b>{ELEMENT_NAMES[enemy.element ?? ''] ?? '無'}</b>

@@ -13,7 +13,7 @@ import {
 
 const memory = new Map<string, string>();
 
-function get(key: string): string | null {
+export function readRaw(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch {
@@ -21,7 +21,7 @@ function get(key: string): string | null {
   }
 }
 
-function set(key: string, value: string) {
+export function writeRaw(key: string, value: string) {
   memory.set(key, value);
   try {
     localStorage.setItem(key, value);
@@ -31,7 +31,7 @@ function set(key: string, value: string) {
 }
 
 export function loadGlobal(): GlobalState {
-  const raw = get(GLOBAL_SAVE_KEY);
+  const raw = readRaw(GLOBAL_SAVE_KEY);
   try {
     return raw ? readLegacyGlobal(raw) : emptyGlobalState();
   } catch {
@@ -40,11 +40,11 @@ export function loadGlobal(): GlobalState {
 }
 
 export function saveGlobal(global: GlobalState) {
-  set(GLOBAL_SAVE_KEY, JSON.stringify(global));
+  writeRaw(GLOBAL_SAVE_KEY, JSON.stringify(global));
 }
 
 export function loadGame(id: string): GameState | undefined {
-  const raw = get(id);
+  const raw = readRaw(id);
   if (!raw) return undefined;
   try {
     return readLegacySave(raw);
@@ -54,7 +54,7 @@ export function loadGame(id: string): GameState | undefined {
 }
 
 export function saveGame(id: string, state: GameState) {
-  set(id, JSON.stringify(state));
+  writeRaw(id, JSON.stringify(state));
 }
 
 export interface Settings {
@@ -73,7 +73,7 @@ export function loadSettings(): Settings {
     return {
       theme: 'system',
       fontSize: 'medium',
-      ...(JSON.parse(get(SETTINGS_KEY) ?? '{}') as Partial<Settings>),
+      ...(JSON.parse(readRaw(SETTINGS_KEY) ?? '{}') as Partial<Settings>),
     };
   } catch {
     return { theme: 'system', fontSize: 'medium' };
@@ -81,5 +81,5 @@ export function loadSettings(): Settings {
 }
 
 export function saveSettings(settings: Settings) {
-  set(SETTINGS_KEY, JSON.stringify(settings));
+  writeRaw(SETTINGS_KEY, JSON.stringify(settings));
 }

@@ -16,6 +16,8 @@ export type GameEvent =
   | { type: 'stoneDeath' }
   | { type: 'forgetCured' }
   | { type: 'notEnoughStars' }
+  | { type: 'itemUsed'; id: string }
+  | { type: 'itemNotUsable'; id: string }
   | { type: 'bonusAwarded'; id: string }
   | { type: 'warning'; message: string };
 

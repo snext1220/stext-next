@@ -49,6 +49,22 @@ describe('panels', () => {
     expect(queryByText('秘密')).toBeNull();
   });
 
+  it('offers to use the items that have a target', () => {
+    const onUse = vi.fn();
+    const sc = {
+      ...scenario,
+      items: [...scenario.items, { id: 'i02', name: '薬草', target: 'hp', effect: '10' }],
+    };
+    const s = { ...state(), items: ['i01', 'i02'] };
+    const { getAllByRole, getByText } = render(
+      <ItemsPanel scenario={sc} state={s} onUse={onUse} />,
+    );
+    expect(getAllByRole('button', { name: /を使う$/ })).toHaveLength(1);
+    expect(getByText(/★/)).toBeTruthy();
+    fireEvent.click(getAllByRole('button', { name: '薬草を使う' })[0]!);
+    expect(onUse).toHaveBeenCalledWith('i02');
+  });
+
   it('casts only the magic the stars allow', () => {
     const onCast = vi.fn();
     const { getAllByRole } = render(<MagicPanel state={state()} onCast={onCast} />);
