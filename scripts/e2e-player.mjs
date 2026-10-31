@@ -63,8 +63,9 @@ await page.evaluate(() => {
   s.chara.hp -= 20;
   localStorage.setItem('scepter', JSON.stringify(s));
 });
-await page.goto(`${base}/#/library`);
 await page.goto(`${base}/#/play/scepter`);
+// セーブデータを書き換えたので、読み込み直す
+await page.reload();
 await page.waitForSelector('.enemy');
 await page.click('text=ダイスを振る');
 await page.click('text=敵の攻撃');
@@ -110,8 +111,9 @@ await page.evaluate(() => {
   s.scene = '2020';
   localStorage.setItem('scepter', JSON.stringify(s));
 });
-await page.goto(`${base}/#/library`);
 await page.goto(`${base}/#/play/scepter`);
+// セーブデータを書き換えたので、読み込み直す
+await page.reload();
 await page.waitForSelector('.enemy');
 await page.click('.defeat-check >> nth=0');
 check('撃破チェックで敵に印が付く', (await page.locator('.enemy.defeated').count()) === 1);
@@ -149,12 +151,35 @@ await page.evaluate(() => {
   s.scene = '21';
   localStorage.setItem('baku03', JSON.stringify(s));
 });
-await page.goto(`${base}/#/library`);
 await page.goto(`${base}/#/play/baku03`);
+// セーブデータを書き換えたので、読み込み直す
+await page.reload();
 await page.waitForSelector('.prose');
 check(
   '${effect} が文字ごとの演出になる',
   (await page.locator('.stext-letter.fx-fadeInDown').count()) > 5,
+);
+
+// アイテムを使う（baku03 の「軟膏」：HP を 10 回復）
+await page.evaluate(() => {
+  const s = JSON.parse(localStorage.getItem('baku03'));
+  s.items = ['i02'];
+  s.chara.hp = s.chara.hp_m - 20;
+  localStorage.setItem('baku03', JSON.stringify(s));
+});
+await page.goto(`${base}/#/play/baku03`);
+// セーブデータを書き換えたので、読み込み直す
+await page.reload();
+await page.waitForSelector('.prose');
+await page.click('[role=tab]:has-text("持ち物")');
+await page.click('button:has-text("使う")');
+await page.click('[role=tab]:has-text("冒険者")');
+const [hpNow, hpMax] = (await hp()).split('/').map((v) => Number(v));
+check(
+  'アイテムを使うと効果が出て、なくなる',
+  hpNow === hpMax - 10 &&
+    (await page.evaluate(() => JSON.parse(localStorage.getItem('baku03')).items.length)) === 0,
+  `${hpNow} / ${hpMax}`,
 );
 
 // スマホ幅
