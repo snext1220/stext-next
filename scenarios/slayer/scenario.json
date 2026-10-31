@@ -2968,7 +2968,7 @@
       "name": "石化の鱗粉Lv7/石化",
       "text": "吸い込んでも体にまとわりついても石化してしまう鱗粉｡",
       "attack": "both",
-      "func": " 7L+7R+500-STR-INT-FREE1-10FREE2",
+      "func": "7L+7R+500-STR-INT-FREE1-10FREE2",
       "drop": "mon/1,tue/1,wed/1,thu/1,fri/1,sat/1,sun/1,item/i2861/毒蛾粉"
     },
     {
@@ -2986,6 +2986,7 @@
       "attack": "physics",
       "func": "10L+10R+500-STR-DEX-FREE1-10FREE2",
       "funcOpp": "7L+7R+STR+INT+DEX+KRM-100",
+      "hp": "p2861",
       "drop": "item/i2861/毒蛾粉"
     },
     {
@@ -2996,6 +2997,7 @@
       "attack": "補正",
       "func": "*毒針:1/2､距離~10:x2､11~15:x1､16~:1/2",
       "funcOpp": "7L+7R+STR+INT+DEX+KRM",
+      "hp": "p2861",
       "drop": "item/i2861/毒蛾粉"
     },
     {
@@ -3294,6 +3296,7 @@
       "text": "最強のドラゴン｡攻撃力/知力/魔力全てが高く獰猛｡ある程度天候を操り､雷雲をたずさえる｡",
       "attack": "本体",
       "funcOpp": "9L+9R+STR+INT+DEX+KRM-100",
+      "hp": "p4101",
       "drop": "item/i4150/逆鱗,sun/2,sun/2,sun/2,sun/2,sun/2,sun/2"
     },
     {
@@ -3739,7 +3742,7 @@
       "func": "15L+15R+400-STR-DEX-FREE1,20L+20R+250-2DEX-FREE1,10L+10R+750-2STR-FREE1",
       "funcOpp": "11L+11R+STR+INT+KRM-100",
       "hp": 666,
-      "drop": "mon/2,tue/2,wed/2,thu/2,fri/2,sat/2,sun/2, item/i40/ｴｸｽｶﾘﾊﾟｰ,item/i41/ｲﾋﾟﾙｿｰﾄﾞ,item/i42/ﾑﾗｻﾒﾌﾟﾚｰﾄﾞ,item/i70/ﾛﾄの剣,item/i80/？けん,item/i101/ﾛﾝｸﾞｿｰﾄﾞ,item/i103/ｶﾀﾅﾌﾞﾚｰﾄﾞ,item/i107/ﾂｲﾝｿｰﾄﾞ"
+      "drop": "mon/2,tue/2,wed/2,thu/2,fri/2,sat/2,sun/2,item/i40/ｴｸｽｶﾘﾊﾟｰ,item/i41/ｲﾋﾟﾙｿｰﾄﾞ,item/i42/ﾑﾗｻﾒﾌﾟﾚｰﾄﾞ,item/i70/ﾛﾄの剣,item/i80/？けん,item/i101/ﾛﾝｸﾞｿｰﾄﾞ,item/i103/ｶﾀﾅﾌﾞﾚｰﾄﾞ,item/i107/ﾂｲﾝｿｰﾄﾞ"
     },
     {
       "id": "m11052",
@@ -4068,6 +4071,7 @@
       "attack": "邪神",
       "func": "奇:十字/偶:超力",
       "funcOpp": "8L+8R+STR+INT+KRM-350",
+      "hp": "p15001",
       "drop": "none"
     },
     {
@@ -4115,6 +4119,7 @@
       "attack": "physics",
       "func": "18L+18R+900-2STR-FREE1",
       "funcOpp": "16L+16R+STR+INT+KRM-250",
+      "hp": "p16011",
       "drop": "none"
     },
     {
@@ -4124,6 +4129,7 @@
       "attack": "physics",
       "func": "20L+20R+700-3DEX-FREE1",
       "funcOpp": "16L+16R+STR+INT+KRM-250",
+      "hp": "p16012",
       "drop": "none"
     },
     {
@@ -4133,6 +4139,7 @@
       "attack": "both",
       "func": "16L+16R+999-STR-INT-DEX",
       "funcOpp": "16L+16R+STR+INT+KRM-250",
+      "hp": "p16013",
       "drop": "none"
     },
     {
@@ -4142,6 +4149,7 @@
       "attack": "magic",
       "func": "24L+24R+999-INT-FREE1",
       "funcOpp": "16L+16R+STR+INT+KRM-300",
+      "hp": "p16021",
       "drop": "none"
     },
     {
@@ -4173,7 +4181,8 @@
       "name": "にんじゃLv18(二刀流)/2回攻撃/先制無効/魔法耐性/前列",
       "attack": "physics",
       "func": "18L+18R+999-STR-DEX-FREE1",
-      "funcOpp": "18L+18R+STR+INT+KRM-350"
+      "funcOpp": "18L+18R+STR+INT+KRM-350",
+      "hp": "p18011"
     },
     {
       "id": "m18012",
@@ -4186,14 +4195,16 @@
       "name": "にんじゃLv18(手裏剣)/先制無効/魔法耐性/前列",
       "attack": "physics",
       "func": "18L+18R+999-STR-DEX-FREE1",
-      "funcOpp": "18L+18R+STR+INT+KRM-350"
+      "funcOpp": "18L+18R+STR+INT+KRM-350",
+      "hp": "p18013"
     },
     {
       "id": "m18021",
       "name": "けんじゃLv18(ﾒﾃｵ)/魔法無効",
       "attack": "隕石",
       "func": "プロテス/後列",
-      "funcOpp": "18L+18R+STR+INT+KRM-350"
+      "funcOpp": "18L+18R+STR+INT+KRM-350",
+      "hp": "p18021"
     },
     {
       "id": "m18022",
@@ -4206,7 +4217,8 @@
       "name": "けんじゃLv18(召喚)/魔法無効",
       "attack": "召喚",
       "func": "シェル/後列",
-      "funcOpp": "18L+18R+STR+INT+KRM-350"
+      "funcOpp": "18L+18R+STR+INT+KRM-350",
+      "hp": "p18031"
     },
     {
       "id": "m18032",

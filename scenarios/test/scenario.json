@@ -104,6 +104,7 @@
       "attack": "physics",
       "func": "L+2LM+M+RM+R-STR",
       "funcOpp": "L+R+STR",
+      "hp": "p10",
       "drop": "param/p01:10/TEST"
     }
   ],

@@ -64,7 +64,8 @@ export function checkScenario(scenario: Scenario): CheckIssue[] {
   if (scenario.meta.footerScene) sceneRef('meta.footerScene', scenario.meta.footerScene);
 
   // 本文の部品やルール表示として読み込まれるシーン（選択肢がなくてもよい）
-  const included = new Set<string>([BACK_SCENE_ID]);
+  // 99999 は Battle Sheet の既定のルール
+  const included = new Set<string>([BACK_SCENE_ID, '99999']);
   if (scenario.meta.footerScene) included.add(scenario.meta.footerScene);
   for (const g of scenario.groups) if (g.rule) included.add(g.rule);
   for (const scene of scenario.scenes) {
