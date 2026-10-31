@@ -29,7 +29,7 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 | `apps/playground`  | `@stext/playground` | Browser   | シナリオの編集環境（Vite + React + React Flow、dagre）                                   |
 | `prototype/`       | —                   | —         | デザインプロトタイプ「夜の書見台」                                                       |
 | `scenarios/`       | —                   | —         | 変換済みの旧シナリオ（生成物）。`scenarios/<id>/` に `scenario.json`・`capture/`・`bgm/` |
-| `assets/`          | —                   | —         | 全シナリオ共通の画像・BGM・効果音（`assets/common/`）                                    |
+| `assets/`          | —                   | —         | 全シナリオ共通の画像・BGM・効果音（`assets/common/`）、旧サイトの画像（`assets/site/`）  |
 | `schema/`          | —                   | —         | JSON Schema（生成物）                                                                    |
 
 - **依存の向き**：`schema` ← `core` / `convert` ← `cli`、`ui` ← `player` / `playground`。**逆向きの依存は作らない。**
@@ -77,6 +77,7 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 | `schema/scenario.v2.json`                           | `npm run build` のあとに `npm run schema`         | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗する） |
 | `scenarios/`                                        | `npm run build` のあとに `npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき（`../stext` が必要）                |
 | `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs`           | 旧リポジトリの素材を取り込み直すとき（`../stext` が必要）                      |
+| `assets/site/`                                      | `node scripts/import-site-images.mjs`             | 旧サイトの画像（案内・投稿・フッターで使う）を取り込み直すとき                 |
 | `apps/playground/public/templates/`                 | `node scripts/import-playground-templates.mjs`    | 旧 Playground のテンプレートを取り込み直すとき                                 |
 
 ## 確認のコマンド

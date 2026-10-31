@@ -36,6 +36,7 @@
 | 9 | 旧エンジンの残りの機能（ステータス編集、撃破チェック、バックアップ／リストア、ランク・ボーナス一覧、ツイートボタン、`${effect}`、アイテムの使用）を実装する |
 | 10 | Playground（Phase 6）を作る。サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）は作らない |
 | 11 | シナリオに関係する画像・BGM は、シナリオごとのフォルダー（`scenarios/<id>/capture/`・`bgm/`）にまとめる。`assets/` には共通の素材だけを置く |
+| 12 | 旧サイトのページをプレイヤーに移す。「音楽室」「案内」（SText とは・ソーサリアンとは・スタッフ・ギャラリー・関連リンク）「投稿」（作り方・手順・zip の中身・募集企画・制作者向けの素材）の3画面と、全画面のフッターの CONTACT にまとめる。文章は今の仕組みに合わせて書き直す。旧サイトの画像は `assets/site/` に取り込む。投稿先は今と同じ GitHub Discussions（snext1220/stext#299） |
 
 ---
 
@@ -77,11 +78,11 @@
 | `packages/convert` | `@stext/convert` | Universal | `convertScenarioXml`、`convertPlaygroundJson`（旧 Playground の `edges` 形式） |
 | `packages/cli` | `@stext/cli` | Node | `stext` コマンド（convert-all、play など） |
 | `packages/ui` | `@stext/ui` | Browser | Parchment、SceneText（marked、旧記法の前処理、DOMPurify、html-react-parser）、ChoiceList、HeroPanel、MagicPanel、ItemsPanel、RecordPanel、StatusEditor、EnemyCard、Effect、Toasts、`styles.css`（デザイントークン） |
-| `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法、記録、変換所） |
+| `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法、記録、音楽室、案内、投稿、変換所。フッターに CONTACT） |
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（React Flow、dagre） |
 | `prototype/` | — | — | デザインプロトタイプ |
-| `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json` |
-| `assets/` | — | — | どのシナリオでも使う共通の画像・BGM・効果音（`assets/common/`） |
+| `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json`（書庫の一覧。音楽室が使う `bgm` も入れる） |
+| `assets/` | — | — | どのシナリオでも使う共通の画像・BGM・効果音（`assets/common/`）と、旧サイトの画像（`assets/site/`。案内・投稿・フッターで使う） |
 | `schema/` | — | — | JSON Schema（生成物） |
 
 ### シナリオ形式 stext/2 の要点
@@ -101,6 +102,7 @@
 |---|---|
 | `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元 |
 | `VITE_SCENARIO_BASE` | シナリオの配信元（`scenario.json`、挿絵、BGM） |
+| `VITE_PLAYGROUND_URL` | プレイヤーの投稿の画面から開く Playground（既定はプレイヤーの隣の `playground/`） |
 
 ---
 
@@ -116,6 +118,7 @@
 | Phase 5（公開） | GitHub Pages で公開 | 完了（初回だけ、Settings → Pages の Source を「GitHub Actions」にする必要がある） |
 | Phase 5（残りの機能） | 旧エンジンの残りの機能とアイテムの使用 | 完了 |
 | Phase 6（Playground） | 次の節を参照 | 実装済み（[snext1220/stext-next#9](https://github.com/snext1220/stext-next/pull/9)） |
+| 旧サイトのページ | 音楽室・案内・投稿・CONTACT（次の次の節を参照） | 実装済み |
 
 ### Phase 6：Playground の中身
 
@@ -140,6 +143,22 @@
 - **確認**：`scripts/e2e-playground.mjs` の25項目が、開発サーバーとビルド結果の両方ですべて成功。単体テストは全体で108件成功。
 - **作らなかったもの**：サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）。本文の入力欄は textarea のまま（Monaco や CodeMirror は入れていない）。
 
+### 旧サイトのページ（音楽室・案内・投稿・CONTACT）
+
+旧サイト（https://www.web-deli.com/sorcerian/text/）にあって、プレイヤーになかったページを移した。
+
+| 画面 | 旧サイトのページ | 内容 |
+|---|---|---|
+| 音楽室（`#/music`） | For Player「BGMを聴きたい」 | 共通 BGM 24曲（`assets/common/bgm/`）を用途ごとに並べて再生する。曲ごとに使っている書庫のシナリオ（`index.json` の `bgm`）を出す。効果音6種、SoundCloud のサウンドトラックへのリンク |
+| 案内（`#/about/<章>`） | 概要・資料 | SORCERIAN Text とは（eGBP）、ソーサリアンとは、スタッフ、ギャラリー、関連リンク |
+| 投稿（`#/post/<章>`） | 作品投稿・募集企画・For Creator | Playground での作り方、投稿の手順（GitHub Discussions に返信）、zip の中身（stext/2 の構成）、募集企画5つ（ドラゴンモードは募集終了）、BGM 素材・キャラ画像素材集（`assets/common/face/` の24点）・書き方の資料 |
+| フッター | CONTACT | X、公式マニュアル、質問・要望箱、GitHub、シナリオへの感想（`#/library/quest` でアンケートのあるシナリオだけの書庫を開く）。冒険の画面では出さない |
+
+- **主なファイル**（`apps/player/src/`）：`screens/Music.tsx`、`screens/About.tsx`、`screens/Post.tsx`、`screens/Doc.tsx`（案内・投稿の共通部品）、`screens/Footer.tsx`、`music.ts`（曲の分類と使用シナリオの集計）、`links.ts`（外部リンク）。3画面は開いたときに読み込む（lazy）。
+- **画像**：旧サイトにしかない画像36点を `scripts/import-site-images.mjs` で `assets/site/` に取り込んだ（約5.7MB）。旧 UI の画面写真、旧ツール構成の図、原作の画面と思われる画像は取り込んでいない。
+- **リンク**：旧サイトの d.hatena のマニュアルは、移転先の sorcerian.hateblo.jp に直した。Twitter は X（x.com）にした。
+- **確認**：`scripts/e2e-player.mjs` の36項目がすべて成功（音楽室の再生、章への移動、画像の表示、CONTACT から書庫、スマホ幅）。
+
 ---
 
 ## 6. 残っている課題
@@ -150,7 +169,7 @@
 4. **GitHub Pages の設定**：Source を「GitHub Actions」にする（未設定なら）。
 5. **ヘルプの移行メモの確認**：`apps/playground/src/help/reference.md` の `@mark 要確認`（4項目・5件）と `@mark 未実装`（`imageSet`、`randomCacheDays`、`${result?id}`、ライセンス表示など）を見て、仕様を決めるか実装する。Playground の目次で「移行メモ：要確認」などに絞り込める。
 6. **改善できること（任意）**：
-   - プレイヤーと Playground を互いにリンクする。
+   - Playground からプレイヤーへリンクする（プレイヤーからは、投稿の画面から Playground を開ける）。
    - 元に戻したことで選択中のシーンが消えたとき、選択を外すのではなく別のシーンを選ぶ。
    - 保存するファイル名を工夫する（いまは `meta.id`、なければ `scenario.json`）。
    - Playground の JS が大きい（約800KB）ので、分割する。
@@ -202,6 +221,9 @@ node scripts/e2e-playground.mjs --shots /tmp/shots
 | 問題 | 対処 |
 |---|---|
 | e2e でハッシュの移動が速すぎて不安定になる | ストレージを書き換えたあとに再読み込みする |
+| e2e で遅延読み込み（`loading="lazy"`）の画像が読まれず、表示されていないと判定される | ページを下まで少しずつスクロールしてから、すべての画像の `complete` を待つ |
+| `index.json` を作り直すと、手元の `../stext` が古いため `slayer` などが古い版に戻る | 全体の作り直しをやめ、コミット済みの `scenario.json` から `bgm` を集計して足した。旧リポジトリを最新にしてから `npm run convert:legacy` すれば同じ結果になる |
+| `.gitignore` の `site/`（公開用に組み立てるサイト）が `assets/site/` まで無視していた | ルートだけを指す `/site/` にした |
 | `npm i -w` で依存が追加されない | 先に `npm install` してワークスペースを認識させる |
 | React Flow の Node data の型制約 | `Record<string, unknown>` と交差型にする |
 | react-hooks ルールの定義が見つからない | ESLint の対象にそのアプリを追加する |

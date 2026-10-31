@@ -43,10 +43,21 @@ function levelLabel(level: number) {
 /** 検索条件は、詳細から冒険に出て書庫に戻っても残す（ページを読み込み直すと既定に戻る） */
 let lastFilter: LibraryFilter = DEFAULT_FILTER;
 
-export function Library({ global, settings }: { global: GlobalState; settings: Settings }) {
+/** quest：アンケートのあるシナリオだけに絞った状態で開く（#/library/quest。CONTACT から来たとき） */
+export function Library({
+  global,
+  settings,
+  quest = false,
+}: {
+  global: GlobalState;
+  settings: Settings;
+  quest?: boolean;
+}) {
   const [entries, setEntries] = useState<ScenarioEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState(lastFilter);
+  const [filter, setFilter] = useState(() =>
+    quest ? { ...DEFAULT_FILTER, quest: true } : lastFilter,
+  );
   const [detail, setDetail] = useState<ScenarioEntry | null>(null);
   const closeDetail = useCallback(() => setDetail(null), []);
   const update = (patch: Partial<LibraryFilter>) => {
@@ -54,6 +65,10 @@ export function Library({ global, settings }: { global: GlobalState; settings: S
     lastFilter = next;
     setFilter(next);
   };
+
+  useEffect(() => {
+    if (quest) lastFilter = { ...DEFAULT_FILTER, quest: true };
+  }, [quest]);
 
   useEffect(() => {
     loadIndex().then(setEntries, (e: unknown) =>

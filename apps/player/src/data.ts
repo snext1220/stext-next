@@ -23,6 +23,8 @@ export interface ScenarioEntry {
   quest?: string;
   /** 書庫の詳細に出すプロローグ（Markdown） */
   prologue?: string;
+  /** 使っている共通 BGM（@ を除いた名前。音楽室で使う） */
+  bgm?: string[];
 }
 
 let indexPromise: Promise<ScenarioEntry[]> | undefined;

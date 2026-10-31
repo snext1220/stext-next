@@ -76,7 +76,10 @@ body {
 .pg-main {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 44%);
+  /* 右パネルの幅は Splitter.tsx が --pg-side-width で決める。フロー図に 280px は残す */
+  grid-template-columns:
+    minmax(0, 1fr) auto
+    minmax(360px, min(var(--pg-side-width, 44%), calc(100% - 280px - 7px)));
   min-height: 0;
 }
 .pg-flow-pane {
@@ -84,7 +87,19 @@ body {
   grid-template-rows: auto 1fr;
   min-width: 0;
   min-height: 0;
-  border-right: 1px solid var(--desk-line);
+}
+.pg-splitter {
+  width: 7px;
+  cursor: col-resize;
+  touch-action: none;
+  background: linear-gradient(var(--desk-line), var(--desk-line)) center / 1px 100% no-repeat;
+}
+.pg-splitter:hover,
+.pg-splitter:focus-visible,
+.pg-splitter.is-dragging {
+  outline: none;
+  background-image: linear-gradient(var(--gold), var(--gold));
+  background-size: 3px 100%;
 }
 .pg-flow-tools {
   display: flex;
@@ -364,10 +379,39 @@ body {
 }
 .pg-table td {
   padding: 2px 4px;
-  min-width: 6em;
 }
-.pg-table td.wide {
-  min-width: 14em;
+/* 列の幅（Definitions.tsx の Column.width）。l だけは幅を決めず、余った幅を受け持つ */
+.pg-table .w-xs {
+  width: 5em;
+  min-width: 5em;
+}
+.pg-table .w-s {
+  width: 8em;
+  min-width: 8em;
+}
+.pg-table .w-m {
+  width: 11em;
+  min-width: 11em;
+}
+.pg-table .w-l {
+  min-width: 20em;
+}
+.pg-table .w-check,
+.pg-table tr > :last-child {
+  width: 1%;
+}
+.pg-table td.w-check {
+  text-align: center;
+}
+.pg-table td.mono input {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+/* 横に送っても、どの行か分かるように先頭の列（ID など）を残す */
+.pg-table tr > :first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--desk);
 }
 .pg-table input[type='checkbox'] {
   width: auto;
@@ -609,6 +653,9 @@ body {
   }
   .pg-main {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .pg-splitter {
+    display: none;
   }
   .pg-flow-pane {
     height: 60vh;

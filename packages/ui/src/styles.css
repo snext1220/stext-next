@@ -2219,3 +2219,434 @@ label.drop {
   margin-left: 8px;
   vertical-align: middle;
 }
+
+/* ───── 案内・投稿（羊皮紙の章を並べる文書の画面） ───── */
+.doc-page > *,
+.music > * {
+  /* 長い行（フォルダー構成の図など）でグリッドの列が画面より広がらないように */
+  min-width: 0;
+}
+.page-title {
+  font-family: var(--f-book);
+  font-size: var(--step-3);
+  margin: 4px 0 6px;
+}
+.doc-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.doc-toc .chip-btn {
+  border-color: var(--desk-line);
+}
+.doc-toc .chip-btn[aria-current='location'] {
+  color: var(--on-desk);
+  border-color: var(--gold);
+}
+.doc-section {
+  /* 上部のバーに見出しが隠れないように */
+  scroll-margin-top: 72px;
+}
+.doc {
+  font-family: var(--f-book);
+  line-height: 1.9;
+}
+.doc p,
+.doc li {
+  max-width: 46em;
+}
+.doc::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+.doc h2 {
+  font-size: var(--step-2);
+  font-weight: 700;
+  line-height: 1.4;
+  border-bottom: 1px solid var(--page-edge);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+.doc h3 {
+  clear: both;
+  font-size: var(--step-1);
+  font-weight: 700;
+  margin: 1.8em 0 0.6em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.doc h3::before {
+  content: '';
+  width: 6px;
+  height: 1.1em;
+  border-radius: 2px;
+  background: var(--gold);
+}
+.doc p {
+  margin: 0 0 1em;
+}
+.doc ul,
+.doc ol {
+  margin: 0 0 1em;
+  padding-left: 1.4em;
+}
+.doc li {
+  margin-bottom: 0.4em;
+}
+.doc a {
+  color: var(--lapis);
+}
+.doc .btn {
+  color: var(--page);
+}
+.doc .btn:hover,
+.doc .btn.ghost {
+  color: var(--ink);
+}
+.doc code {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 0.9em;
+  background: rgba(39, 29, 18, 0.08);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.doc .end-actions {
+  margin-bottom: 1em;
+}
+.doc-eyebrow {
+  color: var(--ink-soft);
+}
+.doc-strong {
+  font-weight: 700;
+  font-size: var(--step-1);
+}
+.doc-small {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.doc-float {
+  float: right;
+  width: min(40%, 240px);
+  height: auto;
+  margin: 0 0 12px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(30, 20, 5, 0.25);
+}
+.doc-banner {
+  display: block;
+  margin-top: 12px;
+}
+.doc-banner-link {
+  display: inline-block;
+}
+.doc-banner-link img {
+  display: block;
+  border-radius: 4px;
+}
+.doc-steps li {
+  padding-left: 4px;
+}
+.doc-tree {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, 'BIZ UDGothic', monospace;
+  font-size: var(--step--1);
+  line-height: 1.7;
+  background: rgba(39, 29, 18, 0.06);
+  border: 1px solid var(--page-edge);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  overflow-x: auto;
+  margin: 0 0 1em;
+}
+.figure-grid,
+.face-grid,
+.doc .figure-grid,
+.doc .face-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1em;
+  display: grid;
+  gap: 14px;
+}
+.figure-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.figure-grid li,
+.face-grid li {
+  margin: 0;
+  font-family: var(--f-ui);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.figure-grid img {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: contain;
+  background: rgba(39, 29, 18, 0.06);
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.face-grid {
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+.face-grid a {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+.face-grid img {
+  width: 100px;
+  height: 100px;
+  border-radius: 4px;
+  background: rgba(39, 29, 18, 0.06);
+}
+.face-grid a:hover span {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.staff-list {
+  margin: 0 0 1em;
+}
+.staff-list > div {
+  border-top: 1px solid var(--page-edge);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.staff-list dt {
+  font-family: var(--f-display);
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  font-weight: 700;
+}
+.staff-list dd {
+  margin: 4px 0 8px;
+}
+.staff-list dd p {
+  margin: 0;
+}
+.staff-list .staff-name {
+  text-align: right;
+  font-size: var(--step--1);
+}
+.recruit {
+  border-top: 1px solid var(--page-edge);
+  padding-top: 14px;
+  margin-top: 18px;
+}
+.recruit img {
+  display: block;
+  width: 100%;
+  max-width: 660px;
+  height: auto;
+  border-radius: 4px;
+}
+.recruit h3 {
+  margin-top: 0.8em;
+}
+.recruit .pill {
+  font-family: var(--f-ui);
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+.recruit.closed img {
+  filter: grayscale(0.8);
+  opacity: 0.75;
+}
+@media (max-width: 760px) {
+  .doc-float {
+    float: none;
+    display: block;
+    width: min(100%, 320px);
+    margin: 0 auto 12px;
+  }
+}
+
+/* ───── 音楽室 ───── */
+.track-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.track {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--desk-line);
+  border-radius: 8px;
+  background: var(--desk-2);
+}
+.track.playing {
+  border-color: var(--gold);
+}
+.track-play {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.track-play:hover,
+.track-play[aria-pressed='true'] {
+  background: var(--gold);
+  color: var(--desk);
+}
+.track-name {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.track-used {
+  font-size: 0.75rem;
+  color: var(--on-desk-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.now-playing {
+  position: sticky;
+  bottom: 12px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--desk-2) 94%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px var(--drop);
+}
+.now-playing-title {
+  display: grid;
+  line-height: 1.3;
+}
+.now-playing-group {
+  font-size: 0.75rem;
+  color: var(--on-desk-soft);
+}
+.now-playing audio {
+  flex: 1 1 260px;
+  min-width: 0;
+  height: 36px;
+}
+.now-playing-loop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--step--1);
+}
+.se-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.se-list .chip-btn {
+  border-color: var(--desk-line);
+  color: var(--on-desk);
+}
+.se-name {
+  margin-left: 6px;
+  color: var(--on-desk-soft);
+  font-size: 0.7rem;
+}
+.music-note {
+  font-size: var(--step--1);
+  max-width: 72ch;
+}
+.link-list {
+  margin: 8px 0 12px;
+  padding-left: 1.2em;
+}
+.link-list a {
+  color: var(--gold-bright);
+}
+.link-note {
+  margin-left: 8px;
+  font-size: var(--step--1);
+  color: var(--on-desk-soft);
+}
+
+/* ───── フッター（CONTACT） ───── */
+.site-footer {
+  border-top: 1px solid var(--desk-line);
+  background: color-mix(in srgb, var(--desk-2) 60%, transparent);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+}
+.site-footer-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-top: 24px;
+}
+.site-footer h2 {
+  margin-bottom: 12px;
+}
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px 20px;
+}
+.contact-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--on-desk);
+  text-decoration: none;
+}
+.contact-list a:hover strong {
+  color: var(--gold-bright);
+  text-decoration: underline;
+}
+.contact-list img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+}
+.contact-list p {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--on-desk-soft);
+  line-height: 1.6;
+}
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--desk-line);
+  font-size: var(--step--1);
+}
+.footer-nav a {
+  color: var(--on-desk-soft);
+}
+.footer-nav a:hover {
+  color: var(--on-desk);
+}
+.footer-copy {
+  margin: 12px 0 0;
+  font-family: var(--f-display);
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  color: var(--on-desk-soft);
+}

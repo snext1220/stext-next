@@ -6,6 +6,7 @@ import { AudioDirector } from './audio.js';
 import { loadScenario } from './data.js';
 import { href, navigate, useRoute } from './router.js';
 import { Create } from './screens/Create.js';
+import { Footer } from './screens/Footer.js';
 import { Library } from './screens/Library.js';
 import { Play } from './screens/Play.js';
 import { Records } from './screens/Records.js';
@@ -21,6 +22,20 @@ import {
 
 // 変換所は変換器（XML パーサを含む）を使うので、開いたときに読み込む
 const Convert = lazy(() => import('./screens/Convert.js').then((m) => ({ default: m.Convert })));
+// 音楽室・案内・投稿は遊ぶのに要らないので、開いたときに読み込む
+const Music = lazy(() => import('./screens/Music.js').then((m) => ({ default: m.Music })));
+const About = lazy(() => import('./screens/About.js').then((m) => ({ default: m.About })));
+const Post = lazy(() => import('./screens/Post.js').then((m) => ({ default: m.Post })));
+
+/** ヘッダーの画面の切り替え */
+const NAV = [
+  ['library', '書庫'],
+  ['records', '記録'],
+  ['music', '音楽室'],
+  ['about', '案内'],
+  ['post', '投稿'],
+  ['convert', '変換所'],
+] as const;
 
 export function App() {
   const route = useRoute();
@@ -65,27 +80,16 @@ export function App() {
             <BrandTitle note="v2" />
           </a>
           <nav className="screens" aria-label="画面">
-            <a
-              className="chip-btn"
-              aria-current={route.name === 'library' ? 'page' : undefined}
-              href={href({ name: 'library' })}
-            >
-              書庫
-            </a>
-            <a
-              className="chip-btn"
-              aria-current={route.name === 'records' ? 'page' : undefined}
-              href={href({ name: 'records' })}
-            >
-              記録
-            </a>
-            <a
-              className="chip-btn"
-              aria-current={route.name === 'convert' ? 'page' : undefined}
-              href={href({ name: 'convert' })}
-            >
-              変換所
-            </a>
+            {NAV.map(([name, label]) => (
+              <a
+                key={name}
+                className="chip-btn"
+                aria-current={route.name === name ? 'page' : undefined}
+                href={href({ name })}
+              >
+                {label}
+              </a>
+            ))}
           </nav>
           <div className="tools">
             <button
@@ -108,8 +112,22 @@ export function App() {
         </div>
       </header>
       <main className="shell">
-        {route.name === 'library' && <Library global={global} settings={settings} />}
+        {route.name === 'library' && (
+          <Library
+            key={route.quest ? 'quest' : 'all'}
+            global={global}
+            settings={settings}
+            quest={route.quest}
+          />
+        )}
         {route.name === 'records' && <Records global={global} onGlobal={setGlobal} />}
+        {(route.name === 'music' || route.name === 'about' || route.name === 'post') && (
+          <Suspense fallback={<p className="empty-state">開いています…</p>}>
+            {route.name === 'music' && <Music />}
+            {route.name === 'about' && <About section={route.section} />}
+            {route.name === 'post' && <Post section={route.section} />}
+          </Suspense>
+        )}
         {route.name === 'convert' && (
           <Suspense fallback={<p className="empty-state">変換所を開いています…</p>}>
             <Convert />
@@ -128,6 +146,7 @@ export function App() {
           />
         )}
       </main>
+      {route.name !== 'play' && <Footer />}
     </>
   );
 }

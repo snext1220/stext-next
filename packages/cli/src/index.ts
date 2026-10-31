@@ -24,7 +24,13 @@ import {
   type GameState,
   type SceneView,
 } from '@stext/core';
-import { SCENARIO_FORMAT, checkScenario, validateScenario, type CheckIssue } from '@stext/schema';
+import {
+  SCENARIO_FORMAT,
+  checkScenario,
+  validateScenario,
+  type CheckIssue,
+  type Scenario,
+} from '@stext/schema';
 
 export interface Io {
   out: (line: string) => void;
@@ -157,6 +163,19 @@ interface IndexEntry {
   quest?: string;
   /** 書庫の詳細に出すプロローグ（stext.xml の work の本文。Markdown） */
   prologue?: string;
+  /** 使っている共通 BGM（"@field05" の @ を除いた名前。音楽室で使う） */
+  bgm?: string[];
+}
+
+/** シナリオが使う共通 BGM（meta.bgm とシーンの bgm のうち @ で始まるもの。無音の @none は除く） */
+function commonBgm(scenario: Scenario): string[] {
+  const names = [
+    ...Object.values(scenario.meta.bgm ?? {}),
+    ...scenario.scenes.map((s) => s.bgm),
+  ].filter((b): b is string => typeof b === 'string' && b.startsWith('@'));
+  return [...new Set(names.map((b) => b.slice(1).toLowerCase()))]
+    .filter((b) => b !== '' && b !== 'none')
+    .sort();
 }
 
 async function convertAll(args: string[], io: Io): Promise<number> {
@@ -218,6 +237,8 @@ async function convertAll(args: string[], io: Io): Promise<number> {
       if (listed['quest']) entry.quest = listed['quest'];
       if (work?.prologue) entry.prologue = work.prologue;
     }
+    const bgm = commonBgm(result.scenario);
+    if (bgm.length > 0) entry.bgm = bgm;
     index.push(entry);
     const errors = result.issues.filter((i) => i.severity === 'error').length;
     const warnings = result.issues.length - errors;

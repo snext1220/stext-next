@@ -1,6 +1,6 @@
 import { convertPlaygroundJson, convertScenarioXml } from '@stext/convert';
 import { validateScenario, type Scenario } from '@stext/schema';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { findProblems, problemsByScene } from './checks.js';
 import { SCENARIO_BASE, TEMPLATE_BASE } from './config.js';
 import { Definitions } from './Definitions.js';
@@ -17,6 +17,7 @@ import {
 } from './model.js';
 import { Problems } from './Problems.js';
 import { SceneEditor } from './SceneEditor.js';
+import { Splitter, useSideWidth } from './Splitter.js';
 import { deleteSlot, loadSlots, saveSlot, useScenarioStore, type Slot } from './store.js';
 import { TestPlay } from './TestPlay.js';
 
@@ -39,6 +40,7 @@ export function App() {
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
   const [published, setPublished] = useState<{ id: string; title: string }[]>([]);
   const [slots, setSlots] = useState<Slot[]>(loadSlots);
+  const [sideWidth, setSideWidth] = useSideWidth();
   const openHelp = useHelp();
 
   const problems = useMemo(() => findProblems(scenario), [scenario]);
@@ -267,7 +269,14 @@ export function App() {
           {message}
         </div>
       )}
-      <main className="pg-main">
+      <main
+        className="pg-main"
+        style={
+          sideWidth === undefined
+            ? undefined
+            : ({ '--pg-side-width': `${sideWidth}px` } as CSSProperties)
+        }
+      >
         <section className="pg-flow-pane">
           <div className="pg-flow-tools">
             <button type="button" onClick={() => newScene()}>
@@ -306,6 +315,7 @@ export function App() {
             }}
           />
         </section>
+        <Splitter width={sideWidth} onChange={setSideWidth} />
         <aside className="pg-side">
           <div className="tabs pg-tabs" role="tablist">
             <button

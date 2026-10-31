@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { emptyGlobalState, newGameState } from '@stext/core';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { bgmUrl, imageUrl, seUrl } from './config.js';
+import { bgmUrl, imageUrl, seUrl, siteImageUrl } from './config.js';
+import type { ScenarioEntry } from './data.js';
+import { BGM_GROUPS, bgmUsage } from './music.js';
 import { href, parseRoute } from './router.js';
 import { loadGame, loadGlobal, saveGame, saveGlobal } from './storage.js';
 
@@ -12,6 +14,50 @@ describe('router', () => {
     expect(parseRoute('#/convert')).toEqual({ name: 'convert' });
     expect(parseRoute('')).toEqual({ name: 'library' });
     expect(href({ name: 'play', id: 'local-a b' })).toBe('#/play/local-a%20b');
+  });
+
+  it('reads the music room, the guide and the post pages with their chapters', () => {
+    expect(parseRoute('#/music')).toEqual({ name: 'music' });
+    expect(parseRoute('#/about')).toEqual({ name: 'about' });
+    expect(parseRoute('#/about/staff')).toEqual({ name: 'about', section: 'staff' });
+    expect(parseRoute('#/post/materials')).toEqual({ name: 'post', section: 'materials' });
+    expect(href({ name: 'about', section: 'gallery' })).toBe('#/about/gallery');
+    expect(href({ name: 'post' })).toBe('#/post');
+  });
+
+  it('opens the library narrowed to scenarios with a questionnaire', () => {
+    expect(parseRoute('#/library/quest')).toEqual({ name: 'library', quest: true });
+    expect(parseRoute('#/library/other')).toEqual({ name: 'library' });
+    expect(href({ name: 'library', quest: true })).toBe('#/library/quest');
+    expect(href({ name: 'library' })).toBe('#/library');
+  });
+});
+
+describe('music room', () => {
+  it('lists the listed scenarios that use each common BGM', () => {
+    const entry = (id: string, listed: boolean, bgm?: string[]): ScenarioEntry => ({
+      id,
+      title: id,
+      listed,
+      scenes: 1,
+      results: 0,
+      ...(bgm ? { bgm } : {}),
+    });
+    const usage = bgmUsage([
+      entry('a', true, ['field04', 'town01']),
+      entry('b', true, ['town01']),
+      entry('dev', false, ['town01']),
+      entry('c', true),
+    ]);
+    expect(usage.get('town01')?.map((e) => e.id)).toEqual(['a', 'b']);
+    expect(usage.get('field04')?.map((e) => e.id)).toEqual(['a']);
+    expect(usage.has('field01')).toBe(false);
+  });
+
+  it('groups every common BGM file exactly once', () => {
+    const tracks = BGM_GROUPS.flatMap((g) => g.tracks);
+    expect(new Set(tracks).size).toBe(tracks.length);
+    expect(tracks).toHaveLength(24);
   });
 });
 
@@ -44,5 +90,6 @@ describe('asset paths', () => {
     expect(bgmUrl('hero', 'hero-room')).toBe('/scenarios/hero/bgm/hero-room.mp3');
     expect(seUrl('slayer', 'hit')).toBe('/scenarios/slayer/bgm/se/hit.mp3');
     expect(seUrl('slayer', 'dice', true)).toBe('/assets/common/se/dice.mp3');
+    expect(siteImageUrl('gallery/cute.jpg')).toBe('/assets/site/gallery/cute.jpg');
   });
 });

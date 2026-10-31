@@ -218,6 +218,82 @@ check(
   (await page.textContent('.page-head .title')).includes('ミニミニ'),
 );
 
+// 音楽室：共通の BGM を再生する
+await page.goto(`${base}/#/music`);
+await page.waitForSelector('.track');
+check('音楽室に共通の BGM が並ぶ', (await page.locator('.track').count()) === 24);
+check(
+  '曲ごとに使っているシナリオが出る',
+  (await page.textContent('.track-used >> nth=0')).includes('編：'),
+);
+await page.click('button[aria-label="field04 を再生"]');
+await page.waitForSelector('.now-playing audio');
+check(
+  '押した曲を再生する',
+  (await page.getAttribute('.now-playing audio', 'src')).endsWith('/common/bgm/field04.mp3'),
+);
+await page.click('.now-playing >> text=停止');
+check('停止すると再生の欄が消える', (await page.locator('.now-playing').count()) === 0);
+
+// 案内・投稿：章へのリンク、旧サイトの画像、フッターの CONTACT
+await page.goto(`${base}/#/about/gallery`);
+await page.waitForSelector('#about-gallery .figure-grid img');
+await page.waitForTimeout(300);
+check(
+  '案内の章へ直接移動できる',
+  await page.evaluate(() => {
+    const top = document.getElementById('about-gallery').getBoundingClientRect().top;
+    return top >= 0 && top < 200;
+  }),
+);
+const brokenImages = async () => {
+  // 遅延読み込みの画像も読み込ませるため、下まで少しずつスクロールしてから、読み終わるのを待つ
+  await page.evaluate(async () => {
+    for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) {
+      scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  });
+  await page.waitForFunction(() => [...document.images].every((i) => i.complete), null, {
+    timeout: 15000,
+  });
+  return page.evaluate(() =>
+    [...document.images].filter((i) => !i.naturalWidth).map((i) => i.getAttribute('src')),
+  );
+};
+const brokenAbout = await brokenImages();
+check('案内の画像がすべて表示される', brokenAbout.length === 0, brokenAbout.join(', '));
+await shot('6-about');
+await page.goto(`${base}/#/post`);
+await page.waitForSelector('#post-materials .face-grid img');
+check('キャラ画像素材が並ぶ', (await page.locator('.face-grid li').count()) === 24);
+check(
+  '投稿先のスレッドへのリンクがある',
+  (await page.locator('a[href="https://github.com/snext1220/stext/discussions/299"]').count()) > 0,
+);
+const brokenPost = await brokenImages();
+check('投稿の画像がすべて表示される', brokenPost.length === 0, brokenPost.join(', '));
+check('フッターに CONTACT が並ぶ', (await page.locator('.contact-list li').count()) === 5);
+await page.click('.contact-list >> text=シナリオへの感想・ご意見');
+await page.waitForSelector('.book');
+check(
+  'CONTACT からアンケートのあるシナリオだけの書庫を開ける',
+  (await page.isChecked('text=アンケートのあるシナリオだけ')) &&
+    (await page.locator('.book').count()) < 30,
+);
+await page.setViewportSize({ width: 390, height: 844 });
+for (const route of ['music', 'about', 'post']) {
+  await page.goto(`${base}/#/${route}`);
+  await page.waitForSelector('.page-title');
+  await page.waitForTimeout(300);
+  check(
+    `スマホ幅で ${route} が横にはみ出さない`,
+    (await page.evaluate(() => document.documentElement.scrollWidth)) <= 390,
+  );
+}
+await shot('7-post-mobile');
+await page.setViewportSize({ width: 1280, height: 900 });
+
 check('ページのエラーがない', errors.length === 0, errors.join(' / '));
 await browser.close();
 const failed = results.filter((r) => !r).length;

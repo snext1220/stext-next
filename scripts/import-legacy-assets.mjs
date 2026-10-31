@@ -47,9 +47,10 @@ const copy = (from, to) =>
     },
   });
 
-// 取り込み直すときは古いものを消す（assets/README.md と scenarios/<id>/scenario.json は残す）
+// 取り込み直すときは古いものを消す（assets/README.md、旧サイトの画像の assets/site/、scenarios/<id>/scenario.json は残す）
 for (const name of existsSync(dest) ? readdirSync(dest) : []) {
-  if (name !== 'README.md') rmSync(join(dest, name), { recursive: true, force: true });
+  if (name !== 'README.md' && name !== 'site')
+    rmSync(join(dest, name), { recursive: true, force: true });
 }
 copy(join(source, 'common'), join(dest, 'common'));
 for (const id of readdirSync(source)) {

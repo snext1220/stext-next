@@ -16,11 +16,13 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 
 - 開発サーバーは `scenarios/` を `/scenarios/` で配信します。シナリオごとのフォルダー（`scenarios/<id>/`）に、`scenario.json` とそのシナリオの挿絵（`capture/`）・BGM（`bgm/`）があります。
 - 共通の画像・BGM・効果音（`assets/common/`）は `/assets/` で配信します。画像・BGM は旧リポジトリから `scripts/import-legacy-assets.mjs` で取り込んだものです（[assets/README.md](../assets/README.md)）。
+- 案内・投稿・フッターで使う旧サイトの画像（ギャラリー、募集企画のバナー、CONTACT のアイコンなど）は `assets/site/` にあります。旧サイトから `scripts/import-site-images.mjs` で取り込んだものです。
 
 | 環境変数 | 内容 |
 | --- | --- |
 | `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときは、`common/` を含む URL を末尾 `/` 付きで指定） |
 | `VITE_SCENARIO_BASE` | シナリオの配信元（既定はビルド結果の `scenarios/`。`<id>/scenario.json` と、挿絵・BGM もここから読む） |
+| `VITE_PLAYGROUND_URL` | 投稿の画面の「Playground を開く」のリンク先（既定はプレイヤーの隣の `playground/`。開発サーバーで試すときは `http://localhost:5174/` を指定） |
 
 `npm run build` の結果（`apps/player/dist/`）には `scenarios/` と `assets/` も含まれるので、そのまま静的サイトとして公開できます。
 
@@ -52,7 +54,7 @@ CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への p
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（Vite + React + React Flow）  |
 | `prototype/`      | —                | Browser   | デザインプロトタイプ（GitHub Pages で公開）      |
 | `scenarios/`      | —                | —         | 旧シナリオ。シナリオごとに `scenario.json`（`stext convert-all` の出力）と挿絵・BGM |
-| `assets/`         | —                | —         | 共通の画像・BGM・効果音（`assets/common/`） |
+| `assets/`         | —                | —         | 共通の画像・BGM・効果音（`assets/common/`）と、旧サイトの画像（`assets/site/`） |
 | `schema/`         | —                | —         | エディター補完用の JSON Schema（生成物、GitHub Pages で公開） |
 
 依存の向き: `schema` ← `core` / `convert` ← `cli`、`ui` ← `player` / `playground`。逆向きの依存は作りません。
@@ -88,7 +90,7 @@ node packages/cli/dist/bin.js --help
 | コマンド | 内容 |
 | --- | --- |
 | `stext convert <scenario.xml\|playground.json> [-o out.json] [--structure-conditions]` | 旧形式を stext/2 に変換する |
-| `stext convert-all <旧リポジトリの stext ディレクトリ> -o <出力先>` | 全シナリオを変換し、`index.json` と `REPORT.md` を作る（`index.json` は公開日の新しい順で、公開日のないものは最後に ID 順。`quest` は stext.xml の quest（感想アンケートの Google フォーム ID）、`prologue` は stext.xml の work の本文から紹介画像を除いたもの） |
+| `stext convert-all <旧リポジトリの stext ディレクトリ> -o <出力先>` | 全シナリオを変換し、`index.json` と `REPORT.md` を作る（`index.json` は公開日の新しい順で、公開日のないものは最後に ID 順。`quest` は stext.xml の quest（感想アンケートの Google フォーム ID）、`prologue` は stext.xml の work の本文から紹介画像を除いたもの、`bgm` はシナリオが使う共通 BGM（`meta.bgm` とシーンの `bgm` のうち `@` で始まるもの。`@none` は除く。音楽室で使う）） |
 | `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
 | `stext play <scenario.json> [--auto <手数>] [--seed <数値>]` | シナリオをコマンドラインで遊ぶ（`--auto` は選択肢を自動で選ぶ） |
 
@@ -100,7 +102,8 @@ node packages/cli/dist/bin.js --help
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
 | `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます |
-| `assets/common/`、`scenarios/<id>/capture/`・`bgm/`・`chara/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` は消しません |
+| `assets/common/`、`scenarios/<id>/capture/`・`bgm/`・`chara/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` と `assets/site/` は消しません |
+| `assets/site/` | `node scripts/import-site-images.mjs` | 旧サイト（https://www.web-deli.com/sorcerian/text/）の画像を取り込み直すとき。取り込む画像はスクリプトの一覧に書きます |
 
 `scenarios/`・`schema/`・`assets/` は生成物なので Prettier の対象外です。
 
@@ -129,7 +132,7 @@ node scripts/difftest.mjs --walks 5 --steps 80 --text
 
 ## プレイヤーの動作確認
 
-`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫と詳細、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
+`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫と詳細、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所、音楽室、案内、投稿、フッターの CONTACT）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
 
 ```bash
 npm run dev

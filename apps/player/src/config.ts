@@ -41,3 +41,12 @@ export function seUrl(scenarioId: string, name: string, common = false): string 
 export function trophyUrl(level: number): string {
   return `${ASSET_BASE}common/trophy${level}.png`;
 }
+
+/** 旧サイトから取り込んだ画像（assets/site/。ギャラリーや CONTACT のアイコンなど） */
+export function siteImageUrl(path: string): string {
+  return `${ASSET_BASE}site/${path}`;
+}
+
+/** Playground（シナリオの編集環境）。公開サイトではプレイヤーの隣の playground/ */
+export const PLAYGROUND_URL =
+  import.meta.env.VITE_PLAYGROUND_URL ?? `${import.meta.env.BASE_URL}playground/`;

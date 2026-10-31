@@ -14,9 +14,9 @@ async function capture(argv: string[]) {
 const XML = `<?xml version="1.0" encoding="utf-8"?>
 <scenario title="テスト" author="Rio">
 <init></init><items></items><flags><flag id="f01">a</flag></flags><enemies></enemies><results></results>
-<scene id="0">はじまり
+<scene id="0" bgm="@Town01">はじまり
 [次へ](1 "f01")</scene>
-<scene id="1" end="happy">おわり</scene>
+<scene id="1" end="happy" bgm="@none">おわり</scene>
 </scenario>`;
 
 function legacyRepo() {
@@ -85,6 +85,7 @@ describe('stext', () => {
         results: 0,
         quest: '1FAIpQLSdemo',
         prologue: '王さまの杖が盗まれた。\n\n<p class="award">ゲストさま投稿作品</p>',
+        bgm: ['town01'],
       },
     ]);
     expect(readFileSync(join(out, 'REPORT.md'), 'utf8')).toContain('| demo | 2 | 1 | 1 | 0 | 0 |');

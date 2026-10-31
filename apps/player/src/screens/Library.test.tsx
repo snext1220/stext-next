@@ -92,6 +92,18 @@ describe('Library', () => {
     expect(screen.queryByRole('link', { name: 'アンケートに回答する' })).toBeNull();
   });
 
+  it('starts narrowed to scenarios with a questionnaire when opened from CONTACT', async () => {
+    const { container } = render(<Library global={emptyGlobalState()} settings={settings} quest />);
+    await screen.findByText('新・消えた王様の杖');
+    expect([...container.querySelectorAll('.book h2')].map((h) => h.textContent)).toEqual([
+      '新・消えた王様の杖',
+    ]);
+    expect(
+      (screen.getByLabelText('アンケートのあるシナリオだけ') as HTMLInputElement).checked,
+    ).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: '条件クリア' }));
+  });
+
   it('narrows the shelf with the search conditions and clears them', async () => {
     const { container } = renderLibrary();
     await screen.findByText('新・消えた王様の杖');
