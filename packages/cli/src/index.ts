@@ -147,6 +147,8 @@ interface IndexEntry {
   level?: number;
   comment?: string;
   scenes: number;
+  /** 実績の数 */
+  results: number;
 }
 
 async function convertAll(args: string[], io: Io): Promise<number> {
@@ -183,6 +185,7 @@ async function convertAll(args: string[], io: Io): Promise<number> {
       title: listed?.['title'] ?? meta.title,
       listed: Boolean(listed),
       scenes: result.stats.scenes,
+      results: result.scenario.results.length,
     };
     const author = listed?.['author'] ?? meta.author;
     if (author) entry.author = author;
