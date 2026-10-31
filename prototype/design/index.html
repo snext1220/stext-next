@@ -1,4 +1,8 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SORCERIAN Text v2</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +27,10 @@
   --blood: #a8322a;
   --mana: #2f6fae;
   --good: #3c7d4a;
-  --shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 18px 40px -18px rgba(30,24,10,.45);
+  --page-back: #f7eed6;     /* めくれた紙の裏面 */
+  --page-fold: #c7a96c;     /* めくれの折り目の陰 */
+  --stain: #7a4a14;         /* 汚れ・焼けの色 */
+  --drop: rgba(40,26,6,.38);
 
   --star-mon: #9aa3bd; --star-tue: #c0473a; --star-wed: #3a93bf; --star-thu: #7559b8;
   --star-fri: #3f9a63; --star-sat: #8b7650; --star-sun: #d49b22;
@@ -45,7 +52,7 @@
     --gold: #d6b062; --gold-bright: #ecc979;
     --lapis: #8b9be6; --lapis-soft: #262c52;
     --blood: #d65a4e; --mana: #5d9ee0; --good: #68b47a;
-    --shadow: 0 30px 60px -24px rgba(0,0,0,.8);
+    --drop: rgba(0,0,0,.7);
     color-scheme: dark;
   }
 }
@@ -57,7 +64,7 @@
   --gold: #d6b062; --gold-bright: #ecc979;
   --lapis: #8b9be6; --lapis-soft: #262c52;
   --blood: #d65a4e; --mana: #5d9ee0; --good: #68b47a;
-  --shadow: 0 30px 60px -24px rgba(0,0,0,.8);
+  --drop: rgba(0,0,0,.7);
   color-scheme: dark;
 }
 
@@ -109,19 +116,52 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .note summary { cursor: pointer; color: var(--on-desk); letter-spacing: .06em; }
 .note ul { margin: 8px 0 0; padding-left: 1.2em; }
 
-/* ───── Parchment page ───── */
+/* ───── Parchment page ─────
+   .parchment（影）> .page（欠けた輪郭で clip）+ .curl（右下のめくれ）
+   輪郭の path は JS（tornPath）が要素の実寸から生成する */
+.parchment { position: relative; min-width: 0; filter: drop-shadow(0 14px 16px var(--drop)) drop-shadow(0 2px 2px var(--drop)); }
 .page {
-  position: relative; background: var(--page); color: var(--ink);
-  border-radius: 3px; box-shadow: var(--shadow);
+  position: relative; color: var(--ink);
   padding: clamp(20px, 4vw, 44px) clamp(18px, 4.5vw, 52px);
+  background-color: var(--page);
   background-image:
-    radial-gradient(ellipse at 0% 0%, rgba(120,80,20,.13), transparent 45%),
-    radial-gradient(ellipse at 100% 100%, rgba(120,80,20,.16), transparent 50%);
-  outline: 1px solid var(--page-edge); outline-offset: -8px;
+    /* 紙の繊維 */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .27 0 0 0 0 .08 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    /* まだらな汚れ（大きな周期のノイズをしきい値で斑に） */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='1600'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006' numOctaves='3' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .28 0 0 0 0 .07 1.6 0 0 0 -.78'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)' opacity='.55'/%3E%3C/svg%3E"),
+    /* カップの輪じみ */
+    radial-gradient(circle at 86% 9%, transparent 0 40px, color-mix(in srgb, var(--stain) 10%, transparent) 42px, color-mix(in srgb, var(--stain) 22%, transparent) 44px, color-mix(in srgb, var(--stain) 6%, transparent) 46px, transparent 49px),
+    radial-gradient(circle at 86% 9%, color-mix(in srgb, var(--stain) 5%, transparent) 0 40px, transparent 41px),
+    /* 水じみ */
+    radial-gradient(ellipse 190px 120px at 6% 72%, color-mix(in srgb, var(--stain) 14%, transparent), color-mix(in srgb, var(--stain) 4%, transparent) 62%, transparent 72%),
+    /* 狐色の斑点（フォクシング） */
+    radial-gradient(circle 5px at 23% 14%, color-mix(in srgb, var(--stain) 30%, transparent), transparent),
+    radial-gradient(circle 3px at 26% 17%, color-mix(in srgb, var(--stain) 26%, transparent), transparent),
+    radial-gradient(circle 4px at 71% 63%, color-mix(in srgb, var(--stain) 22%, transparent), transparent),
+    radial-gradient(circle 7px at 93% 46%, color-mix(in srgb, var(--stain) 18%, transparent), transparent),
+    radial-gradient(circle 3px at 44% 91%, color-mix(in srgb, var(--stain) 28%, transparent), transparent),
+    /* 端の焼け */
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--stain) 16%, transparent), transparent 40%),
+    radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--stain) 20%, transparent), transparent 45%);
+  box-shadow:
+    inset 0 0 3px color-mix(in srgb, var(--stain) 55%, transparent),
+    inset 0 0 22px color-mix(in srgb, var(--stain) 22%, transparent),
+    inset 0 0 70px color-mix(in srgb, var(--stain) 14%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--page-edge) 75%, transparent); outline-offset: -11px;
 }
-.page::after { /* 五芒星の透かし（現行UIの継承） */
-  content: ""; position: absolute; right: 18px; bottom: 18px; width: 140px; height: 140px; opacity: .07; pointer-events: none;
-  background: no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23271d12' stroke-width='3'%3E%3Ccircle cx='50' cy='50' r='46'/%3E%3Cpath d='M50 6 76 86 8 36h84L24 86z'/%3E%3C/g%3E%3C/svg%3E");
+/* 右下のめくれ：clip で切り落とした三角形を、裏面として折り返す */
+.curl {
+  position: absolute; right: 0; bottom: 0; pointer-events: none;
+  background: linear-gradient(to bottom right,
+    var(--page-back) 0%, color-mix(in srgb, var(--page-back) 70%, var(--page-fold)) 30%,
+    var(--page-fold) 47%, color-mix(in srgb, var(--stain) 55%, var(--page-fold)) 49.6%, transparent 50%);
+  border-top-left-radius: 62%;
+  filter: drop-shadow(-2px -2px 2px color-mix(in srgb, var(--stain) 40%, transparent));
+}
+/* 古びた五芒星の透かし（現行UIの継承） */
+.page .mark {
+  position: absolute; right: clamp(28px, 6vw, 64px); bottom: clamp(26px, 5vw, 50px);
+  width: 156px; height: 156px; opacity: .2; pointer-events: none; mix-blend-mode: multiply;
 }
 .page-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--page-edge); padding-bottom: 10px; margin-bottom: 22px; }
 .page-head .title { font-family: var(--f-book); font-weight: 700; color: var(--ink-soft); font-size: var(--step--1); letter-spacing: .1em; }
@@ -303,7 +343,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .filters .chip-btn[aria-pressed="true"] { border-color: var(--gold); color: var(--on-desk); }
 .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 .book {
-  display: grid; grid-template-rows: auto 1fr auto; gap: 10px; text-align: left; cursor: pointer;
+  display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 10px; text-align: left; cursor: pointer;
   background: var(--desk-2); border: 1px solid var(--desk-line); border-radius: 4px 10px 10px 4px; padding: 18px 18px 14px 26px;
   position: relative; color: var(--on-desk); transition: transform .2s, border-color .2s;
 }
@@ -312,14 +352,14 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .book h2 { font-family: var(--f-book); font-size: var(--step-1); font-weight: 700; line-height: 1.4; }
 .book .by { font-size: var(--step--1); color: var(--on-desk-soft); }
 .book p { margin: 0; font-family: var(--f-book); font-size: var(--step--1); color: var(--on-desk-soft); }
-.book .foot { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; color: var(--on-desk-soft); border-top: 1px solid var(--desk-line); padding-top: 10px; gap: 8px; }
+.book .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-size: .75rem; color: var(--on-desk-soft); border-top: 1px solid var(--desk-line); padding-top: 10px; gap: 8px; }
 .pill { padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; font-size: .7rem; white-space: nowrap; }
-.pill.play { color: var(--gold); }
-.pill.clear { color: var(--good); }
-.pill.new { color: var(--lapis); }
+.pill.is-play { color: var(--gold); }
+.pill.is-clear { color: var(--good); }
+.pill.is-new { color: var(--lapis); }
 .continue { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; margin-bottom: 28px; }
 .continue .page { padding: 20px 24px; }
-.continue .page::after { width: 80px; height: 80px; }
+.continue .page .mark { width: 76px; height: 76px; right: 40px; bottom: 10px; }
 
 /* ───── Create ───── */
 .create { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
@@ -367,6 +407,8 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
+</head>
+<body>
 
 <div id="root"></div>
 
@@ -525,6 +567,91 @@ const START_CHARA = {
 
 // ───── 小さな部品 ─────
 const Ornament = () => html`<div class="rule" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 1 12.4 7.6 19 10 12.4 12.4 10 19 7.6 12.4 1 10 7.6 7.6z"/></svg></div>`;
+
+// ───── 羊皮紙 ─────
+// 端の欠けた輪郭を実寸から生成（seed ごとに形が固定される）
+function mulberry32(a) {
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function tornPath(w, h, curl, seed) {
+  const rnd = mulberry32(seed), pts = [];
+  const edge = (x0, y0, x1, y1, nx, ny) => {
+    const len = Math.hypot(x1 - x0, y1 - y0), tx = (x1 - x0) / len, ty = (y1 - y0) / len;
+    const n = Math.max(2, Math.round(len / 11));
+    for (let i = 0; i < n; i++) {
+      const d = i * len / n, x = x0 + tx * d, y = y0 + ty * d;
+      if (i > 1 && i < n - 3 && rnd() < 0.05) {          // 欠け：浅く不揃いな凹み
+        const cw = 12 + rnd() * 14, depth = 3 + rnd() * 6, k = 5;
+        for (let m = 0; m <= k; m++) {
+          const u = m / k, dd = depth * Math.sin(Math.PI * u) * (0.6 + rnd() * 0.5);
+          pts.push([x + tx * cw * u + nx * dd, y + ty * cw * u + ny * dd]);
+        }
+        i += Math.ceil(cw / (len / n)) - 1;
+      } else {
+        const j = rnd() * 2.4;                            // ほつれ
+        pts.push([x + nx * j, y + ny * j]);
+      }
+    }
+  };
+  edge(0, 0, w, 0, 0, 1);
+  edge(w, 0, w, h - curl, -1, 0);
+  edge(w, h - curl, w - curl, h, 0, 0);                   // めくれの折り目（直線）
+  edge(w - curl, h, 0, h, 0, -1);
+  edge(0, h, 0, 0, 1, 0);
+  return 'M' + pts.map(([x, y]) => x.toFixed(1) + ' ' + y.toFixed(1)).join('L') + 'Z';
+}
+
+// 古びた五芒星：線を揺らし（displacement）、ノイズのマスクで擦れ・欠けを作る
+const STAR = 'M50 9.5L73.8 82.8L11.5 37.5H88.5L26.2 82.8Z';
+function Pentagram() {
+  const marks = Array.from({ length: 5 }, (_, k) => {
+    const a = (-90 + 36 + 72 * k) * Math.PI / 180;
+    return [50 + 43.2 * Math.cos(a), 50 + 43.2 * Math.sin(a)];
+  });
+  return html`<svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
+    <defs>
+      <filter id="pg-rough" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="5" result="t"/>
+        <feDisplacementMap in="SourceGraphic" in2="t" scale="1.8"/>
+      </filter>
+      <filter id="pg-wear" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="3" seed="11"/>
+        <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -3.4 0 0 0 2.45"/>
+      </filter>
+      <mask id="pg-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+        <rect width="100" height="100" fill="#fff" filter="url(#pg-wear)"/>
+      </mask>
+    </defs>
+    <g mask="url(#pg-mask)" transform="rotate(-7 50 50)">
+      <g filter="url(#pg-rough)" fill="none" stroke="var(--ink)" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="50" r="46" stroke-width="2.4" stroke-dasharray="64 2.6 41 1.8 77 3.4 55 2"/>
+        <circle cx="50" cy="50" r="40.5" stroke-width="1.1" stroke-dasharray="120 1.5 84 2.2"/>
+        <path d=${STAR} stroke-width="1.9"/>
+        <path d=${STAR} stroke-width="0.6" transform="translate(.7 .4)" opacity=".5"/>
+        ${marks.map(([x, y], k) => html`<g key=${k} transform=${`translate(${x} ${y}) rotate(${36 + 72 * k})`}>
+          <path d="M-1.6 0H1.6M0 -1.6V1.6" stroke-width=".8"/></g>`)}
+      </g>
+    </g>
+  </svg>`;
+}
+
+function Parchment({ as = 'div', className = '', style, seed = 1, curl = 46, children }) {
+  const ref = useRef(null);
+  const [clip, setClip] = useState(null);
+  useEffect(() => {
+    const el = ref.current;
+    const update = () => setClip(tornPath(el.offsetWidth, el.offsetHeight, curl, seed));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [curl, seed]);
+  return html`<div class="parchment">
+    ${React.createElement(as, { ref, className: ('page ' + className).trim(), style: { ...style, clipPath: clip ? `path('${clip}')` : undefined } },
+      children, html`<${Pentagram} key="mark"/>`)}
+    <span class="curl" style=${{ width: curl + 'px', height: curl + 'px' }} aria-hidden="true"></span>
+  </div>`;
+}
 
 const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
 function Die({ value, rolling, left }) {
@@ -745,7 +872,7 @@ function Play({ state, setState, toast, fontScale, setFontScale }) {
   const endLabel = scene.end === 'happy' ? 'Happy End' : scene.end === 'bad' ? 'Bad End' : null;
 
   return html`<div class="play">
-    <article class="page" style=${{ '--book-size': fontScale }}>
+    <${Parchment} as="article" seed=${7} style=${{ '--book-size': fontScale }}>
       <header class="page-head">
         <span class="title">${SCENARIO.meta.title}</span>
         <span class="para"><small>${endLabel || '節'}</small>${state.sceneId}</span>
@@ -765,7 +892,7 @@ function Play({ state, setState, toast, fontScale, setFontScale }) {
           <span class="arrow" aria-hidden="true">→</span>
         </button>`)}
       </nav>
-    </article>
+    <//>
 
     <aside class="panel" aria-label="冒険者パネル">
       <div class="tabs" role="tablist">
@@ -809,11 +936,11 @@ function Library({ onOpen }) {
   const label = { play: '冒険中', clear: 'クリア', new: '未読' };
   return html`<div>
     <div class="continue">
-      <div class="page">
+      <${Parchment} seed=${11} curl=${28}>
         <div class="eyebrow" style=${{ color: 'var(--ink-soft)' }}>続きから</div>
         <div style=${{ fontFamily: 'var(--f-book)', fontSize: 'var(--step-2)', fontWeight: 700, margin: '4px 0' }}>新・消えた王さまの杖</div>
         <div style=${{ fontFamily: 'var(--f-book)', color: 'var(--ink-soft)', fontSize: 'var(--step--1)' }}>「いけにえの神官」クルトン · 節 1010 · HP 82 / 90</div>
-      </div>
+      <//>
       <button class="btn" style=${{ background: 'var(--gold)', borderColor: 'var(--gold)', color: 'var(--desk)' }} onClick=${() => onOpen('play')}>冒険を再開</button>
     </div>
     <div class="lib-head">
@@ -830,7 +957,7 @@ function Library({ onOpen }) {
       ${list.map(b => html`<button key=${b.id} class="book" style=${{ '--spine': b.spine }} onClick=${() => onOpen(b.status === 'new' ? 'create' : 'play')}>
         <div><h2>${b.title}</h2><div class="by">${b.author}</div></div>
         <p>${b.desc}</p>
-        <div class="foot"><span>${b.scenes.toLocaleString()} 節 · ${b.kind}</span><span class=${'pill ' + b.status}>${b.progress || label[b.status]}</span></div>
+        <div class="foot"><span>${b.scenes.toLocaleString()} 節 · ${b.kind}</span><span class=${'pill is-' + b.status}>${b.progress || label[b.status]}</span></div>
       </button>`)}
     </div>
   </div>`;
@@ -860,7 +987,7 @@ function Create({ onStart }) {
         <select id="job"><option>のうふ</option><option>かじや</option><option>きこり</option><option>りょうし</option><option>ぼくし</option></select>
       </label>
     </div>
-    <div class="page sheet-preview">
+    <${Parchment} className="sheet-preview" seed=${3}>
       <div class="page-head"><span class="title">冒険者名簿</span><span class="para"><small>No.</small>0001</span></div>
       <div class="prose">
         <p>その者、名を<b>クルトン</b>という。かつては「いけにえの神官」と呼ばれた、${{ YOUNG: '若き', ADULT: '壮年の', OLD: '老いた' }[age]}${RACES.find(r => r.id === race).ja}である。</p>
@@ -873,7 +1000,7 @@ function Create({ onStart }) {
         <button class="btn ghost" onClick=${reroll}>能力を振り直す</button>
         <button class="btn" onClick=${onStart}>この者で冒険に出る</button>
       </div>
-    </div>
+    <//>
   </div>`;
 }
 
@@ -999,3 +1126,5 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
 </script>
+</body>
+</html>
