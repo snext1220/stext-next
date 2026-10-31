@@ -77,6 +77,7 @@ describe('stext', () => {
         tags: ['短編', 'テスト'],
         level: 2,
         scenes: 2,
+        results: 0,
       },
     ]);
     expect(readFileSync(join(out, 'REPORT.md'), 'utf8')).toContain('| demo | 2 | 1 | 1 | 0 | 0 |');

@@ -13,6 +13,7 @@ import {
   applyStartBonus,
   paramDefinitions,
   paramValue,
+  updateParams,
   updateHpMp,
   updateState,
   type EffectContext,
@@ -136,19 +137,32 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
     return ctx;
   }
 
-  /** 新しいキャラクターで冒険を始め、シーン 0 に入る */
-  function start(global: GlobalState, opts: { memos?: string } = {}): Step {
-    const g = clone(global);
-    const constraint = scenario.meta.constraint;
-    const state = newGameState(random, {
+  /** 新しいキャラクターのセーブデータを作る（シナリオの制約に従う。キャラ作成画面の下書き用） */
+  function newCharacter(
+    global: GlobalState,
+    opts: { memos?: string; constraint?: Scenario['meta']['constraint'] } = {},
+  ): GameState {
+    const constraint = opts.constraint ?? scenario.meta.constraint;
+    return newGameState(random, {
       ...(constraint ? { constraint } : {}),
       ...(opts.memos !== undefined ? { memos: opts.memos } : {}),
-      bonusItems: g.items,
+      bonusItems: global.items,
     });
+  }
+
+  /** 作ったキャラクターで冒険を始める：開始時のボーナスを適用し、シーン 0 に入る */
+  function begin(character: GameState, global: GlobalState): Step {
+    const state = clone(character);
+    const g = clone(global);
     const events: GameEvent[] = [];
     applyStartBonus(effectContext(state, g, events));
     const step = enterScene(state, g, '0');
     return { ...step, events: [...events, ...step.events] };
+  }
+
+  /** 新しいキャラクターで冒険を始め、シーン 0 に入る */
+  function start(global: GlobalState, opts: { memos?: string } = {}): Step {
+    return begin(newCharacter(global, opts), global);
   }
 
   /** シーンに入る（旧エンジン createScene の、表示以外の処理） */
@@ -371,9 +385,27 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
     return { state, global: ctx.global, events };
   }
 
+  /** 本文の ${input?p01} の入力欄から、パラメーターに値を代入する（旧エンジン param_handler） */
+  function setParam(current: GameState, id: string, value: string): GameState {
+    const state = clone(current);
+    updateParams({ state, params }, [`${id}:@${value}`]);
+    return state;
+  }
+
+  /** 指定したシーンの本文を展開する（Battle Sheet のルール表示など。共通フッターは付けない） */
+  function sceneText(state: GameState, global: GlobalState, id: string): string {
+    const scene = scenes.get(id);
+    if (!scene) return '';
+    return expandSceneText({ ...scene, excludeFooter: true }, textContext(state, global)).markdown;
+  }
+
   return {
     scenario,
     scenarioId,
+    setParam,
+    sceneText,
+    newCharacter,
+    begin,
     start,
     enterScene,
     view,

@@ -1,6 +1,6 @@
 # ソーサリアンText 次世代化 移行計画（v2 計画書・ドラフト）
 
-> ステータス: **Phase 3（コアエンジン）完了**。次は Phase 4（プレイヤーUI）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
+> ステータス: **Phase 4（プレイヤーUI）β 完了**。次は Phase 5（並行公開・検証）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
 > 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
 > デザインプロトタイプ: [`prototype/design/index.html`](../prototype/design/index.html)（ブラウザで直接開けます）
@@ -337,7 +337,7 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 | **1. 基盤** | モノレポ化、TS/Vite/Vitest/ESLint/Prettier導入、CI（GitHub Actions）。現行版は `snext1220/stext` に残す | ビルド・テストが回る空のパッケージ群 | 完了 |
 | **2. スキーマと変換器** | v2 JSON Schema 確定（条件ASTの定義、`parseCondition` / `formatCondition` を含む）、`@stext/convert` 実装、43シナリオ一括変換、変換レポートの作成 | `scenarios/*/scenario.json`、`stext convert/convert-all/validate`、`schema/scenario.v2.json` | 完了（旧シナリオ側の手修正は未実施） |
 | **3. コアエンジン** | `Common`データ移植 → 条件ASTの評価器（Phase 2 で前倒し済み）→ 状態更新 → マクロ展開 → 戦闘 → セーブ互換の順で実装。旧エンジンとの差分テスト基盤 | `@stext/core`、`stext play`、`scripts/difftest.mjs` | 完了（§5.2） |
-| **4. プレイヤーUI** | プロトタイプを元に `@stext/ui` と `apps/player` を実装。BGM/SE、トースト、ダイアログ群 | 新プレイヤー（β） | 4〜6週 |
+| **4. プレイヤーUI** | プロトタイプを元に `@stext/ui` と `apps/player` を実装。BGM/SE、トースト、ダイアログ群 | 新プレイヤー（β） | β 完了（§5.3） |
 | **5. 並行公開・検証** | `?engine=v2` のようなクエリで新旧切り替え。小規模シナリオから順に新版をデフォルト化。旧セーブの自動移行 | 全シナリオ新版対応 | 2〜4週 |
 | **6. Playground刷新** | 新エディタ（React）。vis.js→React Flow 等への置き換え、Ace→Monaco/CodeMirror 6 検討。出力はv2 JSON | 新Playground | 別途 |
 | **7. 旧版撤去** | `snext1220/stext` の凍結・アーカイブ、XMLは変換入力としてのみサポート | — | — |
@@ -378,6 +378,32 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
   - URL の自動リンク、画像のパスの解決、演出（`${effect}`）、BGM・効果音の再生
   - Markdown の描画。旧エンジンの Markdown は改行や画像の扱いに独自の癖があるので、Phase 4 で表示を突き合わせる
 
+### 5.3 Phase 4 の結果（プレイヤー β）
+
+`apps/player`（Vite + React 19）と `@stext/ui` で、プロトタイプの画面を実装した。
+
+| 画面 | 内容 |
+|---|---|
+| 書庫 | `scenarios/index.json` の一覧。シリーズで絞り込み、冒険中・実績数を表示、「続きから」 |
+| 冒険者の誕生 | シナリオの制約の範囲で種族・性別・年齢を選んで能力を振り直す。職業・名前を変えられる |
+| 冒険 | 本文・選択肢（数字キー）・戻る（Backspace）・戦闘・ルール表示・エンディング。右に冒険者／魔法／持ち物／記録、スマホでは下部タブとシート |
+| 変換所 | scenario.xml・Playground JSON をブラウザ内で変換し、保存したりそのまま遊んだりできる |
+
+- 本文の描画：`marked`（`breaks: true`）で、空行は段落、改行は `<br>`。旧エンジンの Markdown に合わせ、`**…**` は前後の文字に関係なく太字、`--` だけの行は区切り線にする。HTML は DOMPurify で安全なものに限り、`${input}` の入力欄などは React の部品にする
+- 保存：旧エンジンと同じキー（シナリオ ID と `sorcerian_text`）で localStorage に保存する
+- 素材：画像・BGM・効果音は**このリポジトリの `assets/` に移した**（866ファイル・約285MB。旧リポジトリの `stext/` と同じ構成で、`scripts/import-legacy-assets.mjs` で取り込む）。プレイヤーは既定でビルド結果の `assets/` から読み、`VITE_ASSET_BASE` で別の配信元にもできる
+  - シナリオが参照する素材2,441件のうち、旧リポジトリにもないものが12種類ある（`card` の挿絵6点、`avengers`・`baku03`・`baku04`・`slayer` の BGM・効果音、大文字小文字の違い `None.mp3` など）。旧版でも表示・再生されていなかったもの
+- 検証
+  - 本文の描画を旧エンジンと比べた（12シナリオの最初のシーン、段落・改行・画像・太字の数）。旧エンジンの選択肢リンクの間の `<br>` を除いて、12件すべて一致
+  - `scripts/e2e-player.mjs` で、書庫→作成→冒険→戦闘→魔法→選択と戻る→スマホ幅→変換所で遊ぶ、を開発サーバーとビルド結果の両方で確認（12項目すべて成功）
+  - 単体テスト 80件（UI の部品・保存・パスの組み立てを含む）
+- まだ実装していないもの（旧エンジンにはある）
+  - ステータス欄の手入力による変更（旧エンジンはサイドバーで能力値・星などを自由に書き換えられた）、敵の撃破チェック
+  - セーブデータのバックアップ／リストア（`.stext` ファイル）、プレイヤーランク・ボーナスアイテムの一覧、ツイートボタン
+  - 文字の演出（`${effect}`）は、Textillate の効果名に関係なく同じフェードで表示している
+- 未確認
+  - 公開（デプロイ）の仕組みはまだない
+
 ## 6. 互換性・データ移行
 
 | 対象 | 方針 |
@@ -409,9 +435,10 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」（§2.3）
 - デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
 - 選択肢は各シーンの `choices[]` に持たせる（§3）。Playground のフロー図は `choices` から導出する
-- Phase 1（基盤整備）、Phase 2（スキーマと変換器）、Phase 3（コアエンジン）完了
+- 画像・BGM・効果音は新リポジトリ（`assets/`）に移設する
+- Phase 1〜3 完了、Phase 4 は β 完了
 
 次:
 
 1. `scenarios/REPORT.md` のエラー12件を、旧リポジトリのシナリオで直すかどうかの判断（直す場合は `npm run convert:legacy` で変換し直す）
-2. Phase 4（プレイヤーUI）：プロトタイプをもとに `@stext/ui` と `apps/player` を実装する。Markdown の描画を旧エンジンの表示と突き合わせ、Battle Sheet・魔法シート・ステータスを `@stext/core` の関数でつなぐ
+2. Phase 5（並行公開・検証）：プレイヤーの公開（GitHub Pages など）、旧版からの導線、§5.3 の未実装機能（ステータスの手入力・バックアップ／リストアなど）の補完、実際に遊んでの確認

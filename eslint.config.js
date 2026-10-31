@@ -55,7 +55,7 @@ export default tseslint.config(
   },
   {
     // page.evaluate の中はブラウザで動く
-    files: ['scripts/difftest.mjs'],
+    files: ['scripts/difftest.mjs', 'scripts/e2e-player.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   {
