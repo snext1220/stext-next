@@ -222,7 +222,13 @@ body {
 .pg-field.wide {
   grid-column: 1 / -1;
 }
-.pg-field > label {
+.pg-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.pg-label > label {
   color: var(--on-desk-soft);
   letter-spacing: 0.04em;
 }
@@ -419,6 +425,180 @@ body {
   padding-left: 1.2em;
   font-size: 0.75rem;
   color: var(--on-desk-soft);
+}
+/* ダイナミックヘルプ */
+.pg .pg-help-button {
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--on-desk-soft);
+  background: transparent;
+  vertical-align: middle;
+}
+.pg-table th .pg-help-button {
+  margin-left: 4px;
+}
+.pg-help-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(10, 6, 2, 0.45);
+}
+.pg-help {
+  width: min(680px, 100%);
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--desk);
+  color: var(--on-desk);
+  border-left: 1px solid var(--desk-line);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  outline: none;
+}
+.pg-help-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--desk-line);
+  background: var(--desk-2);
+}
+.pg-help-head h2 {
+  margin: 0;
+  font-family: var(--f-book);
+  font-size: var(--step-1);
+}
+.pg-help-key {
+  font-size: 0.75rem;
+  color: var(--on-desk-soft);
+}
+.pg-help-content {
+  overflow: auto;
+  padding: 12px 20px 40px;
+  font-size: var(--step--1);
+  line-height: 1.8;
+}
+.pg-help-content h3 {
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  color: var(--on-desk-soft);
+  margin: 16px 0 6px;
+}
+.pg-help-body table {
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+.pg-help-body th,
+.pg-help-body td {
+  border: 1px solid var(--desk-line);
+  padding: 3px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.pg-help-body code {
+  font-size: 0.9em;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--desk-2);
+}
+.pg-help-body pre {
+  overflow: auto;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--desk-line);
+  background: var(--desk-2);
+  line-height: 1.5;
+}
+.pg-help-body pre code {
+  padding: 0;
+  background: none;
+}
+.pg-help-body blockquote {
+  margin: 8px 0;
+  padding: 2px 12px;
+  border-left: 3px solid var(--gold);
+  color: var(--on-desk-soft);
+}
+.pg-help-content a {
+  color: var(--gold-bright);
+}
+.pg-help-marks {
+  margin: 4px 0 12px;
+  padding: 6px 12px;
+  border: 1px dashed var(--gold);
+  border-radius: 6px;
+  background: var(--desk-2);
+}
+.pg-help-marks h3 {
+  margin: 0 0 4px;
+}
+.pg-help-marks ul,
+.pg-help-related ul,
+.pg-help-index ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pg-help-marks li {
+  margin: 4px 0;
+}
+.pg-mark {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: var(--desk);
+  background: var(--on-desk-soft);
+}
+.pg-help-marks .pg-mark {
+  margin-left: 0;
+}
+/* 変更 / 未実装 / 誤り / 廃止 / 要確認 */
+.pg-mark.mark-0 {
+  background: var(--lapis);
+}
+.pg-mark.mark-1 {
+  background: var(--gold);
+}
+.pg-mark.mark-2 {
+  background: var(--blood);
+}
+.pg-mark.mark-4 {
+  background: var(--good);
+}
+.pg-help-related li,
+.pg-help-index li {
+  margin: 2px 0;
+}
+.pg-help-related button,
+.pg-help-index li button {
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  color: var(--gold-bright);
+  text-align: left;
+}
+.pg-help-index input[type='search'] {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--desk-line);
+  background: var(--desk-2);
+  color: var(--on-desk);
+}
+.pg-help-index ul {
+  columns: 2 14em;
 }
 @media (max-width: 900px) {
   body {

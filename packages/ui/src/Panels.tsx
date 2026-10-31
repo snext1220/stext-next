@@ -3,12 +3,14 @@ import {
   STAR_IDS,
   STAR_NAMES,
   STATE_NAMES,
+  bonusItem,
   canCast,
   type GameState,
   type GlobalState,
   type MagicName,
 } from '@stext/core';
 import type { Scenario } from '@stext/schema';
+import { useState } from 'react';
 
 const STAR_COLORS = [
   '--star-mon',
@@ -41,17 +43,43 @@ export function RaceSigil({ race }: { race: string }) {
   );
 }
 
-export function HeroPanel({ scenario, state }: { scenario: Scenario; state: GameState }) {
+/** キャラクターの顔画像。読み込めなければ種族の紋章を出す */
+export function CharaPortrait({ src, race }: { src?: string | undefined; race: string }) {
+  const [failed, setFailed] = useState<string>();
+  if (!src || failed === src) return <RaceSigil race={race} />;
+  return (
+    <img
+      className="portrait"
+      src={src}
+      alt=""
+      width={100}
+      height={100}
+      onError={() => setFailed(src)}
+    />
+  );
+}
+
+export function HeroPanel({
+  scenario,
+  state,
+  portraitUrl,
+}: {
+  scenario: Scenario;
+  state: GameState;
+  /** 顔画像の URL（省略時は種族の紋章） */
+  portraitUrl?: string | undefined;
+}) {
   const c = state.chara;
   const pct = (a: number, b: number) => `${Math.max(0, Math.min(100, (a / b) * 100))}%`;
   const label = (k: string) => statusLabel(scenario, k);
   const frees = (['free1', 'free2', 'free3'] as const).filter(
     (k) => scenario.meta.labels?.[k] || c[k] !== 0,
   );
+  const bonus = state.bonus ? bonusItem(state.bonus) : undefined;
   return (
     <div>
-      <div className="hero">
-        <RaceSigil race={c.race} />
+      <div className={'hero' + (portraitUrl ? ' with-portrait' : '')}>
+        <CharaPortrait src={portraitUrl} race={c.race} />
         <div>
           <div className="epithet">「{c.title}」</div>
           <div className="name">{c.name}</div>
@@ -102,6 +130,15 @@ export function HeroPanel({ scenario, state }: { scenario: Scenario; state: Game
         <span>状態</span>
         <b>{STATE_NAMES[c.state] ?? c.state}</b>
       </div>
+      {state.bonus && (
+        <div className="hero-bonus">
+          <span>ボーナス</span>
+          <div>
+            <b>{bonus?.name ?? state.bonus}</b>
+            {bonus && <p>{bonus.desc}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -25,7 +25,12 @@ function legacyRepo() {
   writeFileSync(join(dir, 'demo', 'scenario.xml'), XML);
   writeFileSync(
     join(dir, 'stext.xml'),
-    '<stext><scenario><work id="demo" title="デモ" author="Rio" tags="短編, テスト" level="2" /></scenario></stext>',
+    `<stext><scenario><work id="demo" title="デモ" author="Rio" tags="短編, テスト" level="2" quest="1FAIpQLSdemo">
+  <img src="./stext/demo/capture/intro.png" height="120" class="right" />
+  王さまの杖が盗まれた。
+
+  <p class="award">ゲストさま投稿作品</p>
+</work></scenario></stext>`,
   );
   return dir;
 }
@@ -78,9 +83,32 @@ describe('stext', () => {
         level: 2,
         scenes: 2,
         results: 0,
+        quest: '1FAIpQLSdemo',
+        prologue: '王さまの杖が盗まれた。\n\n<p class="award">ゲストさま投稿作品</p>',
       },
     ]);
     expect(readFileSync(join(out, 'REPORT.md'), 'utf8')).toContain('| demo | 2 | 1 | 1 | 0 | 0 |');
+  });
+
+  it('orders the index by publication date, newest first', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'stext-'));
+    for (const id of ['dev', 'new', 'old', 'same']) {
+      mkdirSync(join(dir, id));
+      writeFileSync(join(dir, id, 'scenario.xml'), XML);
+    }
+    writeFileSync(
+      join(dir, 'stext.xml'),
+      `<stext><scenario>
+<work id="old" title="古い" published="2018-1-15" />
+<work id="new" title="新しい" published="2018-12-20" />
+<work id="same" title="同じ日" published="2018-12-20" />
+<work id="dev" title="開発用" />
+</scenario></stext>`,
+    );
+    const out = join(dir, 'scenarios');
+    expect((await capture(['convert-all', dir, '-o', out])).code).toBe(0);
+    const index = JSON.parse(readFileSync(join(out, 'index.json'), 'utf8')) as { id: string }[];
+    expect(index.map((e) => e.id)).toEqual(['new', 'same', 'old', 'dev']);
   });
 
   it('validates scenario JSON and fails on errors', async () => {

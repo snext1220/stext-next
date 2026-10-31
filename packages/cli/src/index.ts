@@ -153,6 +153,10 @@ interface IndexEntry {
   clears?: string[];
   /** 公開前（stext.xml の unpublished） */
   unpublished?: boolean;
+  /** 感想アンケート（Google フォーム）の ID（stext.xml の quest） */
+  quest?: string;
+  /** 書庫の詳細に出すプロローグ（stext.xml の work の本文。Markdown） */
+  prologue?: string;
 }
 
 async function convertAll(args: string[], io: Io): Promise<number> {
@@ -183,7 +187,8 @@ async function convertAll(args: string[], io: Io): Promise<number> {
     await writeFile(join(outDir, id, 'scenario.json'), toJson(result.scenario));
     reports.push({ id, result });
     const meta = result.scenario.meta;
-    const listed = catalog.get(id);
+    const work = catalog.get(id);
+    const listed = work?.attrs;
     const entry: IndexEntry = {
       id,
       title: listed?.['title'] ?? meta.title,
@@ -210,28 +215,68 @@ async function convertAll(args: string[], io: Io): Promise<number> {
           .map((r) => r.trim())
           .filter(Boolean);
       if (listed['unpublished'] !== undefined) entry.unpublished = true;
+      if (listed['quest']) entry.quest = listed['quest'];
+      if (work?.prologue) entry.prologue = work.prologue;
     }
     index.push(entry);
     const errors = result.issues.filter((i) => i.severity === 'error').length;
     const warnings = result.issues.length - errors;
     io.err(`${id}: ${result.stats.scenes} シーン、エラー ${errors}、警告 ${warnings}`);
   }
-  await writeFile(join(outDir, 'index.json'), toJson(index));
+  await writeFile(join(outDir, 'index.json'), toJson(sortByPublished(index)));
   await writeFile(join(outDir, 'REPORT.md'), report(reports));
   io.err(`${ids.length} 本を ${outDir} に書き出しました（詳細は REPORT.md）`);
   return 0;
 }
 
-async function readCatalog(path: string): Promise<Map<string, Record<string, string>>> {
-  const catalog = new Map<string, Record<string, string>>();
+/** 一覧は公開日の新しい順。公開日のないもの（公開一覧にない開発用など）は最後に ID 順で並べる */
+function sortByPublished(index: IndexEntry[]): IndexEntry[] {
+  // stext.xml の日付は「2018-1-15」のように月日の桁がそろっていないので、数値にして比べる
+  const day = (e: IndexEntry) => {
+    const m = /^(\d+)-(\d+)-(\d+)/.exec(e.published ?? '');
+    return m ? Number(m[1]) * 10000 + Number(m[2]) * 100 + Number(m[3]) : -1;
+  };
+  return [...index].sort((a, b) => day(b) - day(a) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+interface CatalogWork {
+  attrs: Record<string, string>;
+  prologue?: string;
+}
+
+async function readCatalog(path: string): Promise<Map<string, CatalogWork>> {
+  const catalog = new Map<string, CatalogWork>();
   if (!existsSync(path)) return catalog;
   // stext.xml の <scenario> 内の <work id=".." title=".." ..> を、scenario.xml の licence と同じ読み方で読む
   const xml = await readFile(path, 'utf8');
   const section = /<scenario>([\s\S]*?)<\/scenario>/.exec(xml)?.[1] ?? '';
   const legacy = readScenarioXml(`<scenario><licence>${section}</licence></scenario>`);
-  for (const work of legacy.licence)
-    if (work.attrs['id']) catalog.set(work.attrs['id'], work.attrs);
+  const bodies = workBodies(section);
+  for (const work of legacy.licence) {
+    const id = work.attrs['id'];
+    if (!id) continue;
+    const prologue = bodies.get(id);
+    catalog.set(id, prologue ? { attrs: work.attrs, prologue } : { attrs: work.attrs });
+  }
   return catalog;
+}
+
+/**
+ * <work> の本文（旧サイトの書庫の詳細に出していたプロローグ）。本文は HTML 混じりの Markdown なので、XML として読まずにそのまま取り出す。
+ * 冒頭の紹介画像（<img>）は書庫が capture/intro.png を別に出すので除く。
+ */
+function workBodies(section: string): Map<string, string> {
+  const bodies = new Map<string, string>();
+  for (const m of section.matchAll(/<work\b([^>]*?)(?:\/>|>([\s\S]*?)<\/work>)/g)) {
+    const id = /\bid="([^"]*)"/.exec(m[1] ?? '')?.[1];
+    const body = (m[2] ?? '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/<img\b[^>]*>/g, '')
+      .replace(/^[ \t]+/gm, '')
+      .trim();
+    if (id && body) bodies.set(id, body);
+  }
+  return bodies;
 }
 
 function report(entries: { id: string; result: ConvertResult }[]): string {

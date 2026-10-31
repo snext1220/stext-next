@@ -42,6 +42,25 @@ describe('panels', () => {
     expect(getByText('50')).toBeTruthy();
   });
 
+  it('shows the applied bonus item with its effect', () => {
+    const s = state();
+    s.bonus = 'gi23';
+    const { getByText } = render(<HeroPanel scenario={scenario} state={s} />);
+    expect(getByText('D・スレイヤー')).toBeTruthy();
+    expect(getByText('すべての星を1個所有した状態で冒険を開始する')).toBeTruthy();
+  });
+
+  it('shows the portrait and falls back to the race sigil when it cannot be loaded', () => {
+    const { container } = render(
+      <HeroPanel scenario={scenario} state={state()} portraitUrl="/chara.png" />,
+    );
+    const img = container.querySelector('img.portrait')!;
+    expect(img.getAttribute('src')).toBe('/chara.png');
+    fireEvent.error(img);
+    expect(container.querySelector('img.portrait')).toBeNull();
+    expect(container.querySelector('.sigil')).toBeTruthy();
+  });
+
   it('lists items and only the visible flags', () => {
     const { getByText, queryByText } = render(<ItemsPanel scenario={scenario} state={state()} />);
     expect(getByText('こいし')).toBeTruthy();

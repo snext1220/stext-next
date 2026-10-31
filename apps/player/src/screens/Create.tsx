@@ -159,7 +159,6 @@ export function Create({
             </div>
           ))}
         </div>
-        {draft.bonus && <p className="enemy-desc">ボーナスアイテム {draft.bonus} が働きます。</p>}
         {previous && !previous.isEnded && (
           <p className="enemy-desc">このシナリオの冒険の記録は、新しい冒険で上書きされます。</p>
         )}

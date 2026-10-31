@@ -674,6 +674,17 @@ h3 {
   place-items: center;
   background: var(--desk);
 }
+.hero.with-portrait {
+  grid-template-columns: 84px 1fr;
+}
+.portrait {
+  width: 84px;
+  height: 84px;
+  border: 2px solid var(--gold);
+  border-radius: 6px;
+  background: var(--desk);
+  object-fit: cover;
+}
 .sigil svg {
   width: 40px;
   height: 40px;
@@ -770,6 +781,30 @@ h3 {
 .state b {
   color: var(--good);
   font-weight: 700;
+}
+.hero-bonus {
+  margin-top: 8px;
+  font-size: var(--step--1);
+  color: var(--on-desk-soft);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hero-bonus > span {
+  flex: none;
+}
+.hero-bonus > div {
+  text-align: right;
+  min-width: 0;
+}
+.hero-bonus b {
+  color: var(--gold);
+  font-weight: 700;
+}
+.hero-bonus p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .stars {
@@ -1096,15 +1131,6 @@ h3 {
   font-size: var(--step-3);
   font-weight: 700;
 }
-.filters {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.filters .chip-btn[aria-pressed='true'] {
-  border-color: var(--gold);
-  color: var(--on-desk);
-}
 .shelf {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1112,7 +1138,7 @@ h3 {
 }
 .book {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   gap: 10px;
@@ -1184,6 +1210,238 @@ h3 {
 }
 .pill.is-new {
   color: var(--lapis);
+}
+/* 書庫のカードと詳細の紹介画像（旧サイトの capture/intro.png。大きさがまちまちなので枠に収める） */
+.book-img {
+  display: grid;
+  place-items: center;
+  height: 132px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--desk) 70%, #000 8%);
+}
+.book-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.book-noimg {
+  width: 56px;
+  height: 56px;
+  fill: none;
+  stroke: var(--spine, var(--gold));
+  stroke-width: 3;
+  opacity: 0.6;
+}
+.book-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--step--1);
+  color: var(--on-desk-soft);
+  align-self: end;
+}
+/* 旧サイトの難易度アイコン（61×13 のドット絵）を2倍で表示する */
+.level {
+  width: 122px;
+  height: 26px;
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+span.level {
+  width: auto;
+  height: auto;
+}
+.book-detail {
+  border-color: var(--desk-line);
+  color: var(--on-desk);
+}
+.book-detail:hover {
+  border-color: var(--gold);
+}
+/* 書庫の検索条件（旧サイトの検索フォームと同じ項目） */
+.lib-search {
+  margin-bottom: 20px;
+  border: 1px solid var(--desk-line);
+  border-radius: 10px;
+  background: var(--desk-2);
+}
+.lib-search > summary {
+  cursor: pointer;
+  padding: 10px 16px;
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  color: var(--on-desk);
+}
+.lib-search-count {
+  margin-left: 10px;
+  color: var(--gold);
+}
+.lib-search-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 20px;
+  align-items: end;
+  padding: 4px 16px 16px;
+}
+.lib-search-form label {
+  display: grid;
+  gap: 4px;
+  font-size: var(--step--1);
+  color: var(--on-desk-soft);
+}
+.lib-search-form select,
+.lib-search-form input[type='search'] {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--desk-line);
+  border-radius: var(--radius);
+  background: var(--desk);
+  color: var(--on-desk);
+  font-size: var(--step--1);
+}
+.lib-search-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6em;
+  gap: 6px;
+  align-items: end;
+}
+.lib-search-form .lib-search-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+}
+.lib-search-reset {
+  justify-self: start;
+  border-color: var(--desk-line);
+}
+.lib-search-result {
+  margin: 0 0 12px;
+  font-size: var(--step--1);
+  color: var(--on-desk-soft);
+}
+.lib-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: rgba(5, 6, 14, 0.6);
+  padding: max(24px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+    max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+}
+.lib-detail-in {
+  max-width: 760px;
+  margin: 0 auto;
+  animation: up 0.25s ease-out;
+}
+.lib-detail-in:focus {
+  outline: none;
+}
+.lib-detail-head {
+  border-bottom: 1px solid var(--page-edge);
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+}
+.lib-detail-head .eyebrow {
+  color: var(--ink-soft);
+}
+.lib-detail-head h2 {
+  font-family: var(--f-book);
+  font-size: var(--step-2);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.lib-detail-head .by {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.lib-detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+.lib-detail-body .book-img {
+  height: auto;
+  min-height: 120px;
+  background: rgba(39, 29, 18, 0.08);
+}
+.lib-detail-body .prose {
+  font-size: var(--step-0);
+  line-height: 1.9;
+  margin: 0;
+}
+.lib-detail-body .prose p:first-child::first-letter {
+  font-size: inherit;
+  float: none;
+  margin: 0;
+  font-weight: inherit;
+}
+.lib-detail .award {
+  color: var(--blood);
+  font-weight: 700;
+}
+.lib-detail-save {
+  font-family: var(--f-book);
+  color: var(--ink);
+  margin: 8px 0 0;
+}
+.lib-detail-note {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  margin: 8px 0 0;
+}
+.lib-detail-quest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.lib-detail-quest .chip-btn {
+  color: var(--ink);
+  border-color: var(--page-edge);
+  text-decoration: none;
+}
+.lib-detail-quest .chip-btn:hover {
+  border-color: var(--ink-soft);
+}
+.lib-detail-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px 20px;
+  margin: 20px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--page-edge);
+  font-size: var(--step--1);
+}
+.lib-detail-info > div {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  gap: 8px;
+}
+.lib-detail-info > .wide {
+  grid-column: 1 / -1;
+}
+.lib-detail-info dt {
+  color: var(--ink-soft);
+}
+.lib-detail-info dd {
+  margin: 0;
+  color: var(--ink);
+}
+@media (max-width: 760px) {
+  .lib-detail-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .continue {
   display: grid;
@@ -1642,9 +1900,6 @@ a.btn:hover {
 .screens a[aria-current='page'] {
   color: var(--on-desk);
   border-color: var(--gold);
-}
-a.book {
-  color: var(--on-desk);
 }
 label.drop {
   cursor: pointer;

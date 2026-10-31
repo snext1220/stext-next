@@ -108,9 +108,7 @@ export function App() {
         </div>
       </header>
       <main className="shell">
-        {route.name === 'library' && (
-          <Library global={global} settings={settings} onSettings={setSettings} />
-        )}
+        {route.name === 'library' && <Library global={global} settings={settings} />}
         {route.name === 'records' && <Records global={global} onGlobal={setGlobal} />}
         {route.name === 'convert' && (
           <Suspense fallback={<p className="empty-state">変換所を開いています…</p>}>

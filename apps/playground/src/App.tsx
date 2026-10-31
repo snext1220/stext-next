@@ -5,6 +5,7 @@ import { findProblems, problemsByScene } from './checks.js';
 import { SCENARIO_BASE, TEMPLATE_BASE } from './config.js';
 import { Definitions } from './Definitions.js';
 import { FlowView } from './FlowView.js';
+import { HELP_INDEX, useHelp } from './help/HelpPanel.js';
 import { autoLayout } from './layout.js';
 import {
   addChoice,
@@ -38,6 +39,7 @@ export function App() {
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
   const [published, setPublished] = useState<{ id: string; title: string }[]>([]);
   const [slots, setSlots] = useState<Slot[]>(loadSlots);
+  const openHelp = useHelp();
 
   const problems = useMemo(() => findProblems(scenario), [scenario]);
   const byScene = useMemo(() => problemsByScene(problems), [problems]);
@@ -253,6 +255,11 @@ export function App() {
           >
             ↷
           </button>
+          {openHelp && (
+            <button type="button" onClick={() => openHelp(HELP_INDEX)}>
+              ヘルプ
+            </button>
+          )}
         </div>
       </header>
       {message && (

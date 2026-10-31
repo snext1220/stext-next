@@ -38,8 +38,15 @@ await page.waitForSelector('.book');
 check('書庫にシナリオが並ぶ', (await page.locator('.book').count()) > 20);
 await shot('1-library');
 
-// キャラクター作成から冒険開始
-await page.click('a.book[href*="scepter"]');
+// 詳細を開き、キャラクター作成から冒険開始
+await page.click('button[aria-label="「新・消えた王様の杖」の詳細を表示"]');
+await page.waitForSelector('[role=dialog] .lib-detail-body');
+check(
+  '詳細にプロローグが表示される',
+  (await page.textContent('[role=dialog]')).includes('おうさまのつえ'),
+);
+await shot('1b-detail');
+await page.click('[role=dialog] >> text=新たに冒険を始める');
 await page.waitForSelector('.create');
 await page.click('button.opt:has-text("エルフ")');
 check(

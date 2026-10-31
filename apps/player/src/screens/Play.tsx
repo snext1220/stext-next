@@ -1,7 +1,7 @@
 import {
-  BONUS_ITEMS,
   applyDrop,
   attackEnemy,
+  bonusItem,
   createEngine,
   dropFor,
   enemyHp,
@@ -34,7 +34,7 @@ import {
 } from '@stext/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AudioDirector } from '../audio.js';
-import { bgmUrl, imageUrl, seUrl } from '../config.js';
+import { bgmUrl, charaImageUrl, imageUrl, seUrl } from '../config.js';
 import { href } from '../router.js';
 import { saveGame, saveGlobal, type Settings } from '../storage.js';
 
@@ -138,7 +138,7 @@ export function Play({
         else if (e.type === 'itemLost') toast('info', 'アイテム消失', itemName(e.id));
         else if (e.type === 'resultUnlocked') toast('result', '実績獲得', resultName(e.id));
         else if (e.type === 'bonusAwarded') {
-          const item = BONUS_ITEMS.happy[e.id] ?? BONUS_ITEMS.bad[e.id];
+          const item = bonusItem(e.id);
           toast('result', 'ボーナスアイテム', item ? `${item.name}：${item.desc}` : e.id);
         } else if (e.type === 'stateGuarded')
           toast('info', 'シナリオボーナス', `${e.state} を防いだ！`);
@@ -383,7 +383,11 @@ export function Play({
       />
     ) : (
       <div>
-        <HeroPanel scenario={scenario} state={state} />
+        <HeroPanel
+          scenario={scenario}
+          state={state}
+          portraitUrl={charaImageUrl(id, scenario.meta.imageSet, state.chara)}
+        />
         <button
           type="button"
           className="chip-btn"

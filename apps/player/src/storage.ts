@@ -62,8 +62,6 @@ export interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   /** 最後に遊んだシナリオ */
   recent?: string;
-  /** 開発用のシナリオも書庫に出す */
-  showUnlisted?: boolean;
 }
 
 const SETTINGS_KEY = 'stext-next:settings';

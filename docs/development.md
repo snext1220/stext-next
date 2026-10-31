@@ -88,7 +88,7 @@ node packages/cli/dist/bin.js --help
 | コマンド | 内容 |
 | --- | --- |
 | `stext convert <scenario.xml\|playground.json> [-o out.json] [--structure-conditions]` | 旧形式を stext/2 に変換する |
-| `stext convert-all <旧リポジトリの stext ディレクトリ> -o <出力先>` | 全シナリオを変換し、`index.json` と `REPORT.md` を作る |
+| `stext convert-all <旧リポジトリの stext ディレクトリ> -o <出力先>` | 全シナリオを変換し、`index.json` と `REPORT.md` を作る（`index.json` は公開日の新しい順で、公開日のないものは最後に ID 順。`quest` は stext.xml の quest（感想アンケートの Google フォーム ID）、`prologue` は stext.xml の work の本文から紹介画像を除いたもの） |
 | `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
 | `stext play <scenario.json> [--auto <手数>] [--seed <数値>]` | シナリオをコマンドラインで遊ぶ（`--auto` は選択肢を自動で選ぶ） |
 
@@ -100,7 +100,7 @@ node packages/cli/dist/bin.js --help
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
 | `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます |
-| `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` は消しません |
+| `assets/common/`、`scenarios/<id>/capture/`・`bgm/`・`chara/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` は消しません |
 
 `scenarios/`・`schema/`・`assets/` は生成物なので Prettier の対象外です。
 
@@ -129,7 +129,7 @@ node scripts/difftest.mjs --walks 5 --steps 80 --text
 
 ## プレイヤーの動作確認
 
-`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
+`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫と詳細、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
 
 ```bash
 npm run dev
@@ -143,7 +143,7 @@ node scripts/e2e-player.mjs --shots /tmp/shots
 
 ## Playground の動作確認
 
-`scripts/e2e-playground.mjs` は、Playground をブラウザで一通り操作して確かめます（テンプレート、シーンの追加と ID の変更、条件の入力、元に戻す、定義、検査、試遊、自動保存、マイストレージ、JSON の保存、XML を開く、公開シナリオ、スマホ幅）。旧リポジトリ（`../stext`）の mini の XML も使います。
+`scripts/e2e-playground.mjs` は、Playground をブラウザで一通り操作して確かめます（テンプレート、シーンの追加と ID の変更、条件の入力、ヘルプ、元に戻す、定義、検査、試遊、自動保存、マイストレージ、JSON の保存、XML を開く、公開シナリオ、スマホ幅）。旧リポジトリ（`../stext`）の mini の XML も使います。
 
 ```bash
 npm run dev:playground
@@ -156,6 +156,8 @@ node scripts/e2e-playground.mjs --shots /tmp/shots
 ビルド結果を確かめるときは、`npm run build:site` のあと `site/` を HTTP サーバーで配信し、`--base http://localhost:<ポート>/playground` を付けます。
 
 Playground のテンプレート（`apps/playground/public/templates/`）は、旧 Playground のテンプレートを `scripts/import-playground-templates.mjs` で変換したものです（`npm run build` のあと、旧リポジトリを `../stext` に置いて実行）。
+
+Playground のヘルプ（各欄の「?」や項目名のダブルクリックで開く説明）は、`apps/playground/src/help/reference.md` に書きます。旧 Playground の `lib/reference.xml` を stext/2 に合わせて書き直したもので、旧版と食い違う点には `@mark`（変更／未実装／誤り／廃止／要確認）を付けています。書き方はファイルの先頭にあります。フォームから使うキーは `help="scene.text"` のように指定し、存在しないキーや関連項目は `help.test.ts` が見つけます。
 
 ## 公開（GitHub Pages）
 

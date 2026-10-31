@@ -41,7 +41,7 @@ SORCERIAN Text v2 のシナリオは、JSON 形式（`format: "stext/2"`）で�
 | `constraint` | `<constraint race age sex>` | キャラクター作成の制約。`race` `age` は配列 |
 | `bgm` | `<bgm main happy bad>` | 通常・ハッピーエンド・バッドエンドの曲 |
 | `labels` | `<label free1 ...>` | ステータス欄の表示名の置き換え |
-| `imageSet` | `<basic imgset>` | `"custom"` でシナリオ独自の画像 |
+| `imageSet` | `<basic imgset>` | `"custom"` でシナリオ独自のキャラクター画像（`chara/性別_年齢_種族.png`） |
 | `showSummary` | `<basic summary="true">` | 見出しにシーン番号ではなく `summary` を出す |
 | `footerScene` | シーン 99998 | 全シーンの末尾に付けるシーン。`end` のシーンと `excludeFooter: true` のシーンには付けない |
 

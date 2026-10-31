@@ -11,6 +11,7 @@ export { SceneText, legacyMarkdown, renderMarkdown, type SceneTextProps } from '
 export { ChoiceList, type ChoiceListProps } from './Choices.js';
 export {
   HeroPanel,
+  CharaPortrait,
   ItemsPanel,
   MagicPanel,
   RaceSigil,

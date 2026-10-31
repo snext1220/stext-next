@@ -4,6 +4,7 @@
 //   assets/common/...               共通の BGM・効果音・画像（_garbage は除く）
 //   scenarios/<id>/capture/...      シナリオの挿絵
 //   scenarios/<id>/bgm/...          シナリオ独自の BGM・効果音（bgm/se/）
+//   scenarios/<id>/chara/...        シナリオ独自のキャラクター画像（imageSet: "custom"）
 //
 // 使い方: node scripts/import-legacy-assets.mjs [旧リポジトリの stext ディレクトリ（既定 ../stext/stext）]
 import { cpSync, existsSync, readdirSync, rmSync, statSync } from 'node:fs';
@@ -53,7 +54,7 @@ for (const name of existsSync(dest) ? readdirSync(dest) : []) {
 copy(join(source, 'common'), join(dest, 'common'));
 for (const id of readdirSync(source)) {
   if (!existsSync(join(source, id, 'scenario.xml'))) continue;
-  for (const sub of ['capture', 'bgm']) {
+  for (const sub of ['capture', 'bgm', 'chara']) {
     const to = join(scenarios, id, sub);
     rmSync(to, { recursive: true, force: true });
     if (existsSync(join(source, id, sub))) copy(join(source, id, sub), to);

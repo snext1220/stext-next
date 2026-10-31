@@ -9,6 +9,7 @@ import {
 } from '@stext/schema';
 import { useState } from 'react';
 import { Field, SelectField, TextArea, TextField, fromList, toList, toValue } from './fields.js';
+import { HelpButton } from './help/HelpPanel.js';
 import { moveChoice, removeChoice, updateChoice, updateScene, renameScene } from './model.js';
 
 /** 本文に差し込むマクロ（旧 Playground の「カーソル位置にタグを追加」に当たる） */
@@ -131,6 +132,7 @@ export function SceneEditor({
       <div className="pg-row">
         <Field
           label="シーン ID"
+          help="scene.id"
           hint={renameError ?? '変えると、選択肢の遷移先などの参照もまとめて直します'}
         >
           {(id) => (
@@ -144,6 +146,7 @@ export function SceneEditor({
         </Field>
         <TextField
           label="サマリー"
+          help="scene.summary"
           value={scene.summary}
           onChange={(v) => set({ summary: v }, 'summary')}
           wide
@@ -152,6 +155,7 @@ export function SceneEditor({
 
       <TextArea
         label="本文"
+        help="scene.text"
         value={scene.text}
         onChange={(v) => set({ text: v }, 'text')}
         toolbar={TEXT_TOOLBAR}
@@ -160,6 +164,7 @@ export function SceneEditor({
       <section className="pg-section">
         <div className="pg-section-head">
           <h3>選択肢</h3>
+          <HelpButton topic="scene.choices" />
           <button
             type="button"
             onClick={() =>
@@ -199,6 +204,7 @@ export function SceneEditor({
         ))}
         <TextArea
           label="選択肢の後ろの文章"
+          help="scene.afterText"
           value={scene.afterText ?? ''}
           onChange={(v) => set({ afterText: v }, 'afterText')}
           rows={2}
@@ -206,10 +212,14 @@ export function SceneEditor({
       </section>
 
       <section className="pg-section">
-        <h3>シーンに入ったときの効果</h3>
+        <div className="pg-section-head">
+          <h3>シーンに入ったときの効果</h3>
+          <HelpButton topic="scene.effects" />
+        </div>
         <div className="pg-grid">
           <TextField
             label="アイテム"
+            help="effects.items"
             value={fromList(e.items)}
             onChange={(v) => setEffects({ items: toList(v) }, 'items')}
             placeholder="i01, -i02, i03:2"
@@ -217,30 +227,35 @@ export function SceneEditor({
           />
           <TextField
             label="フラグ"
+            help="effects.flags"
             value={fromList(e.flags)}
             onChange={(v) => setEffects({ flags: toList(v) }, 'flags')}
             placeholder="f01, -f02"
           />
           <TextField
             label="パラメーター"
+            help="effects.params"
             value={fromList(e.params)}
             onChange={(v) => setEffects({ params: toList(v) }, 'params')}
             placeholder="p01:1, p02:@5"
           />
           <TextField
             label="実績"
+            help="effects.result"
             value={e.result}
             onChange={(v) => setEffects({ result: v }, 'result')}
             placeholder="r01"
           />
           <TextField
             label="HP"
+            help="effects.hp"
             value={e.hp}
             onChange={(v) => setEffects({ hp: toValue(v) as never }, 'hp')}
             placeholder="-5 / -5..-1 / full"
           />
           <TextField
             label="MP"
+            help="effects.mp"
             value={e.mp}
             onChange={(v) => setEffects({ mp: toValue(v) as never }, 'mp')}
             placeholder="-5 / full / half"
@@ -249,6 +264,7 @@ export function SceneEditor({
             <TextField
               key={k}
               label={k.toUpperCase()}
+              help={`effects.${k}`}
               value={e[k]}
               onChange={(v) => setEffects({ [k]: toValue(v) }, k)}
               placeholder="1 / @5 / full"
@@ -258,6 +274,7 @@ export function SceneEditor({
             <TextField
               key={k}
               label={k.toUpperCase()}
+              help={`effects.${k}`}
               value={e[k]}
               onChange={(v) => setEffects({ [k]: toValue(v) }, k)}
               placeholder="1 / @5 / -3..-1"
@@ -265,6 +282,7 @@ export function SceneEditor({
           ))}
           <TextField
             label="星"
+            help="effects.stars"
             value={Array.isArray(e.stars) ? e.stars.join(', ') : e.stars}
             onChange={(v) =>
               setEffects(
@@ -282,6 +300,7 @@ export function SceneEditor({
           />
           <SelectField
             label="状態異常"
+            help="effects.state"
             value={e.state}
             options={STATE_OPTIONS}
             onChange={(v) => setEffects({ state: v }, 'state')}
@@ -294,6 +313,7 @@ export function SceneEditor({
         <div className="pg-grid">
           <TextField
             label="敵"
+            help="scene.enemies"
             value={fromList(scene.enemies)}
             onChange={(v) => set({ enemies: toList(v).length ? toList(v) : undefined }, 'enemies')}
             placeholder="m01, m02"
@@ -305,36 +325,47 @@ export function SceneEditor({
           />
           <SelectField
             label="エンディング"
+            help="scene.end"
             value={scene.end}
             options={END_OPTIONS}
             onChange={(v) => set({ end: (v || undefined) as Scene['end'] }, 'end')}
           />
           <TextField
             label="続編（シナリオ ID）"
+            help="scene.nexts"
             value={fromList(scene.nexts)}
             onChange={(v) => set({ nexts: toList(v).length ? toList(v) : undefined }, 'nexts')}
           />
           <TextField
             label="BGM"
+            help="scene.bgm"
             value={scene.bgm}
             onChange={(v) => set({ bgm: v === '' ? undefined : v }, 'bgm')}
             placeholder="@field05"
             hint="@ で共通の曲"
           />
-          <TextField label="効果音" value={scene.se} onChange={(v) => set({ se: v }, 'se')} />
+          <TextField
+            label="効果音"
+            help="scene.se"
+            value={scene.se}
+            onChange={(v) => set({ se: v }, 'se')}
+          />
           <TextField
             label="戦闘ルールのシーン"
+            help="scene.rule"
             value={scene.rule}
             onChange={(v) => set({ rule: v }, 'rule')}
           />
           <TextField
             label="ダイス"
+            help="scene.dice"
             value={scene.dice}
             onChange={(v) => set({ dice: v }, 'dice')}
             placeholder="6:2（6面を2個）"
           />
           <TextField
             label="フロー図の色"
+            help="scene.editor.color"
             value={scene.editor?.color}
             onChange={(v) =>
               set(
@@ -344,7 +375,7 @@ export function SceneEditor({
             }
             placeholder="#c0473a"
           />
-          <Field label="共通フッター">
+          <Field label="共通フッター" help="scene.excludeFooter">
             {(id) => (
               <label className="pg-check">
                 <input
@@ -424,6 +455,7 @@ function ChoiceEditor({
           <option value="jump">番号入力</option>
           <option value="answer">文字入力</option>
         </select>
+        <HelpButton topic="choice.kind" />
         <span className="pg-spacer" />
         <button type="button" onClick={() => onMove(-1)} aria-label="上へ">
           ↑
@@ -438,6 +470,7 @@ function ChoiceEditor({
       {'kind' in choice && choice.kind === 'jump' ? (
         <TextField
           label="移動できる番号"
+          help="choice.jump"
           value={fromList(choice.allow)}
           onChange={(v) => onChange({ ...choice, allow: toList(v) })}
           wide
@@ -446,16 +479,19 @@ function ChoiceEditor({
         <div className="pg-grid">
           <TextField
             label="正解"
+            help="choice.answer"
             value={choice.answer}
             onChange={(v) => onChange({ ...choice, answer: v })}
           />
           <TextField
             label="正解のとき"
+            help="choice.answer"
             value={choice.to}
             onChange={(v) => onChange({ ...choice, to: v })}
           />
           <TextField
             label="不正解のとき"
+            help="choice.answer"
             value={choice.else}
             onChange={(v) => onChange({ ...choice, else: v })}
           />
@@ -465,12 +501,14 @@ function ChoiceEditor({
           <div className="pg-grid">
             <TextField
               label="文言"
+              help="choice.label"
               value={choice.label}
               onChange={(v) => onChange({ ...choice, label: v })}
               wide
             />
             <TextField
               label={kind === 'random' ? '遷移先（ランダム）' : '遷移先'}
+              help="choice.to"
               value={fromList(choice.to)}
               onChange={(v) => onChange({ ...choice, to: toList(v).length ? toList(v) : [''] })}
               hint={
@@ -482,6 +520,7 @@ function ChoiceEditor({
             {kind === 'random' && (
               <TextField
                 label="結果を保持する日数"
+                help="choice.randomCacheDays"
                 value={choice.randomCacheDays}
                 onChange={(v) =>
                   onChange({
@@ -501,6 +540,7 @@ function ChoiceEditor({
           />
           <TextField
             label="選んだときに唱える魔法（星を消費）"
+            help="choice.cast"
             value={fromList(choice.cast)}
             onChange={(v) =>
               onChange({ ...choice, cast: (toList(v).length ? toList(v) : undefined) as never })
@@ -512,6 +552,7 @@ function ChoiceEditor({
       )}
       <TextField
         label="選択肢の前に出す文章"
+        help="choice.before"
         value={choice.before}
         onChange={(v) => onChange({ ...choice, before: v || undefined } as Choice)}
         wide
@@ -581,6 +622,7 @@ function ConditionField({
   return (
     <Field
       label="表示条件"
+      help="choice.if"
       wide
       hint={
         parsed === null ? (

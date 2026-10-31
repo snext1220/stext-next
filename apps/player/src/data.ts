@@ -19,6 +19,10 @@ export interface ScenarioEntry {
   clears?: string[];
   /** 公開前 */
   unpublished?: boolean;
+  /** 感想アンケート（Google フォーム）の ID */
+  quest?: string;
+  /** 書庫の詳細に出すプロローグ（Markdown） */
+  prologue?: string;
 }
 
 let indexPromise: Promise<ScenarioEntry[]> | undefined;

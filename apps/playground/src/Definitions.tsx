@@ -1,9 +1,10 @@
 import type { Scenario } from '@stext/schema';
 import { useState } from 'react';
 import { TextArea, TextField, fromList, toList } from './fields.js';
+import { HelpButton } from './help/HelpPanel.js';
 import { setList } from './model.js';
 
-type ListKey = 'items' | 'flags' | 'params' | 'enemies' | 'results' | 'groups' | 'licence';
+export type ListKey = 'items' | 'flags' | 'params' | 'enemies' | 'results' | 'groups' | 'licence';
 
 interface Column {
   key: string;
@@ -16,8 +17,8 @@ interface Column {
   wide?: boolean;
 }
 
-/** 旧 Playground の「アイテム」「フラグ」などのタブと同じ項目 */
-const TABLES: Record<
+/** 旧 Playground の「アイテム」「フラグ」などのタブと同じ項目。ヘルプのキーは「表.列」（items.id など） */
+export const TABLES: Record<
   ListKey,
   { label: string; columns: Column[]; newRow: (n: number) => Record<string, unknown> }
 > = {
@@ -139,6 +140,7 @@ export function Definitions({
             <small>{(scenario[k] as unknown[]).length}</small>
           </button>
         ))}
+        <HelpButton topic={tab === 'meta' ? 'scenario' : tab} />
       </div>
       {tab === 'meta' ? (
         <MetaEditor scenario={scenario} onChange={onChange} />
@@ -186,7 +188,10 @@ function Table({
         <thead>
           <tr>
             {def.columns.map((c) => (
-              <th key={c.key}>{c.label}</th>
+              <th key={c.key}>
+                {c.label}
+                <HelpButton topic={`${listKey}.${c.key}`} />
+              </th>
             ))}
             <th aria-label="操作" />
           </tr>
@@ -265,60 +270,75 @@ function MetaEditor({
       <div className="pg-grid">
         <TextField
           label="タイトル"
+          help="meta.title"
           value={m.title}
           onChange={(v) => set({ title: v }, 'title')}
           wide
         />
-        <TextField label="作者" value={m.author} onChange={(v) => set({ author: v }, 'author')} />
+        <TextField
+          label="作者"
+          help="meta.author"
+          value={m.author}
+          onChange={(v) => set({ author: v }, 'author')}
+        />
         <TextField
           label="シナリオ ID"
+          help="meta.id"
           value={m.id}
           onChange={(v) => set({ id: v }, 'id')}
           hint="試遊で画像を scenarios/<ID>/capture/ から読むときに使う"
         />
         <TextField
           label="キーワード"
+          help="meta.keywords"
           value={fromList(m.keywords)}
           onChange={(v) => set({ keywords: toList(v).length ? toList(v) : undefined }, 'keywords')}
         />
         <TextField
           label="BGM（通常）"
+          help="meta.bgm.main"
           value={m.bgm?.main}
           onChange={(v) => set({ bgm: { ...m.bgm, main: v || undefined } }, 'bgm.main')}
           placeholder="@field05"
         />
         <TextField
           label="BGM（ハッピー）"
+          help="meta.bgm.happy"
           value={m.bgm?.happy}
           onChange={(v) => set({ bgm: { ...m.bgm, happy: v || undefined } }, 'bgm.happy')}
           placeholder="@field04"
         />
         <TextField
           label="BGM（バッド）"
+          help="meta.bgm.bad"
           value={m.bgm?.bad}
           onChange={(v) => set({ bgm: { ...m.bgm, bad: v || undefined } }, 'bgm.bad')}
           placeholder="@town01"
         />
         <TextField
           label="選べる種族"
+          help="meta.constraint.race"
           value={fromList(c.race)}
           onChange={(v) => setConstraint({ race: toList(v) as never })}
           placeholder="FIGHTER, WIZARD, DWARF, ELF"
         />
         <TextField
           label="選べる年齢"
+          help="meta.constraint.age"
           value={fromList(c.age)}
           onChange={(v) => setConstraint({ age: toList(v) as never })}
           placeholder="YOUNG, ADULT, OLD"
         />
         <TextField
           label="性別"
+          help="meta.constraint.sex"
           value={c.sex}
           onChange={(v) => setConstraint({ sex: (v || undefined) as never })}
           placeholder="MALE / FEMALE"
         />
         <TextField
           label="共通フッターのシーン"
+          help="meta.footerScene"
           value={m.footerScene}
           onChange={(v) => set({ footerScene: v }, 'footerScene')}
           placeholder="99998"
@@ -327,6 +347,7 @@ function MetaEditor({
           <TextField
             key={k}
             label={`${k.toUpperCase()} の表示名`}
+            help="meta.labels"
             value={m.labels?.[k]}
             onChange={(v) => {
               const labels = { ...m.labels, [k]: v };
@@ -338,6 +359,7 @@ function MetaEditor({
       </div>
       <TextArea
         label="紹介文"
+        help="meta.description"
         value={m.description ?? ''}
         onChange={(v) => set({ description: v }, 'description')}
         rows={3}

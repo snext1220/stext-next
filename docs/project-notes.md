@@ -130,13 +130,14 @@
     - 自動保存（キー `stext-next:playground:current`）
     - マイストレージ（キー `stext-next:playground:slots`）
   - `FlowView.tsx`、`SceneEditor.tsx`、`Definitions.tsx`、`checks.ts`、`Problems.tsx`、`TestPlay.tsx`、`App.tsx`、`fields.tsx`、`playground.css`
+  - `help/`：ダイナミックヘルプ。`reference.md`（旧 `reference.xml` を移した内容と移行メモ）、`help.ts`（読み込み・検索）、`HelpPanel.tsx`（表示。`main.tsx` の `HelpProvider` が状態を持つ）
 - **テンプレート**：`scripts/import-playground-templates.mjs` で、旧 Playground の7本を `apps/playground/public/templates/` に変換する。
 - **フロー図の表示**
   - シナリオを開くと、フロー図に全体が収まるように作り直す。
   - 大きなシナリオは、最初のシーンの近くに合わせて表示する。
   - 拡大は最大 1 倍まで。
   - スマホ幅ではミニマップを出さない。
-- **確認**：`scripts/e2e-playground.mjs` の21項目が、開発サーバーとビルド結果の両方ですべて成功。単体テストは全体で102件成功。
+- **確認**：`scripts/e2e-playground.mjs` の25項目が、開発サーバーとビルド結果の両方ですべて成功。単体テストは全体で108件成功。
 - **作らなかったもの**：サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）。本文の入力欄は textarea のまま（Monaco や CodeMirror は入れていない）。
 
 ---
@@ -147,7 +148,8 @@
 2. **`scenarios/REPORT.md` の変換エラー12件**：旧リポジトリのシナリオを直すかどうかの判断。直す場合は `npm run convert:legacy` で変換し直す。
 3. **Phase 5 の残り**：旧版からの導線、実際に遊んでの確認。
 4. **GitHub Pages の設定**：Source を「GitHub Actions」にする（未設定なら）。
-5. **改善できること（任意）**：
+5. **ヘルプの移行メモの確認**：`apps/playground/src/help/reference.md` の `@mark 要確認`（4項目・5件）と `@mark 未実装`（`imageSet`、`randomCacheDays`、`${result?id}`、ライセンス表示など）を見て、仕様を決めるか実装する。Playground の目次で「移行メモ：要確認」などに絞り込める。
+6. **改善できること（任意）**：
    - プレイヤーと Playground を互いにリンクする。
    - 元に戻したことで選択中のシーンが消えたとき、選択を外すのではなく別のシーンを選ぶ。
    - 保存するファイル名を工夫する（いまは `meta.id`、なければ `scenario.json`）。

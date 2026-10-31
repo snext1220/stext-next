@@ -2,6 +2,7 @@
  * 編集フォームの小さな部品と、入力文字列と値の変換。
  */
 import { useId, useRef, type ReactNode } from 'react';
+import { HelpButton, useHelp } from './help/HelpPanel.js';
 
 /** カンマ区切りの文字列 ⇔ 配列 */
 export const toList = (v: string): string[] =>
@@ -18,21 +19,36 @@ export function toValue(v: string): number | string | undefined {
   return /^[+-]?\d+$/.test(t) ? Number(t) : t;
 }
 
+/** 入力欄の共通の引数。help はヘルプのキー（help/reference.md） */
+interface Common {
+  label: string;
+  help?: string;
+}
+
+/** help の指定を、undefined を渡さずに引き継ぐ（exactOptionalPropertyTypes のため） */
+const helpOf = (help: string | undefined) => (help !== undefined ? { help } : {});
+
 export function Field({
   label,
+  help,
   hint,
   children,
   wide,
-}: {
-  label: string;
+}: Common & {
   hint?: ReactNode;
   children: (id: string) => ReactNode;
   wide?: boolean;
 }) {
   const id = useId();
+  const openHelp = useHelp();
   return (
     <div className={`pg-field${wide ? ' wide' : ''}`}>
-      <label htmlFor={id}>{label}</label>
+      <div className="pg-label">
+        <label htmlFor={id} {...(help && openHelp ? { onDoubleClick: () => openHelp(help) } : {})}>
+          {label}
+        </label>
+        {help && <HelpButton topic={help} />}
+      </div>
       {children(id)}
       {hint && <div className="pg-hint">{hint}</div>}
     </div>
@@ -41,13 +57,13 @@ export function Field({
 
 export function TextField({
   label,
+  help,
   value,
   onChange,
   placeholder,
   hint,
   wide,
-}: {
-  label: string;
+}: Common & {
   value: string | number | undefined;
   onChange: (v: string) => void;
   placeholder?: string;
@@ -55,7 +71,12 @@ export function TextField({
   wide?: boolean;
 }) {
   return (
-    <Field label={label} {...(hint !== undefined ? { hint } : {})} {...(wide ? { wide } : {})}>
+    <Field
+      label={label}
+      {...helpOf(help)}
+      {...(hint !== undefined ? { hint } : {})}
+      {...(wide ? { wide } : {})}
+    >
       {(id) => (
         <input
           id={id}
@@ -70,17 +91,17 @@ export function TextField({
 
 export function SelectField({
   label,
+  help,
   value,
   options,
   onChange,
-}: {
-  label: string;
+}: Common & {
   value: string | undefined;
   options: readonly (readonly [string, string])[];
   onChange: (v: string) => void;
 }) {
   return (
-    <Field label={label}>
+    <Field label={label} {...helpOf(help)}>
       {(id) => (
         <select id={id} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
           {options.map(([v, l]) => (
@@ -97,12 +118,12 @@ export function SelectField({
 /** カーソル位置に文字列を差し込める複数行の入力欄 */
 export function TextArea({
   label,
+  help,
   value,
   onChange,
   toolbar,
   rows = 12,
-}: {
-  label: string;
+}: Common & {
   value: string;
   onChange: (v: string) => void;
   /** 差し込む文字列の候補（before…after でカーソル位置・選択範囲を挟む） */
@@ -123,7 +144,7 @@ export function TextArea({
     });
   };
   return (
-    <Field label={label} wide>
+    <Field label={label} {...helpOf(help)} wide>
       {(id) => (
         <>
           {toolbar && (

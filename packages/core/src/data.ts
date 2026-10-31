@@ -628,6 +628,11 @@ export const BONUS_ITEMS: {
   },
 };
 
+/** ID からボーナスアイテムを引く（happy・bad の両方から探す） */
+export function bonusItem(id: string): BonusItem | undefined {
+  return BONUS_ITEMS.happy[id] ?? BONUS_ITEMS.bad[id];
+}
+
 /** 星の ID（月・火星・水星・木星・金星・土星・太陽の順）と表示名 */
 export const STAR_NAMES = {
   mon: '月',

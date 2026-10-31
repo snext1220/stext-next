@@ -87,6 +87,48 @@ await wait();
 check('正しい条件は読めると表示', (await page.locator('.pg-choice .pg-ok').count()) > 0);
 await shot('2-scene');
 
+// ダイナミックヘルプ
+const helpTitle = () => page.locator('.pg-help h2').innerText();
+const helpButton = (name) => page.locator('.pg-help-head button', { hasText: name });
+await page.locator('.pg-help-button[data-help="scene.text"]').click();
+await wait();
+check('「?」でその項目のヘルプを開ける', (await helpTitle()) === '本文', await helpTitle());
+await page.locator('.pg-help-related button', { hasText: '本文で使える式' }).click();
+await wait();
+const related = await helpTitle();
+await helpButton('戻る').click();
+await wait();
+check(
+  'ヘルプの関連項目へ移り、戻れる',
+  related === '本文で使える式' && (await helpTitle()) === '本文',
+  related,
+);
+await shot('2-help');
+await page.keyboard.press('Escape');
+await wait();
+const closed = (await page.locator('.pg-help').count()) === 0;
+await page.locator('.pg-label label', { hasText: /^BGM$/ }).dblclick();
+await wait();
+check(
+  'Esc で閉じ、項目名のダブルクリックでもヘルプを開ける',
+  closed && (await helpTitle()) === 'BGM',
+  await helpTitle(),
+);
+await helpButton('目次').click();
+await page.getByLabel('移行メモで絞り込む').selectOption('要確認');
+const pending = await page.locator('.pg-help-index li').count();
+await page.getByLabel('移行メモで絞り込む').selectOption('');
+await page.getByLabel('ヘルプを検索').fill('ルビ');
+await page.locator('.pg-help-index li button', { hasText: 'ルビ' }).first().click();
+await wait();
+check(
+  'ヘルプの目次で検索・移行メモの絞り込みができる',
+  (await helpTitle()) === 'ルビ' && pending > 0,
+  `要確認 ${pending} 件`,
+);
+await helpButton('閉じる').click();
+await wait();
+
 // 元に戻す・やり直す
 await page.getByTitle('元に戻す（Ctrl+Z）').click();
 await page.getByTitle('元に戻す（Ctrl+Z）').click();
