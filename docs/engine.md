@@ -56,6 +56,7 @@ if (r.kind === 'moved') ({ state, global, events } = r);
 | `choose(state, global, index, input?)` | 選択肢を選ぶ。`input` は番号入力・文字入力の値 |
 | `enterScene(state, global, id)` | 指定のシーンに直接入る（デバッグ用） |
 | `castMagic(state, global, name)` | 魔法シートから魔法を唱える（星を消費して HP 回復などを反映） |
+| `useItem(state, global, id)` | 持ち物を使う（`target` に `effect` を反映して1つ消費。`target` がなければ `itemNotUsable`） |
 | `setParam(state, id, value)` | 本文の `${input?p01}` の入力欄から、パラメーターに値を代入する |
 | `sceneText(state, global, id)` | 指定したシーンの本文を展開する（Battle Sheet のルール表示など） |
 
