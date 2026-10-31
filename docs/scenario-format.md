@@ -71,11 +71,13 @@ SORCERIAN Text v2 のシナリオは、JSON 形式（`format: "stext/2"`）で�
 | `enemies` | `enemies` | 登場する敵の ID の配列（同じ ID の繰り返しは複数体） |
 | `end` | `end` | `"happy"` / `"bad"` / `"good"` |
 | `nexts` | `nexts` | 続編として案内するシナリオ ID の配列 |
-| `bgm` / `se` / `rule` / `dice` | 同名の属性 | `rule` はルールとして表示するシーンの ID |
+| `bgm` / `se` / `rule` / `dice` | 同名の属性 | `bgm: ""` はメインテーマに戻す。`rule` はルールとして表示するシーンの ID |
 | `excludeFooter` | `exclude="true"` | `meta.footerScene` を付けない |
 | `editor` | `x` `y` `level` `color` `group` | エディター専用の情報。エンジンは使わない |
 
 本文中のマクロ（`${if 条件}…${/if}`、`${import シーンID}`、`${name}` など）は旧形式のまま使えます。
+
+敵の `hp` には数値のほか、パラメーター ID（`"p01"`）も書けます。その場合は戦闘で敵の HP を減らすと、パラメーターも更新されます。
 
 ### 選択肢
 
