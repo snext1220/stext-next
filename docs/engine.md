@@ -115,3 +115,15 @@ npm run build
 node packages/cli/dist/bin.js play scenarios/scepter/scenario.json
 node packages/cli/dist/bin.js play scenarios/scepter/scenario.json --auto 30 --seed 1
 ```
+
+## プレイヤーランク
+
+```ts
+import { playerRank } from '@stext/core';
+
+const rank = playerRank(global, scenarios); // scenarios は index.json の公開シナリオ（id・level・results・clears）
+// rank.level（画像 rank<番号>.png）、rank.jp、rank.exp、rank.next、rank.cleared など
+```
+
+計算は旧エンジンの PlayerRank と同じです（ボーナスアイテム×10 ＋ クリアしたシナリオのレベル点（レベル1〜5で100〜200）＋ 実績×2）。
+
