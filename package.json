@@ -11,14 +11,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -b && npm run build -w @stext/player",
-    "typecheck": "tsc -b && tsc -p tsconfig.test.json && tsc -p apps/player/tsconfig.json",
+    "build": "tsc -b && npm run build -w @stext/player && npm run build -w @stext/playground",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json && tsc -p apps/player/tsconfig.json && tsc -p apps/playground/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dev": "npm run dev -w @stext/player",
+    "dev:playground": "npm run dev -w @stext/playground",
     "clean": "tsc -b --clean && rm -rf apps/*/dist",
     "schema": "node scripts/write-json-schema.mjs",
     "convert:legacy": "node packages/cli/dist/bin.js convert-all ../stext/stext -o scenarios",

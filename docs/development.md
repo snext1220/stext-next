@@ -30,10 +30,11 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 | ---------------------- | -------------------------------------------------------------------- |
 | `npm test`             | すべてのテストを実行（Vitest）                                       |
 | `npm run test:watch`   | 変更を監視してテストを再実行                                         |
-| `npm run typecheck`    | 型検査（ライブラリ、テスト、プレイヤーアプリ）                       |
+| `npm run typecheck`    | 型検査（ライブラリ、テスト、プレイヤー、Playground）                 |
 | `npm run lint`         | ESLint                                                               |
 | `npm run format`       | Prettier で整形（`format:check` は確認のみ）                         |
-| `npm run build`        | ライブラリを `dist/` にビルドし、プレイヤーアプリを `apps/player/dist/` にビルド |
+| `npm run build`        | ライブラリを `dist/` に、プレイヤーを `apps/player/dist/` に、Playground を `apps/playground/dist/` にビルド |
+| `npm run dev:playground` | Playground の開発サーバー（http://localhost:5174/）                 |
 | `npm run clean`        | ビルド結果を削除                                                     |
 
 CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への push で format:check → lint → typecheck → test → build を実行します。
@@ -48,11 +49,12 @@ CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への p
 | `packages/cli`    | `@stext/cli`     | Node      | `stext` コマンド                                 |
 | `packages/ui`     | `@stext/ui`      | Browser   | React コンポーネント                             |
 | `apps/player`     | `@stext/player`  | Browser   | プレイヤーアプリ（Vite + React）                 |
+| `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（Vite + React + React Flow）  |
 | `prototype/`      | —                | Browser   | デザインプロトタイプ（GitHub Pages で公開）      |
 | `scenarios/`      | —                | —         | 変換済みの旧シナリオ（`stext convert-all` の出力） |
 | `schema/`         | —                | —         | エディター補完用の JSON Schema（生成物、GitHub Pages で公開） |
 
-依存の向き: `schema` ← `core` / `convert` ← `cli`、`ui` ← `player`。逆向きの依存は作りません。
+依存の向き: `schema` ← `core` / `convert` ← `cli`、`ui` ← `player` / `playground`。逆向きの依存は作りません。
 
 ### Universal パッケージの決まり
 
@@ -138,6 +140,22 @@ node scripts/e2e-player.mjs --shots /tmp/shots
 
 ビルド結果を確かめるときは、`npm run build` のあと `npx vite preview` を `apps/player` で起動し、`--base http://localhost:4173` を付けます。
 
+## Playground の動作確認
+
+`scripts/e2e-playground.mjs` は、Playground をブラウザで一通り操作して確かめます（テンプレート、シーンの追加と ID の変更、条件の入力、元に戻す、定義、検査、試遊、自動保存、マイストレージ、JSON の保存、XML を開く、公開シナリオ、スマホ幅）。旧リポジトリ（`../stext`）の mini の XML も使います。
+
+```bash
+npm run dev:playground
+```
+
+```bash
+node scripts/e2e-playground.mjs --shots /tmp/shots
+```
+
+ビルド結果を確かめるときは、`npm run build:site` のあと `site/` を HTTP サーバーで配信し、`--base http://localhost:<ポート>/playground` を付けます。
+
+Playground のテンプレート（`apps/playground/public/templates/`）は、旧 Playground のテンプレートを `scripts/import-playground-templates.mjs` で変換したものです（`npm run build` のあと、旧リポジトリを `../stext` に置いて実行）。
+
 ## 公開（GitHub Pages）
 
 `main` に push されると、GitHub Actions（`.github/workflows/pages.yml`）がテスト・ビルドを行い、https://snext1220.github.io/stext-next/ に公開します。手動で公開し直すときは、Actions の「Pages」から「Run workflow」を実行します。
@@ -147,6 +165,7 @@ node scripts/e2e-player.mjs --shots /tmp/shots
 | URL | 中身 |
 | --- | --- |
 | `/stext-next/` | プレイヤー（`apps/player/dist`。`scenarios/` と `assets/` を含む） |
+| `/stext-next/playground/` | Playground（`apps/playground/dist`。シナリオと素材はプレイヤーのものを使う） |
 | `/stext-next/prototype/design/index.html` | デザインプロトタイプ（これまでと同じ URL） |
 | `/stext-next/schema/scenario.v2.json` | シナリオの JSON Schema（各シナリオの `$schema` が指す URL） |
 

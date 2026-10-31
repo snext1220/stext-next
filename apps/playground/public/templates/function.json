@@ -1,0 +1,157 @@
+{
+  "$schema": "https://snext1220.github.io/stext-next/schema/scenario.v2.json",
+  "format": "stext/2",
+  "meta": {
+    "title": "機能テスト",
+    "author": "リオ",
+    "constraint": {
+      "race": ["WIZARD", "ELF"],
+      "age": ["YOUNG", "ADULT"],
+      "sex": "FEMALE"
+    },
+    "bgm": {
+      "main": "@field05",
+      "happy": "@end01d",
+      "bad": "@castle01"
+    }
+  },
+  "items": [
+    {
+      "id": "i01",
+      "name": "Item-01",
+      "text": "Item description..."
+    }
+  ],
+  "flags": [
+    {
+      "id": "f01",
+      "text": "Flag description..."
+    }
+  ],
+  "params": [],
+  "enemies": [
+    {
+      "id": "m01",
+      "name": "Enemy-01",
+      "text": "Enemy description...",
+      "element": "earth",
+      "attack": "physics",
+      "func": "L+R-STR",
+      "drop": "mon/2"
+    }
+  ],
+  "results": [
+    {
+      "id": "r01",
+      "name": "Result-01",
+      "text": "Result description...",
+      "level": 1
+    }
+  ],
+  "groups": [],
+  "licence": [
+    {
+      "name": "Bgm-01",
+      "category": "bgm",
+      "creator": "SText",
+      "url": "https://example.com/"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "0",
+      "text": "ここにプロローグを書きます。",
+      "choices": [
+        {
+          "label": "次へ",
+          "to": ["1"],
+          "if": "f01&i01"
+        },
+        {
+          "label": "ランダム",
+          "to": ["50", "60", "70"],
+          "if": "i01"
+        },
+        {
+          "kind": "jump",
+          "allow": ["100", "200"]
+        }
+      ],
+      "summary": "プロローグ",
+      "effects": {
+        "items": ["i01"],
+        "flags": ["f01"]
+      },
+      "editor": {
+        "color": "#ff0000",
+        "group": "prologue"
+      }
+    },
+    {
+      "id": "1",
+      "text": "ここからが本文です（カラーテスト）。",
+      "choices": [
+        {
+          "kind": "answer",
+          "answer": "王杖",
+          "to": "10",
+          "else": "20"
+        }
+      ],
+      "summary": "本文",
+      "editor": {
+        "color": "#ff0000"
+      }
+    },
+    {
+      "id": "10",
+      "text": "正解です！",
+      "choices": [],
+      "summary": "正解",
+      "end": "happy",
+      "editor": {
+        "group": "happy"
+      }
+    },
+    {
+      "id": "20",
+      "text": "不正解です！",
+      "choices": [],
+      "summary": "不正解",
+      "end": "bad",
+      "editor": {
+        "group": "bad"
+      }
+    },
+    {
+      "id": "50",
+      "text": "ランダム1",
+      "choices": [],
+      "summary": "ランダム1"
+    },
+    {
+      "id": "60",
+      "text": "ランダム2",
+      "choices": [],
+      "summary": "ランダム2"
+    },
+    {
+      "id": "70",
+      "text": "ランダム3",
+      "choices": [],
+      "summary": "ランダム3"
+    },
+    {
+      "id": "100",
+      "text": "任意移動1",
+      "choices": [],
+      "summary": "任意移動1"
+    },
+    {
+      "id": "200",
+      "text": "任意移動2",
+      "choices": [],
+      "summary": "任意移動2"
+    }
+  ]
+}

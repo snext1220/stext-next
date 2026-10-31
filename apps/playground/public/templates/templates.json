@@ -1,0 +1,37 @@
+[
+  {
+    "id": "empty",
+    "name": "空のテンプレート",
+    "scenes": 2
+  },
+  {
+    "id": "sample5",
+    "name": "シンプルサンプル",
+    "scenes": 5
+  },
+  {
+    "id": "mini15",
+    "name": "15sceneサンプル（説明あり）",
+    "scenes": 16
+  },
+  {
+    "id": "sample20",
+    "name": "20sceneサンプル（簡易版）",
+    "scenes": 22
+  },
+  {
+    "id": "bakumatsu",
+    "name": "幕末ソーサリアン",
+    "scenes": 6
+  },
+  {
+    "id": "dragon",
+    "name": "ドラゴンモード例",
+    "scenes": 7
+  },
+  {
+    "id": "function",
+    "name": "機能テスト",
+    "scenes": 9
+  }
+]
