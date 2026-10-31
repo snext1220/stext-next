@@ -14,12 +14,23 @@ import {
   type ConvertOptions,
   type ConvertResult,
 } from '@stext/convert';
-import { ENGINE_VERSION } from '@stext/core';
+import {
+  ENGINE_VERSION,
+  STATE_NAMES,
+  createEngine,
+  emptyGlobalState,
+  seededRandom,
+  type GameEvent,
+  type GameState,
+  type SceneView,
+} from '@stext/core';
 import { SCENARIO_FORMAT, checkScenario, validateScenario, type CheckIssue } from '@stext/schema';
 
 export interface Io {
   out: (line: string) => void;
   err: (line: string) => void;
+  /** 入力を一行読む（入力が終われば null）。stext play で使う */
+  ask?: (prompt: string) => Promise<string | null>;
 }
 
 const USAGE = `使い方: stext <command> [options]
@@ -31,8 +42,8 @@ const USAGE = `使い方: stext <command> [options]
       <id>/scenario.xml をすべて変換し、<出力>/<id>/scenario.json、index.json、REPORT.md を書き出す
   validate <scenario.json>...
       シナリオをスキーマと整合性の両面で検査する
-  play <scenario.json>
-      シナリオをコマンドラインで遊ぶ（Phase 3 で実装予定）
+  play <scenario.json> [--auto <手数>] [--seed <数値>]
+      シナリオをコマンドラインで遊ぶ。--auto は選択肢を自動で選んで進める（s で状態、q で終了）
 
 オプション:
   -v, --version            バージョンを表示する
@@ -59,8 +70,7 @@ export async function run(argv: readonly string[], io: Io): Promise<number> {
       case 'validate':
         return await validate(rest, io);
       case 'play':
-        io.err('stext play はまだ実装されていません（Phase 3 で実装予定）。');
-        return 1;
+        return await play(rest, io);
       default:
         io.err(`不明なコマンドです: ${command}\n\n${USAGE}`);
         return 2;
@@ -305,4 +315,161 @@ function hasErrors(issues: CheckIssue[]) {
 
 function toJson(value: unknown) {
   return JSON.stringify(value, null, 2) + '\n';
+}
+
+// ───── play ─────
+
+async function play(args: string[], io: Io): Promise<number> {
+  const { values, positionals } = parse(args, {
+    auto: { type: 'string' },
+    seed: { type: 'string' },
+  });
+  const [file] = positionals;
+  if (!file || positionals.length > 1)
+    throw new UsageError('遊ぶシナリオ JSON を一つ指定してください。');
+  const auto = values.auto !== undefined ? Number(values.auto) : undefined;
+  if (auto === undefined && !io.ask)
+    throw new UsageError('対話できない環境では --auto を指定してください。');
+  const v = validateScenario(JSON.parse(await readFile(file, 'utf8')));
+  if (!v.ok) {
+    printIssues(
+      v.issues.map((i) => ({ severity: 'error', ...i })),
+      io,
+      file,
+    );
+    return 1;
+  }
+  const seed = values.seed !== undefined ? Number(values.seed) : undefined;
+  const random = seed !== undefined ? seededRandom(seed) : Math.random;
+  const chooser = seededRandom((seed ?? Date.now()) + 1);
+
+  const engine = createEngine(v.scenario, { random });
+  let { state, global, events } = engine.start(emptyGlobalState());
+  const c = state.chara;
+  io.out(`${v.scenario.meta.title}（${v.scenario.meta.author ?? '作者不明'}）`);
+  io.out(
+    `「${c.title}」${c.name}（${c.race} / ${c.sex} / ${c.age} / ${c.job}）として冒険を始めます。`,
+  );
+  printEvents(events, io);
+
+  for (let turn = 0; auto === undefined || turn < auto; turn++) {
+    const view = engine.view(state, global);
+    printScene(view, io);
+    if (view.end) {
+      io.out(view.end === 'bad' ? '― BAD END ―' : '― THE END ―');
+      return 0;
+    }
+    if (view.choices.length === 0) {
+      io.out('（選択肢がありません）');
+      return 0;
+    }
+    let index: number;
+    let input: string | undefined;
+    if (auto !== undefined) {
+      const choice = view.choices[Math.floor(chooser() * view.choices.length)]!;
+      if (choice.kind !== 'go') {
+        io.out('（番号入力・文字入力の選択肢は自動では選べないため、終了します）');
+        return 0;
+      }
+      index = choice.index;
+      io.out(`> ${plain(choice.label)}`);
+    } else {
+      const answer = await askChoice(view, state, io);
+      if (answer === null) return 0;
+      ({ index, input } = answer);
+    }
+    const r = engine.choose(state, global, index, input);
+    if (r.kind === 'moved') {
+      ({ state, global, events } = r);
+      if (r.carryOver)
+        io.out(`（続編 ${Object.keys(r.carryOver).join('、')} に引き継ぐデータができました）`);
+      printEvents(events, io);
+    } else if (r.kind === 'back') {
+      io.out('（戻る操作はコマンドラインでは使えません）');
+    } else {
+      io.out(
+        {
+          notEnoughStars: '星が不足しているようだ。',
+          notAllowed: '指定された番号には移動できないようだ。',
+          hidden: 'その選択肢は選べません。',
+          missingScene: '移動先のシーンがありません。',
+        }[r.reason],
+      );
+    }
+  }
+  return 0;
+}
+
+async function askChoice(
+  view: SceneView,
+  state: GameState,
+  io: Io,
+): Promise<{ index: number; input?: string } | null> {
+  for (;;) {
+    const line = await io.ask!('番号を選んでください（s: 状態、q: 終了）> ');
+    if (line === null || line.trim() === 'q') return null;
+    if (line.trim() === 's') {
+      printStatus(state, io);
+      continue;
+    }
+    const choice = view.choices[Number(line.trim()) - 1];
+    if (!choice) continue;
+    if (choice.kind === 'jump') {
+      const to = await io.ask!('移動する番号 > ');
+      if (to === null) return null;
+      return { index: choice.index, input: to.trim() };
+    }
+    if (choice.kind === 'answer') {
+      const answer = await io.ask!('答え > ');
+      if (answer === null) return null;
+      return { index: choice.index, input: answer.trim() };
+    }
+    return { index: choice.index };
+  }
+}
+
+function printScene(view: SceneView, io: Io) {
+  io.out('');
+  io.out(`── §${view.id}${view.summary ? ` ${view.summary}` : ''} ──`);
+  io.out(plain(view.markdown).trim());
+  for (const e of view.enemies) io.out(`【敵】${e.name}${e.func ? `（${e.func}）` : ''}`);
+  view.choices.forEach((c, i) => {
+    if (c.before) io.out(plain(c.before));
+    const label =
+      c.kind === 'jump'
+        ? '（番号を入力して移動）'
+        : c.kind === 'answer'
+          ? '（答えを入力）'
+          : plain(c.label);
+    io.out(`  ${i + 1}. ${label}`);
+  });
+  if (view.afterText) io.out(plain(view.afterText));
+}
+
+function printStatus(state: GameState, io: Io) {
+  const c = state.chara;
+  io.out(
+    `HP ${c.hp}/${c.hp_m}  MP ${c.mp}/${c.mp_m}  STR ${c.str} INT ${c.int} DEX ${c.dex} KRM ${c.krm}  状態 ${STATE_NAMES[c.state] ?? c.state}`,
+  );
+  io.out(
+    `星 ${state.stars.join(' ')}  アイテム ${state.items.join(',') || 'なし'}  フラグ ${state.flags.length}`,
+  );
+}
+
+function printEvents(events: GameEvent[], io: Io) {
+  for (const e of events) {
+    if (e.type === 'itemGained') io.out(`【アイテム入手】${e.id}`);
+    else if (e.type === 'resultUnlocked') io.out(`【実績獲得】${e.id}`);
+    else if (e.type === 'bonusAwarded') io.out(`【ボーナス】${e.id}`);
+    else if (e.type === 'stateGuarded') io.out(`【ボーナス】${e.state}を防いだ`);
+  }
+}
+
+/** 端末向けに HTML を簡単に取り除く（ルビは「漢字（かな）」にする） */
+function plain(markdown: string) {
+  return markdown
+    .replace(/<rt>(.*?)<\/rt>/g, '$1')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ');
 }

@@ -97,9 +97,40 @@ describe('stext', () => {
     expect(r.err).toContain('遷移先のシーン「404」がありません');
   });
 
-  it('reports play as not implemented yet', async () => {
+  it('plays a scenario automatically', async () => {
+    const dir = legacyRepo();
+    const json = join(dir, 'demo.json');
+    await capture(['convert', join(dir, 'demo', 'scenario.xml'), '-o', json]);
+    // 条件 f01 を満たさないので選択肢がなく、そこで終わる
+    const r = await capture(['play', json, '--auto', '5', '--seed', '1']);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('── §0 ──');
+    expect(r.out).toContain('（選択肢がありません）');
+  });
+
+  it('plays a scenario interactively', async () => {
+    const dir = legacyRepo();
+    const json = join(dir, 'demo.json');
+    const data = JSON.parse((await capture(['convert', join(dir, 'demo', 'scenario.xml')])).out);
+    data.scenes[0].choices[0].if = undefined;
+    writeFileSync(json, JSON.stringify(data));
+    const answers = ['s', '9', '1'];
+    const out: string[] = [];
+    const code = await run(['play', json, '--seed', '1'], {
+      out: (l) => out.push(l),
+      err: () => {},
+      ask: async () => answers.shift() ?? null,
+    });
+    expect(code).toBe(0);
+    const text = out.join('\n');
+    expect(text).toContain('  1. 次へ');
+    expect(text).toMatch(/HP \d+\/\d+/);
+    expect(text).toContain('── §1 ──');
+    expect(text).toContain('― THE END ―');
+  });
+
+  it('asks for --auto when it cannot read input', async () => {
     const r = await capture(['play', 'x.json']);
-    expect(r.code).toBe(1);
-    expect(r.err).toContain('Phase 3');
+    expect(r.code).toBe(2);
   });
 });
