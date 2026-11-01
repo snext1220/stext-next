@@ -235,14 +235,37 @@ check(
 await page.click('.now-playing >> text=停止');
 check('停止すると再生の欄が消える', (await page.locator('.now-playing').count()) === 0);
 
-// 案内・投稿：章へのリンク、旧サイトの画像、フッターの CONTACT
+// ヘッダーのメニュー：サブメニューを開いて、画面を移る
+await page.goto(`${base}/#/library`);
+await page.click('.screens button:has-text("道具箱")');
+check(
+  '道具箱のサブメニューが開く',
+  (await page.locator('.submenu-list:visible a').allTextContents()).join('/') ===
+    '記録/変換所/音楽室/制作者向けの素材',
+);
+await shot('6a-menu');
+await page.click('.submenu-list >> text=制作者向けの素材');
+await page.waitForSelector('.face-grid img');
+check(
+  'サブメニューから画面を開くと閉じ、親に印が付く',
+  (await page.locator('.submenu-list:visible').count()) === 0 &&
+    (await page.getAttribute('.screens button:has-text("道具箱")', 'data-active')) === 'true',
+);
+await page.click('.screens button:has-text("案内所")');
+await page.keyboard.press('Escape');
+check('Esc でサブメニューが閉じる', (await page.locator('.submenu-list:visible').count()) === 0);
+
+// 案内所・道具箱の読み物：以前の URL、章へのリンク、旧サイトの画像、フッターの CONTACT
 await page.goto(`${base}/#/about/gallery`);
-await page.waitForSelector('#about-gallery .figure-grid img');
+await page.waitForSelector('.figure-grid img');
+check('以前の章の URL は分けた画面へ移る', new URL(page.url()).hash === '#/gallery');
+await page.goto(`${base}/#/post/folder`);
+await page.waitForSelector('#post-folder');
 await page.waitForTimeout(300);
 check(
-  '案内の章へ直接移動できる',
+  '投稿の章へ直接移動できる',
   await page.evaluate(() => {
-    const top = document.getElementById('about-gallery').getBoundingClientRect().top;
+    const top = document.getElementById('post-folder').getBoundingClientRect().top;
     return top >= 0 && top < 200;
   }),
 );
@@ -261,18 +284,23 @@ const brokenImages = async () => {
     [...document.images].filter((i) => !i.naturalWidth).map((i) => i.getAttribute('src')),
   );
 };
-const brokenAbout = await brokenImages();
-check('案内の画像がすべて表示される', brokenAbout.length === 0, brokenAbout.join(', '));
-await shot('6-about');
-await page.goto(`${base}/#/post`);
-await page.waitForSelector('#post-materials .face-grid img');
+const DOC_PAGES = ['about', 'post', 'recruit', 'links', 'gallery', 'staff', 'materials'];
+for (const route of DOC_PAGES) {
+  await page.goto(`${base}/#/${route}`);
+  await page.waitForSelector('.doc-page .doc');
+  const broken = await brokenImages();
+  check(`${route} の画像がすべて表示される`, broken.length === 0, broken.join(', '));
+}
+await shot('6-staff');
+await page.goto(`${base}/#/materials`);
+await page.waitForSelector('.face-grid img');
 check('キャラ画像素材が並ぶ', (await page.locator('.face-grid li').count()) === 24);
+await page.goto(`${base}/#/post`);
+await page.waitForSelector('#post-submit');
 check(
   '投稿先のスレッドへのリンクがある',
   (await page.locator('a[href="https://github.com/snext1220/stext/discussions/299"]').count()) > 0,
 );
-const brokenPost = await brokenImages();
-check('投稿の画像がすべて表示される', brokenPost.length === 0, brokenPost.join(', '));
 check('フッターに CONTACT が並ぶ', (await page.locator('.contact-list li').count()) === 5);
 await page.click('.contact-list >> text=シナリオへの感想・ご意見');
 await page.waitForSelector('.book');
@@ -282,7 +310,7 @@ check(
     (await page.locator('.book').count()) < 30,
 );
 await page.setViewportSize({ width: 390, height: 844 });
-for (const route of ['music', 'about', 'post']) {
+for (const route of ['music', ...DOC_PAGES]) {
   await page.goto(`${base}/#/${route}`);
   await page.waitForSelector('.page-title');
   await page.waitForTimeout(300);
@@ -291,7 +319,15 @@ for (const route of ['music', 'about', 'post']) {
     (await page.evaluate(() => document.documentElement.scrollWidth)) <= 390,
   );
 }
-await shot('7-post-mobile');
+await page.click('.screens button:has-text("案内所")');
+check(
+  'スマホ幅でサブメニューが画面に収まる',
+  await page.evaluate(() => {
+    const r = document.querySelector('.submenu-list:not([hidden])').getBoundingClientRect();
+    return r.left >= 0 && r.right <= innerWidth;
+  }),
+);
+await shot('7-menu-mobile');
 await page.setViewportSize({ width: 1280, height: 900 });
 
 check('ページのエラーがない', errors.length === 0, errors.join(' / '));

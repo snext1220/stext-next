@@ -245,7 +245,8 @@ scenario.xml ─ readScenarioXml ─┐
 | ファイル | 役割 |
 | --- | --- |
 | [main.tsx](../apps/player/src/main.tsx) → [App.tsx](../apps/player/src/App.tsx) | 起点。ヘッダーと画面の切り替え、`GlobalState` と設定を持つ |
-| [router.ts](../apps/player/src/router.ts) | ハッシュによる画面遷移（`#/play/<id>` など）。ライブラリは使っていない |
+| [screens/Menu.tsx](../apps/player/src/screens/Menu.tsx) | ヘッダーのメニュー（書庫と、サブメニューの道具箱・案内所） |
+| [router.ts](../apps/player/src/router.ts) | ハッシュによる画面遷移（`#/play/<id>` など）。ライブラリは使っていない。以前の URL（`#/about/staff` など）は移った先の画面へ |
 | [data.ts](../apps/player/src/data.ts) | `index.json` とシナリオの読み込み・検証・キャッシュ |
 | [storage.ts](../apps/player/src/storage.ts) | localStorage への保存（使えないときはメモリ） |
 | [screens/Library.tsx](../apps/player/src/screens/Library.tsx) | 書庫（シナリオ一覧と、プロローグを出す詳細） |

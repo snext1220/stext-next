@@ -389,14 +389,6 @@ export function Play({
           state={state}
           portraitUrl={charaImageUrl(id, scenario.meta.imageSet, state.chara)}
         />
-        <button
-          type="button"
-          className="chip-btn"
-          style={{ marginTop: 10 }}
-          onClick={() => setEditing(true)}
-        >
-          ステータスを編集
-        </button>
         <label className="section-h" htmlFor="memo" style={{ marginTop: 14 }}>
           <span>冒険メモ</span>
         </label>
@@ -407,6 +399,14 @@ export function Play({
           value={state.memos}
           onChange={(e) => setState({ ...state, memos: e.target.value })}
         />
+        <button
+          type="button"
+          className="chip-btn"
+          style={{ marginTop: 10 }}
+          onClick={() => setEditing(true)}
+        >
+          ステータスを編集
+        </button>
       </div>
     );
 

@@ -42,7 +42,7 @@ export function trophyUrl(level: number): string {
   return `${ASSET_BASE}common/trophy${level}.png`;
 }
 
-/** 旧サイトから取り込んだ画像（assets/site/。ギャラリーや CONTACT のアイコンなど） */
+/** 旧サイトから取り込んだ画像（assets/site/。画廊や CONTACT のアイコンなど） */
 export function siteImageUrl(path: string): string {
   return `${ASSET_BASE}site/${path}`;
 }

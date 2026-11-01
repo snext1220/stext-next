@@ -15,6 +15,7 @@ import {
   findScene,
   setPosition,
 } from './model.js';
+import { PostDialog } from './PostDialog.js';
 import { Problems } from './Problems.js';
 import { SceneEditor } from './SceneEditor.js';
 import { Splitter, useSideWidth } from './Splitter.js';
@@ -41,6 +42,7 @@ export function App() {
   const [published, setPublished] = useState<{ id: string; title: string }[]>([]);
   const [slots, setSlots] = useState<Slot[]>(loadSlots);
   const [sideWidth, setSideWidth] = useSideWidth();
+  const [posting, setPosting] = useState(false);
   const openHelp = useHelp();
 
   const problems = useMemo(() => findProblems(scenario), [scenario]);
@@ -201,6 +203,9 @@ export function App() {
           </label>
           <button type="button" onClick={download}>
             保存（JSON）
+          </button>
+          <button type="button" onClick={() => setPosting(true)}>
+            投稿…
           </button>
           <select
             aria-label="マイストレージ"
@@ -387,6 +392,9 @@ export function App() {
           </div>
         </aside>
       </main>
+      {posting && (
+        <PostDialog scenario={scenario} errors={errors} onClose={() => setPosting(false)} />
+      )}
     </div>
   );
 }

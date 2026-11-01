@@ -439,11 +439,12 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 | 試遊 | `@stext/core` のエンジンと `@stext/ui` の表示で、最初から、または選択中のシーンから遊ぶ（戦闘はプレイヤーで確かめる） |
 | 開く・保存 | テンプレート（旧 Playground の7本を変換）、公開シナリオ、ファイル（stext/2 の JSON、旧 `scenario.xml`、旧 Playground の JSON）。保存は JSON のダウンロード、マイストレージ（ブラウザ内に名前を付けて保存）、編集中の内容の自動保存。元に戻す／やり直す |
 | ヘルプ | 旧 Playground のダイナミックヘルプ（`lib/reference.xml`）を `src/help/reference.md` に移した。各欄の「?」か項目名のダブルクリックで開き、関連する項目へ移れる。ヘッダーの「ヘルプ」から目次・検索。旧版と食い違う点には移行メモ（変更／未実装／誤り／廃止／要確認）を付けた |
+| 投稿 | ヘッダーの「投稿…」。旧 Playground Flow の［投稿］と同じ項目（連絡先・分類・難易度・紹介・作者より・BGM／効果音／挿絵・FTP 希望）を、同じ送り先（`upload.php`）へ送る。シナリオは `scenario.json`（stext/2）。合計 8MB・拡張子・入力の不足は送る前に確かめる。送り先が CORS に対応していないので、結果は投稿完了のメールで確かめる |
 
-作らなかったもの（必要になったら検討する）：サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree のツリー表示）。
+作らなかったもの（必要になったら検討する）：シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree のツリー表示）。
 
 - 公開：https://snext1220.github.io/stext-next/playground/ （`scripts/build-site.mjs` が `site/playground/` に置く）
-- 確認：`scripts/e2e-playground.mjs` の25項目が、開発サーバーとビルド結果の両方ですべて成功。編集操作（`src/model.ts`）とヘルプ（`src/help/help.ts`）の単体テストを追加
+- 確認：`scripts/e2e-playground.mjs` の27項目が、開発サーバーとビルド結果の両方ですべて成功。編集操作（`src/model.ts`）とヘルプ（`src/help/help.ts`）の単体テストを追加
 
 ## 6. 互換性・データ移行
 

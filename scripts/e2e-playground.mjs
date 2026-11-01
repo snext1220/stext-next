@@ -208,6 +208,44 @@ check(
   download.suggestedFilename(),
 );
 
+// 投稿（投稿先には送らず、送る内容だけを確かめる）
+const posts = [];
+await page.route(/upload\.php$/, (route) => {
+  posts.push(route.request().postDataBuffer()?.toString('utf8') ?? '');
+  return route.fulfill({ status: 200, body: '' });
+});
+await page.getByRole('button', { name: '投稿…' }).click();
+const postDialog = page.getByRole('dialog', { name: 'シナリオを投稿' });
+await postDialog.getByRole('button', { name: '投稿', exact: true }).click();
+await wait();
+check(
+  '投稿：入力が足りないと送らない',
+  posts.length === 0 && (await postDialog.getByRole('alert').innerText()).includes('連絡先'),
+);
+await postDialog.getByLabel('連絡先（メールアドレス）', { exact: true }).fill('e2e@example.com');
+await postDialog.getByLabel('シナリオ紹介（2〜300文字）', { exact: true }).fill('確認用の紹介文');
+await postDialog.getByLabel('作者より（80文字程度）', { exact: true }).fill('確認用');
+await postDialog.getByLabel('挿絵', { exact: true }).setInputFiles({
+  name: 'intro.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+});
+await postDialog.getByRole('button', { name: '投稿', exact: true }).click();
+await postDialog.getByText('投稿を送信しました').waitFor();
+const body = posts[0] ?? '';
+check(
+  '投稿：旧版と同じ項目で scenario.json と添付ファイルを送る',
+  posts.length === 1 &&
+    body.includes('name="key"') &&
+    body.includes('e2e@example.com') &&
+    body.includes('name="scenario"; filename="scenario.json"') &&
+    body.includes('"format": "stext/2"') &&
+    body.includes('name="pics[]"; filename="intro.png"'),
+);
+await shot('7-post');
+await postDialog.getByRole('button', { name: '閉じる' }).first().click();
+await page.unroute(/upload\.php$/);
+
 // 旧形式の XML を開く
 await page.setInputFiles('#open-file', miniXml);
 await wait(1000);

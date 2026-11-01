@@ -644,6 +644,66 @@ body {
 .pg-help-index ul {
   columns: 2 14em;
 }
+.pg-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 6, 2, 0.45);
+}
+.pg-dialog {
+  width: min(760px, 100%);
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--desk);
+  color: var(--on-desk);
+  border: 1px solid var(--desk-line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  outline: none;
+}
+.pg-dialog-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--desk-line);
+  background: var(--desk-2);
+  border-radius: 10px 10px 0 0;
+}
+.pg-dialog-head h2 {
+  margin: 0;
+  font-family: var(--f-book);
+  font-size: var(--step-1);
+}
+.pg-dialog-body {
+  overflow: auto;
+  padding: 14px 18px 18px;
+  font-size: var(--step--1);
+}
+.pg-dialog-body p,
+.pg-dialog-body ul {
+  margin: 0;
+}
+.pg-dialog-body ul {
+  padding-left: 1.4em;
+}
+.pg-dialog-body p + p {
+  margin-top: 8px;
+}
+.pg-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.pg-dialog-body:not(form) .pg-dialog-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
+}
 @media (max-width: 900px) {
   body {
     overflow: auto;

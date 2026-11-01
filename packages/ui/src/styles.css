@@ -1402,6 +1402,7 @@ span.level {
   float: none;
   margin: 0;
   font-weight: inherit;
+  color: inherit;
 }
 .lib-detail .award {
   color: var(--blood);
@@ -1740,6 +1741,7 @@ span.level {
   font-size: inherit;
   float: none;
   margin: 0;
+  color: inherit;
 }
 .stext-effect {
   animation: stext-fade 1.2s ease-out both;
@@ -1955,6 +1957,66 @@ a.btn:hover {
 .screens a[aria-current='page'] {
   color: var(--on-desk);
   border-color: var(--gold);
+}
+/* ヘッダーのサブメニュー（道具箱・案内所） */
+.submenu {
+  position: relative;
+}
+.submenu > .chip-btn::after {
+  content: '';
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+  border: 4px solid transparent;
+  border-top-color: currentColor;
+  border-bottom: 0;
+  transition: transform 0.15s;
+}
+.submenu > .chip-btn[aria-expanded='true']::after {
+  transform: rotate(180deg);
+}
+.submenu > .chip-btn[data-active] {
+  color: var(--on-desk);
+  border-color: var(--gold);
+}
+.submenu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  gap: 2px;
+  min-width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--desk-2);
+  border: 1px solid var(--desk-line);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+.submenu-list[hidden] {
+  display: none;
+}
+.submenu-list a {
+  display: block;
+  padding: 6px 14px;
+  border-radius: 6px;
+  color: var(--on-desk-soft);
+  font-size: var(--step--1);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.submenu-list a:hover,
+.submenu-list a:focus-visible {
+  color: var(--on-desk);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+}
+.submenu-list a[aria-current='page'] {
+  color: var(--on-desk);
+  box-shadow: inset 3px 0 0 var(--gold);
 }
 label.drop {
   cursor: pointer;
@@ -2220,7 +2282,7 @@ label.drop {
   vertical-align: middle;
 }
 
-/* ───── 案内・投稿（羊皮紙の章を並べる文書の画面） ───── */
+/* ───── 案内所・道具箱の読み物（羊皮紙を並べる文書の画面） ───── */
 .doc-page > *,
 .music > * {
   /* 長い行（フォルダー構成の図など）でグリッドの列が画面より広がらないように */
@@ -2231,19 +2293,6 @@ label.drop {
   font-size: var(--step-3);
   margin: 4px 0 6px;
 }
-.doc-toc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-.doc-toc .chip-btn {
-  border-color: var(--desk-line);
-}
-.doc-toc .chip-btn[aria-current='location'] {
-  color: var(--on-desk);
-  border-color: var(--gold);
-}
 .doc-section {
   /* 上部のバーに見出しが隠れないように */
   scroll-margin-top: 72px;
@@ -2251,6 +2300,11 @@ label.drop {
 .doc {
   font-family: var(--f-book);
   line-height: 1.9;
+}
+/* 見出しのない羊皮紙が小見出しで始まるときは、上を空けない */
+.doc > h3:first-child,
+.doc > :first-child > h3:first-child {
+  margin-top: 0;
 }
 .doc p,
 .doc li {

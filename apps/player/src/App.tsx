@@ -4,10 +4,11 @@ import { BrandTitle } from '@stext/ui';
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { AudioDirector } from './audio.js';
 import { loadScenario } from './data.js';
-import { href, navigate, useRoute } from './router.js';
+import { href, navigate, useRoute, type Route } from './router.js';
 import { Create } from './screens/Create.js';
 import { Footer } from './screens/Footer.js';
 import { Library } from './screens/Library.js';
+import { Menu } from './screens/Menu.js';
 import { Play } from './screens/Play.js';
 import { Records } from './screens/Records.js';
 import {
@@ -22,20 +23,29 @@ import {
 
 // 変換所は変換器（XML パーサを含む）を使うので、開いたときに読み込む
 const Convert = lazy(() => import('./screens/Convert.js').then((m) => ({ default: m.Convert })));
-// 音楽室・案内・投稿は遊ぶのに要らないので、開いたときに読み込む
+// 音楽室・案内所の読み物は遊ぶのに要らないので、開いたときに読み込む
 const Music = lazy(() => import('./screens/Music.js').then((m) => ({ default: m.Music })));
 const About = lazy(() => import('./screens/About.js').then((m) => ({ default: m.About })));
 const Post = lazy(() => import('./screens/Post.js').then((m) => ({ default: m.Post })));
+const Recruit = lazy(() => import('./screens/Recruit.js').then((m) => ({ default: m.Recruit })));
+const Links = lazy(() => import('./screens/Links.js').then((m) => ({ default: m.Links })));
+const Gallery = lazy(() => import('./screens/Gallery.js').then((m) => ({ default: m.Gallery })));
+const Staff = lazy(() => import('./screens/Staff.js').then((m) => ({ default: m.Staff })));
+const Materials = lazy(() =>
+  import('./screens/Materials.js').then((m) => ({ default: m.Materials })),
+);
 
-/** ヘッダーの画面の切り替え */
-const NAV = [
-  ['library', '書庫'],
-  ['records', '記録'],
-  ['music', '音楽室'],
-  ['about', '案内'],
-  ['post', '投稿'],
-  ['convert', '変換所'],
-] as const;
+/** 開いたときに読み込む画面（変換所を除く） */
+const LAZY_PAGES: readonly Route['name'][] = [
+  'music',
+  'about',
+  'post',
+  'recruit',
+  'links',
+  'gallery',
+  'staff',
+  'materials',
+];
 
 export function App() {
   const route = useRoute();
@@ -79,18 +89,7 @@ export function App() {
           <a href={href({ name: 'library' })} style={{ textDecoration: 'none' }}>
             <BrandTitle note="v2" />
           </a>
-          <nav className="screens" aria-label="画面">
-            {NAV.map(([name, label]) => (
-              <a
-                key={name}
-                className="chip-btn"
-                aria-current={route.name === name ? 'page' : undefined}
-                href={href({ name })}
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
+          <Menu route={route} />
           <div className="tools">
             <button
               type="button"
@@ -121,11 +120,16 @@ export function App() {
           />
         )}
         {route.name === 'records' && <Records global={global} onGlobal={setGlobal} />}
-        {(route.name === 'music' || route.name === 'about' || route.name === 'post') && (
+        {LAZY_PAGES.includes(route.name) && (
           <Suspense fallback={<p className="empty-state">開いています…</p>}>
             {route.name === 'music' && <Music />}
             {route.name === 'about' && <About section={route.section} />}
             {route.name === 'post' && <Post section={route.section} />}
+            {route.name === 'recruit' && <Recruit />}
+            {route.name === 'links' && <Links />}
+            {route.name === 'gallery' && <Gallery />}
+            {route.name === 'staff' && <Staff />}
+            {route.name === 'materials' && <Materials />}
           </Suspense>
         )}
         {route.name === 'convert' && (

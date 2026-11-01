@@ -16,13 +16,14 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 
 - 開発サーバーは `scenarios/` を `/scenarios/` で配信します。シナリオごとのフォルダー（`scenarios/<id>/`）に、`scenario.json` とそのシナリオの挿絵（`capture/`）・BGM（`bgm/`）があります。
 - 共通の画像・BGM・効果音（`assets/common/`）は `/assets/` で配信します。画像・BGM は旧リポジトリから `scripts/import-legacy-assets.mjs` で取り込んだものです（[assets/README.md](../assets/README.md)）。
-- 案内・投稿・フッターで使う旧サイトの画像（ギャラリー、募集企画のバナー、CONTACT のアイコンなど）は `assets/site/` にあります。旧サイトから `scripts/import-site-images.mjs` で取り込んだものです。
+- 案内所の画面・フッターで使う旧サイトの画像（画廊のイラスト、募集企画のバナー、CONTACT のアイコンなど）は `assets/site/` にあります。旧サイトから `scripts/import-site-images.mjs` で取り込んだものです。
 
 | 環境変数 | 内容 |
 | --- | --- |
 | `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときは、`common/` を含む URL を末尾 `/` 付きで指定） |
 | `VITE_SCENARIO_BASE` | シナリオの配信元（既定はビルド結果の `scenarios/`。`<id>/scenario.json` と、挿絵・BGM もここから読む） |
 | `VITE_PLAYGROUND_URL` | 投稿の画面の「Playground を開く」のリンク先（既定はプレイヤーの隣の `playground/`。開発サーバーで試すときは `http://localhost:5174/` を指定） |
+| `VITE_POST_URL` | Playground の「投稿…」の送り先（既定は旧 Playground Flow と同じ `https://www.web-deli.com/sorcerian/text/playground/upload.php`） |
 
 `npm run build` の結果（`apps/player/dist/`）には `scenarios/` と `assets/` も含まれるので、そのまま静的サイトとして公開できます。
 
@@ -132,7 +133,7 @@ node scripts/difftest.mjs --walks 5 --steps 80 --text
 
 ## プレイヤーの動作確認
 
-`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫と詳細、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所、音楽室、案内、投稿、フッターの CONTACT）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
+`scripts/e2e-player.mjs` は、プレイヤーをブラウザで一通り操作して確かめます（書庫と詳細、キャラ作成、冒険、戦闘、魔法、選択と戻る、スマホ幅、変換所、音楽室、メニューのサブメニュー、案内所と制作者向けの素材の各画面、以前の URL の転送、フッターの CONTACT）。差分テストと同じく Chromium と playwright が必要で、CI では動かしません。
 
 ```bash
 npm run dev

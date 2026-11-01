@@ -6,6 +6,10 @@ export const ASSET_BASE =
 export const SCENARIO_BASE =
   import.meta.env.VITE_SCENARIO_BASE ?? new URL('../scenarios/', location.href.split('#')[0]).href;
 
+/** シナリオの投稿先（旧 Playground Flow と同じ upload.php） */
+export const POST_URL =
+  import.meta.env.VITE_POST_URL ?? 'https://www.web-deli.com/sorcerian/text/playground/upload.php';
+
 /** テンプレート（public/templates/） */
 export const TEMPLATE_BASE = `${import.meta.env.BASE_URL}templates/`;
 

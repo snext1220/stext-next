@@ -16,13 +16,27 @@ describe('router', () => {
     expect(href({ name: 'play', id: 'local-a b' })).toBe('#/play/local-a%20b');
   });
 
-  it('reads the music room, the guide and the post pages with their chapters', () => {
+  it('reads the toolbox and guide pages, with chapters on the guide and post pages', () => {
     expect(parseRoute('#/music')).toEqual({ name: 'music' });
+    expect(parseRoute('#/records')).toEqual({ name: 'records' });
+    for (const name of ['materials', 'recruit', 'links', 'gallery', 'staff'] as const) {
+      expect(parseRoute(`#/${name}`)).toEqual({ name });
+      expect(href({ name })).toBe(`#/${name}`);
+    }
     expect(parseRoute('#/about')).toEqual({ name: 'about' });
-    expect(parseRoute('#/about/staff')).toEqual({ name: 'about', section: 'staff' });
-    expect(parseRoute('#/post/materials')).toEqual({ name: 'post', section: 'materials' });
-    expect(href({ name: 'about', section: 'gallery' })).toBe('#/about/gallery');
+    expect(parseRoute('#/about/sorcerian')).toEqual({ name: 'about', section: 'sorcerian' });
+    expect(parseRoute('#/post/submit')).toEqual({ name: 'post', section: 'submit' });
+    expect(href({ name: 'about', section: 'sorcerian' })).toBe('#/about/sorcerian');
     expect(href({ name: 'post' })).toBe('#/post');
+  });
+
+  it('sends the former chapter URLs to the pages they moved to', () => {
+    expect(parseRoute('#/about/stext')).toEqual({ name: 'about' });
+    expect(parseRoute('#/about/staff')).toEqual({ name: 'staff' });
+    expect(parseRoute('#/about/gallery')).toEqual({ name: 'gallery' });
+    expect(parseRoute('#/about/links')).toEqual({ name: 'links' });
+    expect(parseRoute('#/post/recruit')).toEqual({ name: 'recruit' });
+    expect(parseRoute('#/post/materials')).toEqual({ name: 'materials' });
   });
 
   it('opens the library narrowed to scenarios with a questionnaire', () => {

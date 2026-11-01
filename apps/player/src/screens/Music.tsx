@@ -110,7 +110,7 @@ export function Music() {
         </ul>
         <p className="lede music-note">
           ※ ソーサリアン Text 以外での利用は禁止されています。シナリオで使うときは、投稿の「
-          <a href={href({ name: 'post', section: 'materials' })}>制作者向けの素材</a>
+          <a href={href({ name: 'materials' })}>制作者向けの素材</a>
           」も参照してください。
         </p>
       </section>

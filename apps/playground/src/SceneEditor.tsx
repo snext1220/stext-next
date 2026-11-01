@@ -136,11 +136,7 @@ export function SceneEditor({
   return (
     <div className="pg-editor">
       <div className="pg-row">
-        <Field
-          label="シーン ID"
-          help="scene.id"
-          hint={renameError ?? '変えると、選択肢の遷移先などの参照もまとめて直します'}
-        >
+        <Field label="シーン ID" help="scene.id" hint={renameError}>
           {(id) => (
             <span className="pg-inline">
               <input id={id} value={newId} onChange={(ev) => setNewId(ev.target.value)} />
@@ -191,11 +187,7 @@ export function SceneEditor({
             ＋ 新しいシーンへ
           </button>
         </div>
-        {scene.choices.length === 0 && (
-          <p className="pg-hint">
-            選択肢がありません。フロー図でシーンの右の点から別のシーンへ線を引いても作れます。
-          </p>
-        )}
+        {scene.choices.length === 0 && <p className="pg-hint">選択肢がありません。</p>}
         {scene.choices.map((c, i) => (
           <ChoiceEditor
             key={i}
@@ -229,7 +221,6 @@ export function SceneEditor({
             value={fromList(e.items)}
             onChange={(v) => setEffects({ items: toList(v) }, 'items')}
             placeholder="i01, -i02, i03:2"
-            hint="入手 / -で消失 / :で個数"
           />
           <TextField
             label="フラグ"
@@ -348,7 +339,6 @@ export function SceneEditor({
             value={scene.bgm}
             onChange={(v) => set({ bgm: v === '' ? undefined : v }, 'bgm')}
             placeholder="@field05"
-            hint="@ で共通の曲"
           />
           <TextField
             label="効果音"
@@ -517,11 +507,6 @@ function ChoiceEditor({
               help="choice.to"
               value={fromList(choice.to)}
               onChange={(v) => onChange({ ...choice, to: toList(v).length ? toList(v) : [''] })}
-              hint={
-                kind === 'random'
-                  ? '同じ ID を重ねると選ばれやすくなる。90000 は「戻る」'
-                  : '90000 は「戻る」'
-              }
             />
             {kind === 'random' && (
               <TextField
@@ -567,6 +552,13 @@ function ChoiceEditor({
   );
 }
 
+/** 差し込み候補の表示名。「名前（説明）」の形にする */
+function describe(name: string, text: string | undefined): string {
+  const t = text?.replace(/\s+/g, ' ').trim();
+  if (!t) return name;
+  return `${name}（${t.length > 30 ? `${t.slice(0, 30)}…` : t}）`;
+}
+
 /** 表示条件の入力欄。旧 Playground の条件ビルダーのように、項目を選んで差し込める */
 function ConditionField({
   scenario,
@@ -591,10 +583,10 @@ function ConditionField({
     const v = value.trim();
     onChange(v === '' || /[&|!(]$/.test(v) ? v + token : `${v}&${token}`);
   };
-  const groups: [string, string[]][] = [
-    ['フラグ', scenario.flags.map((f) => f.id)],
-    ['アイテム', scenario.items.map((i) => i.id)],
-    ['パラメーター', scenario.params.map((p) => `${p.id}:@0`)],
+  const groups: [string, (string | [token: string, label: string])[]][] = [
+    ['フラグ', scenario.flags.map((f) => [f.id, describe(f.id, f.text)])],
+    ['アイテム', scenario.items.map((i) => [i.id, describe(i.name || i.id, i.text)])],
+    ['パラメーター', scenario.params.map((p) => [`${p.id}:@0`, describe(p.id, p.text)])],
     ['魔法', MAGIC_NAMES.map((m) => `m${m}`)],
     ['ステータス', ['oHP10', 'oMP10', 'oSTR5', 'oINT5', 'oDEX5', 'oKRM5', 'oFREEI1']],
     [
@@ -631,9 +623,7 @@ function ConditionField({
       help="choice.if"
       wide
       hint={
-        parsed === null ? (
-          '空なら常に表示。& かつ / | または / ! でない'
-        ) : parsed.ok ? (
+        parsed === null ? undefined : parsed.ok ? (
           <span className="pg-ok">✓ 条件として読めます</span>
         ) : (
           <span className="pg-error">{parsed.error}</span>
@@ -667,11 +657,14 @@ function ConditionField({
                 disabled={tokens.length === 0}
               >
                 <option value="">{label}…</option>
-                {tokens.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
+                {tokens.map((t) => {
+                  const [token, text] = typeof t === 'string' ? [t, t] : t;
+                  return (
+                    <option key={token} value={token} title={token}>
+                      {text}
+                    </option>
+                  );
+                })}
               </select>
             ))}
           </div>
