@@ -147,6 +147,10 @@ node scripts/e2e-player.mjs --shots /tmp/shots
 
 ## Playground の動作確認
 
+macOS の Safari では、大きなシナリオ（`gods` など）を開いた直後にメモリ使用量の警告と再読み込みが発生し、画面外の描画を省くことで動作するようになったとの報告があります。起動時の `navigator.userAgent` から Safari（macOS・iOS）と判定した場合だけ、React Flow の `onlyRenderVisibleElements` を有効にし、接続線のアニメーションを停止します。Chrome・Edge・Firefox などは従来どおり全体を描画し、ランダム分岐の接続線をアニメーション表示します。手動設定はありません。判定はユーザーエージェントに依存するため、偽装している場合は実際のブラウザと異なる描画になることがあります。
+
+Safari では、移動・ズームに応じて必要なシーンと接続線が描画されます。シナリオのデータや自動配置、ミニマップは共通です。描画の変更を確認するときは、Safari とそれ以外のブラウザで同じシナリオを開き、表示範囲を移動してシーンを選べることも確認してください。
+
 `scripts/e2e-playground.mjs` は、Playground をブラウザで一通り操作して確かめます（テンプレート、シーンの追加と ID の変更、条件の入力、ヘルプ、元に戻す、定義、検査、試遊、自動保存、マイストレージ、JSON の保存、XML を開く、公開シナリオ、スマホ幅）。旧リポジトリ（`../stext`）の mini の XML も使います。
 
 ```bash
@@ -179,4 +183,3 @@ Playground のヘルプ（各欄の「?」や項目名のダブルクリック�
 手元で同じものを作るには `npm run build:site` を実行します。
 
 **初回だけ必要な設定**：リポジトリの Settings → Pages → Build and deployment の Source を「GitHub Actions」にします。これまでの「Deploy from a branch」のままだと、ワークフローの公開の段階が失敗します。
-
