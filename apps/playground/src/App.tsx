@@ -13,6 +13,7 @@ import {
   deleteScene,
   emptyScenario,
   findScene,
+  sceneSelectionGroups,
   setPosition,
 } from './model.js';
 import { PostDialog } from './PostDialog.js';
@@ -48,6 +49,8 @@ export function App() {
   const problems = useMemo(() => findProblems(scenario), [scenario]);
   const byScene = useMemo(() => problemsByScene(problems), [problems]);
   const scene = selected ? findScene(scenario, selected) : undefined;
+  const sceneGroups = useMemo(() => sceneSelectionGroups(scenario), [scenario]);
+  const [focusRequest, setFocusRequest] = useState<{ id: string }>();
 
   useEffect(() => {
     fetch(`${TEMPLATE_BASE}templates.json`)
@@ -84,6 +87,7 @@ export function App() {
     store.replace(laid);
     setFlowKey((k) => k + 1);
     setSelected(laid.scenes[0]?.id);
+    setFocusRequest(undefined);
     setTab('scene');
     flash(note);
   };
@@ -284,6 +288,29 @@ export function App() {
       >
         <section className="pg-flow-pane">
           <div className="pg-flow-tools">
+            <select
+              className="pg-scene-select"
+              aria-label="編集するシーン"
+              value={scene?.id ?? ''}
+              onChange={(e) => {
+                setSelected(e.target.value);
+                setTab('scene');
+                setFocusRequest({ id: e.target.value });
+              }}
+            >
+              <option value="" disabled>
+                編集するシーンを選択
+              </option>
+              {sceneGroups.map((group, index) => (
+                <optgroup key={index} label={group.title}>
+                  {group.scenes.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.id}：{s.summary || '（サマリーなし）'}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
             <button type="button" onClick={() => newScene()}>
               ＋ シーン
             </button>
@@ -307,6 +334,7 @@ export function App() {
             key={flowKey}
             scenario={scenario}
             selected={selected}
+            focusRequest={focusRequest}
             problems={byScene}
             onSelect={(id) => {
               setSelected(id);

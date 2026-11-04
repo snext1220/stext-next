@@ -109,6 +109,10 @@ body {
   padding: 6px 12px;
   border-bottom: 1px solid var(--desk-line);
 }
+.pg-scene-select {
+  max-width: 100%;
+  width: 240px;
+}
 .flow {
   min-height: 0;
   height: 100%;

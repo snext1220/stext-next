@@ -12,6 +12,7 @@ import {
   type Node,
   type NodeChange,
   type NodeProps,
+  type ReactFlowInstance,
 } from '@xyflow/react';
 import type { Scenario } from '@stext/schema';
 import { useEffect, useMemo, useState } from 'react';
@@ -49,6 +50,7 @@ const nodeTypes = { scene: SceneNode };
 export interface FlowViewProps {
   scenario: Scenario;
   selected: string | undefined;
+  focusRequest?: { id: string } | undefined;
   /** シーン ID ごとの問題の数 */
   problems: ReadonlyMap<string, number>;
   onSelect: (id: string) => void;
@@ -59,11 +61,21 @@ export interface FlowViewProps {
 export function FlowView({
   scenario,
   selected,
+  focusRequest,
   problems,
   onSelect,
   onMove,
   onConnect,
 }: FlowViewProps) {
+  const [flow, setFlow] = useState<ReactFlowInstance<Node<SceneNodeData>, Edge> | null>(null);
+  useEffect(() => {
+    if (focusRequest)
+      void flow?.fitView({
+        nodes: [{ id: focusRequest.id }],
+        maxZoom: 1,
+        padding: 0.5,
+      });
+  }, [flow, focusRequest]);
   const [lightweight] = useState(() => {
     const ua = navigator.userAgent;
     return (
@@ -108,6 +120,7 @@ export function FlowView({
   return (
     <div className="flow" aria-label="シナリオのフロー図">
       <ReactFlow
+        onInit={setFlow}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}

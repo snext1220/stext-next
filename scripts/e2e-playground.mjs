@@ -57,10 +57,19 @@ check('テンプレートを開ける', (await allNodes.count()) === 16, `${awai
 check('最初のシーンが見える大きさで表示される', (await nodes.first().boundingBox()).width > 80);
 await shot('1-template');
 
+const sceneSelect = page.getByRole('combobox', { name: '編集するシーン', exact: true });
+await sceneSelect.selectOption('10');
+await wait();
+check(
+  'シーン一覧から編集対象とフロー図の選択を切り替えられる',
+  (await selectedId()) === '§10' && (await field('シーン ID').inputValue()) === '10',
+);
+
 // シーンの選択・追加・名前の変更
 await nodes.filter({ hasText: '§1' }).first().click();
 await wait();
 check('シーンをクリックすると編集できる', (await selectedId()) === '§1');
+check('フロー図の選択がシーン一覧にも反映される', (await sceneSelect.inputValue()) === '1');
 const edgesBefore = await page.locator('.react-flow__edge').count();
 await page.getByRole('button', { name: '＋ 選択中のシーンから' }).click();
 await wait();
@@ -270,6 +279,66 @@ check(
   '公開シナリオを開ける',
   published > 20 && (await allNodes.count()) > 50,
   `${await allNodes.count()} シーン`,
+);
+
+// グループ別のシーン選択
+const groupedScenario = {
+  format: 'stext/2',
+  meta: { title: 'グループ選択テスト' },
+  items: [],
+  flags: [],
+  params: [],
+  enemies: [],
+  results: [],
+  licence: [],
+  groups: [
+    { title: '後半', start: '20', end: '100' },
+    { title: '前半', start: '2', end: '10' },
+  ],
+  scenes: ['100', '10', 'town', '2', '20', '0'].map((id, i) => ({
+    id,
+    summary: `シーン${id}`,
+    text: '',
+    choices: [],
+    editor: { x: i * 2000, y: 0 },
+  })),
+};
+await page.setInputFiles('#open-file', {
+  name: 'groups.json',
+  mimeType: 'application/json',
+  buffer: Buffer.from(JSON.stringify(groupedScenario)),
+});
+await wait();
+const groupedOptions = await sceneSelect
+  .locator('optgroup')
+  .evaluateAll((groups) =>
+    groups.map((group) => [
+      group.label,
+      Array.from(group.querySelectorAll('option'), (option) => option.value),
+    ]),
+  );
+check(
+  'シーン一覧をグループの開始ID・シーンID順に並べ、未所属も表示する',
+  JSON.stringify(groupedOptions) ===
+    JSON.stringify([
+      ['前半', ['2', '10']],
+      ['後半', ['20', '100']],
+      ['グループ未所属', ['0', 'town']],
+    ]),
+);
+await sceneSelect.selectOption('0');
+await wait();
+const focused = await nodes.filter({ hasText: '§0' }).boundingBox();
+const flowPane = await page.locator('.flow').boundingBox();
+check(
+  '画面外のシーンを一覧から選ぶとフロー図内に表示される',
+  (await field('シーン ID').inputValue()) === '0' &&
+    focused &&
+    flowPane &&
+    focused.x >= flowPane.x &&
+    focused.x + focused.width <= flowPane.x + flowPane.width &&
+    focused.y >= flowPane.y &&
+    focused.y + focused.height <= flowPane.y + flowPane.height,
 );
 
 // スマホ幅

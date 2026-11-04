@@ -10,6 +10,7 @@ import {
   nextSceneId,
   removeChoice,
   renameScene,
+  sceneSelectionGroups,
   toGraph,
   updateChoice,
   updateScene,
@@ -44,6 +45,62 @@ function sample(): Scenario {
     ],
   };
 }
+
+describe('scene selection groups', () => {
+  const scene = (id: string) => ({ id, text: '', choices: [] });
+
+  it('sorts groups by start id and scenes numerically without changing the scenario', () => {
+    const s: Scenario = {
+      ...emptyScenario(),
+      groups: [
+        { title: '後半', start: '20', end: '100' },
+        { title: '前半', start: '2', end: '10' },
+      ],
+      scenes: ['100', '10', 'town', '2', '20', '0'].map(scene),
+    };
+    const before = structuredClone(s);
+    expect(sceneSelectionGroups(s).map((g) => [g.title, g.scenes.map((item) => item.id)])).toEqual([
+      ['前半', ['2', '10']],
+      ['後半', ['20', '100']],
+      ['グループ未所属', ['0', 'town']],
+    ]);
+    expect(s).toEqual(before);
+  });
+
+  it('includes boundary scenes in every matching group and omits empty groups', () => {
+    const s: Scenario = {
+      ...emptyScenario(),
+      groups: [
+        { title: '最初', start: '0', end: '10' },
+        { title: '重複', start: '10', end: '20' },
+        { title: '空', start: '30', end: '40' },
+      ],
+      scenes: ['20', '10', '0'].map(scene),
+    };
+    expect(sceneSelectionGroups(s).map((g) => g.scenes.map((item) => item.id))).toEqual([
+      ['0', '10'],
+      ['10', '20'],
+    ]);
+  });
+
+  it('sorts all scenes when no groups exist, including text ids', () => {
+    const s = { ...emptyScenario(), scenes: ['town10', '10', '2', 'town2'].map(scene) };
+    expect(sceneSelectionGroups(s).map((g) => g.scenes.map((item) => item.id))).toEqual([
+      ['2', '10', 'town2', 'town10'],
+    ]);
+    expect(sceneSelectionGroups({ ...s, scenes: [] })).toEqual([]);
+  });
+
+  it('compares negative and decimal ids by their numeric values', () => {
+    const s = { ...emptyScenario(), scenes: ['2.5', '-2', '2.11', '-10'].map(scene) };
+    expect(sceneSelectionGroups(s)[0]!.scenes.map((item) => item.id)).toEqual([
+      '-10',
+      '-2',
+      '2.11',
+      '2.5',
+    ]);
+  });
+});
 
 describe('editing model', () => {
   it('starts with a valid empty scenario', () => {

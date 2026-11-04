@@ -26,6 +26,37 @@ export function findScene(s: Scenario, id: string): Scene | undefined {
   return s.scenes.find((x) => x.id === id);
 }
 
+export function sceneSelectionGroups(s: Scenario): { title: string; scenes: Scene[] }[] {
+  const compareIds = (a: string, b: string) => {
+    const difference = Number(a) - Number(b);
+    return (
+      (Number.isFinite(difference) ? difference : 0) ||
+      a.localeCompare(b, 'ja', { numeric: true }) ||
+      a.localeCompare(b, 'ja')
+    );
+  };
+  const scenes = [...s.scenes].sort((a, b) => compareIds(a.id, b.id));
+  const assigned = new Set<string>();
+  const groups = [...s.groups]
+    .sort((a, b) => compareIds(a.start, b.start))
+    .map((group) => ({
+      title: group.title,
+      scenes: scenes.filter((scene) => {
+        const n = Number(scene.id);
+        const matches = Number(group.start) <= n && n <= Number(group.end);
+        if (matches) assigned.add(scene.id);
+        return matches;
+      }),
+    }));
+  const ungrouped = scenes.filter((scene) => !assigned.has(scene.id));
+  if (ungrouped.length)
+    groups.push({
+      title: s.groups.length ? 'グループ未所属' : 'すべてのシーン',
+      scenes: ungrouped,
+    });
+  return groups.filter((group) => group.scenes.length > 0);
+}
+
 function mapScenes(s: Scenario, fn: (scene: Scene) => Scene): Scenario {
   return { ...s, scenes: s.scenes.map(fn) };
 }

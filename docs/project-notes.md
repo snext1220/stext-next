@@ -140,6 +140,7 @@
   - `post.ts`、`PostDialog.tsx`：投稿。旧 Playground Flow と同じ項目名（key・email・tag・level・intro・comment・ftp・scenario・bgms[]・ses[]・pics[]）で `upload.php` に送る。入力内容はキー `stext-next:playground:post`、投稿者のキーは `stext-next:playground:post-key` に保存する
 - **テンプレート**：`scripts/import-playground-templates.mjs` で、旧 Playground の7本を `apps/playground/public/templates/` に変換する。
 - **フロー図の表示**
+  - 上部のシーン選択ボックスはグループ別に表示する。グループは最初のシーンID順、各グループ内はシーンID順（数字は数値順）。未所属は末尾にまとめる。選ぶとシーン編集とフロー図の表示位置を切り替えるが、フロー図は絞り込まない。
   - シナリオを開くと、フロー図に全体が収まるように作り直す。
   - 大きなシナリオは、最初のシーンの近くに合わせて表示する。
   - Safari（macOS・iOS）はユーザーエージェントから自動判定し、画面外の描画を省いて接続線のアニメーションを停止する。他のブラウザは従来の全体描画とランダム分岐のアニメーションを使う。手動設定は設けない。
