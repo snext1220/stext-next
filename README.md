@@ -112,6 +112,8 @@ npm run dev:playground
 
 | 文書 | 内容 |
 | --- | --- |
+| [docs/manual-player.md](docs/manual-player.md) | プレイヤー向けマニュアル |
+| [docs/manual-playground.md](docs/manual-playground.md) | Playgroundマニュアル |
 | [docs/code-reading-guide.md](docs/code-reading-guide.md) | コードの読み解き方（全体像・読む順番・処理の流れ） |
 | [docs/migration-plan.md](docs/migration-plan.md) | 移行計画と各フェーズの結果 |
 | [docs/project-notes.md](docs/project-notes.md) | 決定事項・開発ルール・進捗のまとめ |
