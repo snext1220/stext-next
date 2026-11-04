@@ -83,7 +83,7 @@
 | `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法。メニューの道具箱に記録・変換所・音楽室・制作者向けの素材、案内所にソーサリアン Text とは・投稿・募集中の企画・関連リンク・画廊・作り手たち。フッターに CONTACT） |
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（React Flow、dagre） |
 | `prototype/` | — | — | デザインプロトタイプ |
-| `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json`（書庫の一覧。音楽室が使う `bgm` も入れる） |
+| `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json`（書庫の一覧。音楽室が使う `bgm` も入れる）。`gods`（新・天の神々たち）は旧シナリオの変換ではなく、stext/2 で直接書いたシナリオ |
 | `assets/` | — | — | どのシナリオでも使う共通の画像・BGM・効果音（`assets/common/`）と、旧サイトの画像（`assets/site/`。案内所の画面・フッターで使う） |
 | `schema/` | — | — | JSON Schema（生成物） |
 
