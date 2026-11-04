@@ -37,8 +37,9 @@ await page.route(/fonts\.(googleapis|gstatic)/, (r) => r.abort());
 const shot = (name) => shots && page.screenshot({ path: `${shots}/${name}.png` });
 const wait = (ms = 300) => page.waitForTimeout(ms);
 const nodes = page.locator('.flow-node');
+const allNodes = page.locator('.react-flow__minimap-node');
 const selectedId = async () =>
-  (await page.locator('.flow-node.is-selected .flow-node-id').innerText()).split('\n')[0];
+  `§${await page.getByLabel('シーン ID', { exact: true }).inputValue()}`;
 const tab = (name) => page.locator('[role=tab]', { hasText: name }).click();
 const field = (label) => page.getByLabel(label, { exact: true });
 
@@ -52,7 +53,7 @@ check('最初は空のシナリオ（シーン 0 だけ）', (await nodes.count(
 // テンプレート
 await page.selectOption('select[aria-label="新しく始める"]', 't:mini15');
 await wait(1000);
-check('テンプレートを開ける', (await nodes.count()) === 16, `${await nodes.count()} シーン`);
+check('テンプレートを開ける', (await allNodes.count()) === 16, `${await allNodes.count()} シーン`);
 check('最初のシーンが見える大きさで表示される', (await nodes.first().boundingBox()).width > 80);
 await shot('1-template');
 
@@ -66,7 +67,7 @@ await wait();
 const added = await selectedId();
 check(
   '選択中のシーンから新しいシーンを作ると線も引かれる',
-  (await nodes.count()) === 17 &&
+  (await allNodes.count()) === 17 &&
     (await page.locator('.react-flow__edge').count()) === edgesBefore + 1,
   added,
 );
@@ -180,7 +181,11 @@ await page.reload();
 await page.waitForSelector('.flow-node');
 check(
   '再読み込みしても編集中のシナリオが残る',
-  (await nodes.filter({ hasText: '§town' }).count()) === 1,
+  await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('stext-next:playground:current')).scenes.some(
+      (s) => s.id === 'town',
+    ),
+  ),
 );
 
 // マイストレージ
@@ -194,7 +199,7 @@ const slot = await page
   .getAttribute('value');
 await page.selectOption('select[aria-label="マイストレージ"]', slot);
 await wait(600);
-check('マイストレージに保存して開き直せる', (await nodes.count()) === 17);
+check('マイストレージに保存して開き直せる', (await allNodes.count()) === 17);
 
 // JSON で保存
 const [download] = await Promise.all([
@@ -251,8 +256,8 @@ await page.setInputFiles('#open-file', miniXml);
 await wait(1000);
 check(
   '旧形式の XML を変換して開ける',
-  (await page.locator('.pg-message').innerText()).includes('変換') && (await nodes.count()) > 5,
-  `${await nodes.count()} シーン`,
+  (await page.locator('.pg-message').innerText()).includes('変換') && (await allNodes.count()) > 5,
+  `${await allNodes.count()} シーン`,
 );
 
 // 公開シナリオ
@@ -263,8 +268,8 @@ await page.selectOption('select[aria-label="新しく始める"]', 's:scepter');
 await wait(1500);
 check(
   '公開シナリオを開ける',
-  published > 20 && (await nodes.count()) > 50,
-  `${await nodes.count()} シーン`,
+  published > 20 && (await allNodes.count()) > 50,
+  `${await allNodes.count()} シーン`,
 );
 
 // スマホ幅

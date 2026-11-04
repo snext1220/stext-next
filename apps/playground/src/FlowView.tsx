@@ -64,6 +64,14 @@ export function FlowView({
   onMove,
   onConnect,
 }: FlowViewProps) {
+  const [lightweight] = useState(() => {
+    const ua = navigator.userAgent;
+    return (
+      /AppleWebKit\//.test(ua) &&
+      /Version\/[\d.]+.*Safari\//.test(ua) &&
+      !/(Chrome|Chromium|CriOS|FxiOS|Edg|EdgA|EdgiOS|OPR|OPiOS|SamsungBrowser)\//.test(ua)
+    );
+  });
   const graph = useMemo(() => toGraph(scenario), [scenario]);
   const toNodes = (): Node<SceneNodeData>[] =>
     graph.nodes.map((n, i) => ({
@@ -92,9 +100,9 @@ export function FlowView({
         label: e.label.length > 14 ? e.label.slice(0, 14) + '…' : e.label,
         className: `flow-edge kind-${e.kind}${e.conditional ? ' conditional' : ''}`,
         markerEnd: { type: MarkerType.ArrowClosed },
-        animated: e.kind === 'random',
+        animated: !lightweight && e.kind === 'random',
       })),
-    [graph],
+    [graph, lightweight],
   );
 
   return (
@@ -103,6 +111,7 @@ export function FlowView({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        onlyRenderVisibleElements={lightweight}
         onNodesChange={(changes: NodeChange<Node<SceneNodeData>>[]) =>
           setNodes((ns) => applyNodeChanges(changes, ns))
         }
