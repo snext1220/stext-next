@@ -8,7 +8,8 @@ import {
 import type { Scenario } from '@stext/schema';
 import { ChoiceList, HeroPanel, SceneText } from '@stext/ui';
 import { useCallback, useMemo, useState } from 'react';
-import { imageUrl } from './config.js';
+import { bgmUrl, imageUrl, seUrl } from './config.js';
+import { localAudioPath } from './resources.js';
 
 /**
  * 試遊：編集中のシナリオをその場で遊ぶ。保存はせず、この画面の中だけで進む。
@@ -16,9 +17,11 @@ import { imageUrl } from './config.js';
 export function TestPlay({
   scenario,
   startScene,
+  resourceUrls,
 }: {
   scenario: Scenario;
   startScene: string | undefined;
+  resourceUrls: Readonly<Record<string, string>>;
 }) {
   const engine = useMemo(
     () => createEngine(scenario, { scenarioId: scenario.meta.id ?? 'playground' }),
@@ -64,6 +67,18 @@ export function TestPlay({
     }
   }, [engine, run]);
   const view = shown.view;
+  const music = view ? view.bgm || scenario.meta.bgm?.main || 'main' : undefined;
+  const musicPath = music ? localAudioPath('bgm', music) : undefined;
+  const musicUrl =
+    music && musicPath
+      ? (resourceUrls[musicPath] ?? bgmUrl(scenario.meta.id ?? 'playground', music))
+      : undefined;
+  const soundName = view?.se;
+  const soundPath = soundName ? localAudioPath('se', soundName) : undefined;
+  const soundUrl =
+    soundName && soundPath
+      ? (resourceUrls[soundPath] ?? seUrl(scenario.meta.id ?? 'playground', soundName))
+      : undefined;
 
   const choose = (index: number, input?: string) => {
     if (!run) return;
@@ -122,8 +137,23 @@ export function TestPlay({
             <SceneText
               className="prose"
               markdown={view.markdown}
-              resolveImage={(src) => imageUrl(scenario.meta.id, src)}
+              resolveImage={(src) => {
+                const path = src.startsWith('capture/') ? src : `capture/${src}`;
+                return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
+              }}
             />
+            {musicUrl && (
+              <label className="pg-play-audio">
+                BGM
+                <audio key={musicUrl} controls loop preload="none" src={musicUrl} />
+              </label>
+            )}
+            {soundUrl && (
+              <label className="pg-play-audio">
+                効果音
+                <audio key={soundUrl} controls preload="none" src={soundUrl} />
+              </label>
+            )}
             {view.enemies.length > 0 && (
               <p className="pg-hint">
                 敵：{view.enemies.map((e) => e.name).join('、')}

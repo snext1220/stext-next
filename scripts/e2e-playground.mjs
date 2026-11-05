@@ -8,6 +8,7 @@
 import { createRequire } from 'node:module';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { strFromU8, unzipSync } from 'fflate';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_PATH ?? 'playwright');
@@ -51,7 +52,13 @@ await page.waitForSelector('.flow-node');
 check('最初は空のシナリオ（シーン 0 だけ）', (await nodes.count()) === 1);
 
 // テンプレート
-await page.selectOption('select[aria-label="新しく始める"]', 't:mini15');
+await page.getByRole('button', { name: '作品…' }).click();
+await page.getByRole('dialog', { name: '作品' }).waitFor();
+await page.keyboard.press('Escape');
+await page.getByRole('dialog', { name: '作品' }).waitFor({ state: 'detached' });
+await page.getByRole('button', { name: '作品…' }).click();
+await page.getByLabel('テンプレート', { exact: true }).selectOption('mini15');
+await page.getByRole('button', { name: 'テンプレートを開く' }).click();
 await wait(1000);
 check('テンプレートを開ける', (await allNodes.count()) === 16, `${await allNodes.count()} シーン`);
 check('最初のシーンが見える大きさで表示される', (await nodes.first().boundingBox()).width > 80);
@@ -197,23 +204,21 @@ check(
   ),
 );
 
-// マイストレージ
-await page.selectOption('select[aria-label="マイストレージ"]', 'save');
+// 保存済み作品一覧から作品を切り替える
+await page.getByRole('button', { name: '作品…' }).click();
+await page.getByRole('button', { name: '新しいシナリオ' }).click();
 await wait();
-await page.selectOption('select[aria-label="新しく始める"]', 'empty');
-await wait();
-const slot = await page
-  .locator('select[aria-label="マイストレージ"] option[value^="load:"]')
-  .first()
-  .getAttribute('value');
-await page.selectOption('select[aria-label="マイストレージ"]', slot);
+await page.getByRole('button', { name: '作品…' }).click();
+await page.getByRole('button', { name: '作品一覧を開く' }).click();
+await page.locator('.pg-project-open:not(:disabled)').first().click();
 await wait(600);
-check('マイストレージに保存して開き直せる', (await allNodes.count()) === 17);
+check('保存済みの作品一覧から作品を開き直せる', (await allNodes.count()) === 17);
 
 // JSON で保存
+await page.getByRole('button', { name: 'エクスポート…' }).click();
 const [download] = await Promise.all([
   page.waitForEvent('download'),
-  page.getByRole('button', { name: '保存（JSON）' }).click(),
+  page.getByRole('button', { name: 'シナリオだけをJSONでダウンロード' }).click(),
 ]);
 const saved = JSON.parse(readFileSync(await download.path(), 'utf8'));
 check(
@@ -222,46 +227,127 @@ check(
   download.suggestedFilename(),
 );
 
-// 投稿（投稿先には送らず、送る内容だけを確かめる）
-const posts = [];
-await page.route(/upload\.php$/, (route) => {
-  posts.push(route.request().postDataBuffer()?.toString('utf8') ?? '');
-  return route.fulfill({ status: 200, body: '' });
-});
-await page.getByRole('button', { name: '投稿…' }).click();
-const postDialog = page.getByRole('dialog', { name: 'シナリオを投稿' });
-await postDialog.getByRole('button', { name: '投稿', exact: true }).click();
-await wait();
-check(
-  '投稿：入力が足りないと送らない',
-  posts.length === 0 && (await postDialog.getByRole('alert').innerText()).includes('連絡先'),
-);
-await postDialog.getByLabel('連絡先（メールアドレス）', { exact: true }).fill('e2e@example.com');
-await postDialog.getByLabel('シナリオ紹介（2〜300文字）', { exact: true }).fill('確認用の紹介文');
-await postDialog.getByLabel('作者より（80文字程度）', { exact: true }).fill('確認用');
-await postDialog.getByLabel('挿絵', { exact: true }).setInputFiles({
-  name: 'intro.png',
+// 素材とシナリオをZIPへまとめる
+await tab('定義');
+await page.locator('.pg-subtabs button', { hasText: '基本' }).click();
+await field('シナリオ ID').fill('e2e-archive');
+await tab('素材');
+await page.locator('.pg-resource-add select').selectOption('chara/');
+await page.locator('.pg-resource-add input[type="file"]').setInputFiles({
+  name: 'e2e.png',
   mimeType: 'image/png',
   buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
 });
-await postDialog.getByRole('button', { name: '投稿', exact: true }).click();
-await postDialog.getByText('投稿を送信しました').waitFor();
-const body = posts[0] ?? '';
+await page.getByText('chara/e2e.png', { exact: true }).waitFor();
+const [archiveDownload] = await Promise.all([
+  page.waitForEvent('download'),
+  (async () => {
+    await page.getByRole('button', { name: 'エクスポート…' }).click();
+    await page.getByRole('button', { name: '作品一式をZIPでダウンロード' }).click();
+  })(),
+]);
+const archiveFiles = unzipSync(new Uint8Array(readFileSync(await archiveDownload.path())));
 check(
-  '投稿：旧版と同じ項目で scenario.json と添付ファイルを送る',
-  posts.length === 1 &&
-    body.includes('name="key"') &&
-    body.includes('e2e@example.com') &&
-    body.includes('name="scenario"; filename="scenario.json"') &&
-    body.includes('"format": "stext/2"') &&
-    body.includes('name="pics[]"; filename="intro.png"'),
+  'ZIPにシナリオと未参照登録素材を収録する',
+  Boolean(
+    archiveFiles['e2e-archive/scenario.json'] &&
+    archiveFiles['e2e-archive/chara/e2e.png'] &&
+    JSON.parse(strFromU8(archiveFiles['e2e-archive/scenario.json'])).meta.id === 'e2e-archive',
+  ),
+  archiveDownload.suggestedFilename(),
 );
-await shot('7-post');
+await page.reload();
+await page.waitForSelector('.flow-node');
+await tab('素材');
+check(
+  '登録素材を再読み込み後も使える',
+  (await page.getByText('chara/e2e.png', { exact: true }).count()) === 1,
+);
+
+// 提出画面（PHP受け口への送信はテスト応答に置き換える）
+const submissions = [];
+const submissionEndpoint = 'https://www.web-deli.com/sorcerian/text/playground/submit.php';
+await page.route(submissionEndpoint, (route) => {
+  submissions.push(new URLSearchParams(route.request().postData() ?? ''));
+  return route.fulfill({
+    status: 202,
+    contentType: 'application/json',
+    body: JSON.stringify({ accepted: true }),
+  });
+});
+await page.getByRole('button', { name: '提出…' }).click();
+const postDialog = page.getByRole('dialog', { name: '作品を提出' });
+check(
+  '提出：scenario.jsonの作品名とIDを読み取り専用で表示する',
+  (await postDialog.getByText('e2e-archive', { exact: true }).count()) === 1 &&
+    (await postDialog.getByText('作品名', { exact: true }).count()) === 1,
+);
+const formNames = await postDialog
+  .locator('[name]')
+  .evaluateAll((fields) => fields.map((field) => field.getAttribute('name')));
+check(
+  '提出：PHP受け口用の項目名を使い、ファイル添付欄を置かない',
+  [
+    'author',
+    'email',
+    'tag',
+    'level',
+    'intro',
+    'comment',
+    'downloadUrl',
+    'retention',
+    'key',
+    'website',
+  ].every((name) => formNames.includes(name)) &&
+    (await postDialog.locator('input[type="file"]').count()) === 0,
+);
+await postDialog.getByLabel('ペンネーム（作者名）', { exact: true }).fill('e2e作者');
+await postDialog.getByLabel('連絡先（メールアドレス）', { exact: true }).fill('e2e@example.com');
+await postDialog
+  .getByLabel('シナリオ紹介（2〜300文字）', { exact: true })
+  .fill('E2E提出の確認用シナリオです。');
+await postDialog.getByLabel('作者より（80文字程度）', { exact: true }).fill('確認をお願いします。');
+await postDialog
+  .getByLabel('ダウンロードURL（必須）', { exact: true })
+  .fill('https://gigafile.nu/e2e');
+await postDialog.getByLabel('保持期間（7日以上）', { exact: true }).fill('7日');
+const zipDownloadPromise = page.waitForEvent('download');
+await postDialog.getByRole('button', { name: 'ZIPを作成してダウンロード' }).click();
+const submissionArchiveDownload = await zipDownloadPromise;
+const submissionArchive = unzipSync(
+  new Uint8Array(readFileSync(await submissionArchiveDownload.path())),
+);
+check(
+  '提出：作品スナップショットと登録素材をZIPにする',
+  Boolean(
+    submissionArchive['e2e-archive/scenario.json'] &&
+    submissionArchive['e2e-archive/chara/e2e.png'],
+  ),
+);
+const [submissionResponse] = await Promise.all([
+  page.waitForResponse((response) => response.url() === submissionEndpoint),
+  postDialog.getByRole('button', { name: '提出情報を送信' }).click(),
+]);
+check(
+  '提出：PHP受け口から受付応答を受け取る',
+  submissionResponse.status() === 202 &&
+    submissions.length === 1 &&
+    submissions[0].get('email') === 'e2e@example.com' &&
+    submissions[0].get('downloadUrl') === 'https://gigafile.nu/e2e',
+);
+check(
+  '提出：サーバー応答を成功表示する',
+  (await postDialog.getByRole('status').allTextContents()).some((text) =>
+    text.includes('提出情報を受け付けました'),
+  ),
+);
+await shot('7-submission');
 await postDialog.getByRole('button', { name: '閉じる' }).first().click();
-await page.unroute(/upload\.php$/);
+await page.unroute(submissionEndpoint);
 
 // 旧形式の XML を開く
-await page.setInputFiles('#open-file', miniXml);
+await page.getByRole('button', { name: '作品…' }).click();
+await page.setInputFiles('#work-open-file', miniXml);
 await wait(1000);
 check(
   '旧形式の XML を変換して開ける',
@@ -270,10 +356,10 @@ check(
 );
 
 // 公開シナリオ
-const published = await page
-  .locator('select[aria-label="新しく始める"] optgroup[label="公開シナリオ"] option')
-  .count();
-await page.selectOption('select[aria-label="新しく始める"]', 's:scepter');
+await page.getByRole('button', { name: '作品…' }).click();
+const published = await page.getByLabel('公開シナリオ').locator('option').count();
+await page.getByLabel('公開シナリオ', { exact: true }).selectOption('scepter');
+await page.getByRole('button', { name: '公開シナリオを開く' }).click();
 await wait(1500);
 check(
   '公開シナリオを開ける',
@@ -303,7 +389,8 @@ const groupedScenario = {
     editor: { x: i * 2000, y: 0 },
   })),
 };
-await page.setInputFiles('#open-file', {
+await page.getByRole('button', { name: '作品…' }).click();
+await page.setInputFiles('#work-open-file', {
   name: 'groups.json',
   mimeType: 'application/json',
   buffer: Buffer.from(JSON.stringify(groupedScenario)),

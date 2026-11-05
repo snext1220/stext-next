@@ -1,165 +1,149 @@
-/**
- * シナリオの投稿。旧 Playground Flow の［投稿］と同じ項目を、同じ投稿先（upload.php）へ送る。
- * 旧版との違いは、シナリオを scenario.xml ではなく scenario.json（stext/2）で送ること。
- */
 import type { Scenario } from '@stext/schema';
 
-/** 投稿できる合計サイズの上限（旧版と同じ 8MB） */
-export const POST_LIMIT = 8 * 1024 * 1024;
+export const SUBMISSION_ENDPOINT =
+  import.meta.env.VITE_SUBMISSION_URL ??
+  'https://www.web-deli.com/sorcerian/text/playground/submit.php';
+export const DISCUSSION_URL = 'https://github.com/snext1220/stext/discussions/299';
 
-const KEY_KEY = 'stext-next:playground:post-key';
-const FORM_KEY = 'stext-next:playground:post';
-
-/** FTP を希望するときに送る値（旧版と同じ） */
-export const FTP_WISH = '★FTP希望★';
-
-export interface PostForm {
-  email: string;
-  /** 分類（カンマ区切り） */
-  tag: string;
-  /** 難易度 1〜5 */
-  level: string;
-  /** シナリオ紹介 */
-  intro: string;
-  /** 作者より */
-  comment: string;
-  ftp: boolean;
-}
-
-export type FileKind = 'bgms' | 'ses' | 'pics';
-export type PostFiles = Record<FileKind, readonly File[]>;
-
-/** 添付ファイルの種類。拡張子は upload.php が受け付けるもの */
-export const FILE_KINDS: Record<FileKind, { label: string; extensions: readonly string[] }> = {
-  bgms: { label: 'BGM', extensions: ['mp3'] },
-  ses: { label: '効果音', extensions: ['mp3'] },
-  pics: { label: '挿絵', extensions: ['png', 'jpg', 'jpeg'] },
-};
+export const FORM_FIELDS = {
+  author: 'author',
+  email: 'email',
+  tag: 'tag',
+  level: 'level',
+  intro: 'intro',
+  comment: 'comment',
+  downloadUrl: 'downloadUrl',
+  retention: 'retention',
+  key: 'key',
+} as const;
 
 export const LEVELS = [
-  ['5', '5（Hell）'],
-  ['4', '4（Hard）'],
-  ['3', '3（Normal）'],
-  ['2', '2（Easy）'],
-  ['1', '1（Very Easy）'],
+  ['1（易）', '1（易）'],
+  ['2（やや易）', '2（やや易）'],
+  ['3（普通）', '3（普通）'],
+  ['4（やや難）', '4（やや難）'],
+  ['5（難）', '5（難）'],
 ] as const;
 
-function read(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
+const characterCount = (value: string) => Array.from(value).length;
+
+export interface PostForm {
+  author: string;
+  email: string;
+  tag: string;
+  level: string;
+  intro: string;
+  comment: string;
+  downloadUrl: string;
+  retention: string;
+  key: string;
 }
 
-function write(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // 保存できなくても投稿はできる
-  }
+export interface SubmissionValues {
+  author: string;
+  email: string;
+  tag: string;
+  level: string;
+  intro: string;
+  comment: string;
+  downloadUrl: string;
+  retention: string;
+  key: string;
+  website: string;
 }
 
-/**
- * 入力欄の初期値。連絡先・難易度・作者より・FTP は前回の入力を使う。
- * 分類とシナリオ紹介は、シナリオの「定義」（キーワード・紹介文）にあればそちらを使う。
- */
-export function initialForm(scenario: Scenario, saved: Partial<PostForm> = loadForm()): PostForm {
-  const keywords = (scenario.meta.keywords ?? []).join(', ');
+export function submissionValues(form: PostForm): SubmissionValues {
   return {
-    email: saved.email ?? '',
-    tag: keywords || (saved.tag ?? ''),
-    level: saved.level ?? '3',
-    intro: scenario.meta.description || (saved.intro ?? ''),
-    comment: saved.comment ?? '',
-    ftp: saved.ftp ?? false,
+    author: form.author.trim(),
+    email: form.email.trim(),
+    tag: form.tag.trim(),
+    level: form.level,
+    intro: form.intro.trim(),
+    comment: form.comment.trim(),
+    downloadUrl: form.downloadUrl.trim(),
+    retention: form.retention.trim(),
+    key: form.key,
+    website: '',
   };
 }
 
-export function loadForm(): Partial<PostForm> {
+export function clearLegacyPostData(): string | undefined {
   try {
-    return JSON.parse(read(FORM_KEY) ?? '{}') as Partial<PostForm>;
-  } catch {
-    return {};
+    localStorage.removeItem('stext-next:playground:post');
+    localStorage.removeItem('stext-next:playground:post-key');
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
   }
 }
 
-export function saveForm(form: PostForm) {
-  write(FORM_KEY, JSON.stringify(form));
+export function initialForm(scenario: Scenario): PostForm {
+  return {
+    author: scenario.meta.author ?? '',
+    email: '',
+    tag: (scenario.meta.keywords ?? []).join(', '),
+    level: '3（普通）',
+    intro: scenario.meta.description ?? '',
+    comment: '',
+    downloadUrl: '',
+    retention: '',
+    key: '',
+  };
 }
 
-/** 投稿者を見分けるキー（ブラウザーごと。投稿先のフォルダー名になる） */
-export function postKey(): string {
-  const saved = read(KEY_KEY);
-  if (saved && /^[0-9a-z]{8,}$/i.test(saved)) return saved;
-  const key = Date.now().toString(16);
-  write(KEY_KEY, key);
-  return key;
-}
-
-export function scenarioFile(scenario: Scenario): Blob {
-  return new Blob([JSON.stringify(scenario, null, 2) + '\n'], { type: 'application/json' });
-}
-
-const extension = (name: string) => /\.([^.]+)$/.exec(name)?.[1]?.toLowerCase() ?? '';
-
-/** 送る前の確認。問題がなければ空の配列 */
-export function validatePost(form: PostForm, files: PostFiles, scenarioSize: number): string[] {
+export function validatePost(form: PostForm): string[] {
   const errors: string[] = [];
+  if (!form.author.trim()) errors.push('ペンネーム（作者名）を入力してください');
+  else if (characterCount(form.author.trim()) > 100)
+    errors.push('ペンネーム（作者名）は100文字以内で入力してください');
   if (!form.email.trim()) errors.push('連絡先（メールアドレス）を入力してください');
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
     errors.push('連絡先（メールアドレス）の形式が正しくありません');
-  const intro = form.intro.trim().length;
-  if (intro < 2 || intro > 300)
-    errors.push(`シナリオ紹介は2〜300文字で入力してください（いま ${intro} 文字）`);
+  else if (characterCount(form.email.trim()) > 254)
+    errors.push('連絡先（メールアドレス）は254文字以内で入力してください');
+  if (characterCount(form.tag.trim()) > 300) errors.push('分類は300文字以内で入力してください');
+  if (!(LEVELS as readonly (readonly [string, string])[]).some(([value]) => value === form.level))
+    errors.push('難易度を1〜5から選択してください');
+  const introLength = characterCount(form.intro.trim());
+  if (introLength < 2 || introLength > 300)
+    errors.push(`シナリオ紹介は2〜300文字で入力してください（いま ${introLength} 文字）`);
   if (!form.comment.trim()) errors.push('作者よりを入力してください');
-  for (const kind of Object.keys(FILE_KINDS) as FileKind[]) {
-    const { label, extensions } = FILE_KINDS[kind];
-    for (const f of files[kind])
-      if (!extensions.includes(extension(f.name)))
-        errors.push(`${label}に送れないファイルです：${f.name}（${extensions.join('・')} のみ）`);
+  else if (characterCount(form.comment.trim()) > 1000)
+    errors.push('作者よりは1000文字以内で入力してください');
+  if (!form.downloadUrl.trim()) errors.push('ギガファイル便のダウンロードURLを入力してください');
+  else if (characterCount(form.downloadUrl.trim()) > 2048)
+    errors.push('ダウンロードURLは2048文字以内で入力してください');
+  else {
+    try {
+      const url = new URL(form.downloadUrl.trim());
+      if (url.protocol !== 'https:' || url.username || url.password)
+        errors.push('ダウンロードURLにはHTTPSのURLを入力してください');
+    } catch {
+      errors.push('ダウンロードURLの形式が正しくありません');
+    }
   }
-  const total =
-    scenarioSize +
-    Object.values(files)
-      .flat()
-      .reduce((n, f) => n + f.size, 0);
-  if (total > POST_LIMIT)
-    errors.push(
-      `合計サイズが上限（8MB）を超えています（${(total / 1024 / 1024).toFixed(1)}MB）。複数回に分けて投稿してください`,
-    );
+  if (!form.retention.trim()) errors.push('ZIPの保持期間を入力してください');
+  else {
+    const days = /^(\d{1,4})\s*日(?:間)?$/.exec(form.retention.trim());
+    if (!days || Number(days[1]) < 7) errors.push('保持期間は7日以上の日数で入力してください');
+  }
+  if (characterCount(form.key) > 128)
+    errors.push('ダウンロードキーは128文字以内で入力してください');
   return errors;
 }
 
-/** upload.php に送るデータ（項目名は旧版と同じ） */
-export function buildPostData(
-  key: string,
-  form: PostForm,
-  scenario: Scenario,
-  files: PostFiles,
-): FormData {
-  const data = new FormData();
-  data.append('key', key);
-  data.append('email', form.email.trim());
-  data.append('tag', form.tag);
-  data.append('level', form.level);
-  data.append('intro', form.intro);
-  data.append('comment', form.comment);
-  data.append('ftp', form.ftp ? FTP_WISH : '');
-  data.append('scenario', scenarioFile(scenario), 'scenario.json');
-  for (const kind of Object.keys(FILE_KINDS) as FileKind[])
-    for (const f of files[kind]) data.append(`${kind}[]`, f, f.name);
-  return data;
-}
-
-/**
- * 送る。投稿先は CORS に対応していないので、応答は読めない（no-cors）。
- * 通信できなかったときだけ失敗になる。
- */
-export async function sendPost(
-  url: string,
-  data: FormData,
-  fetcher: typeof fetch = fetch,
-): Promise<void> {
-  await fetcher(url, { method: 'POST', mode: 'no-cors', body: data });
+/** Convert the form state to the PHP endpoint's field names. */
+/** Public Discussion copy omits the private contact, download URL, and key. */
+export function publicSubmissionText(scenario: Scenario, form: PostForm): string {
+  return [
+    'シナリオ提出',
+    `作品名: ${scenario.meta.title || '無題'}`,
+    `シナリオID: ${scenario.meta.id || '未設定'}`,
+    `作者名: ${form.author.trim() || '未入力'}`,
+    `分類: ${form.tag.trim() || '未入力'}`,
+    `難易度: ${form.level || '未入力'}`,
+    `シナリオ紹介: ${form.intro.trim() || '未入力'}`,
+    `作者より: ${form.comment.trim() || '未入力'}`,
+    'ZIPをこの投稿に添付してください。',
+  ].join('\n');
 }

@@ -110,4 +110,4 @@ npm run build
 
 ## 作らないと決めたもの
 
-Playground では、サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）は作らない。
+Playground では、作品提出に使うPHP 8.4受け口以外の独自投稿受け口、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）は作らない。作品提出はZIPを利用者がギガファイル便にアップロードし、投稿情報とURLをPHPへ送る方式にする。

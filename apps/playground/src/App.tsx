@@ -1,6 +1,7 @@
 import { convertPlaygroundJson, convertScenarioXml } from '@stext/convert';
 import { validateScenario, type Scenario } from '@stext/schema';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { createScenarioArchive, findMissingResources, validateArchiveId } from './archive.js';
 import { findProblems, problemsByScene } from './checks.js';
 import { SCENARIO_BASE, TEMPLATE_BASE } from './config.js';
 import { Definitions } from './Definitions.js';
@@ -18,18 +19,17 @@ import {
 } from './model.js';
 import { PostDialog } from './PostDialog.js';
 import { Problems } from './Problems.js';
+import { ProjectDialog } from './ProjectDialog.js';
+import { ResourcesPanel } from './ResourcesPanel.js';
+import type { LocalResource } from './resources.js';
 import { SceneEditor } from './SceneEditor.js';
 import { Splitter, useSideWidth } from './Splitter.js';
-import { deleteSlot, loadSlots, saveSlot, useScenarioStore, type Slot } from './store.js';
+import { useScenarioStore } from './store.js';
 import { TestPlay } from './TestPlay.js';
+import { clearLegacyPostData } from './post.js';
+import { ExportDialog, WorkDialog, type WorkMenuTemplate } from './WorkspaceMenus.js';
 
-type Tab = 'scene' | 'defs' | 'problems' | 'play';
-
-interface TemplateEntry {
-  id: string;
-  name: string;
-  scenes: number;
-}
+type Tab = 'scene' | 'defs' | 'resources' | 'problems' | 'play';
 
 export function App() {
   const store = useScenarioStore();
@@ -39,11 +39,26 @@ export function App() {
   const [message, setMessage] = useState<string | null>(null);
   // 開き直したときはフロー図を作り直して全体が見えるようにする
   const [flowKey, setFlowKey] = useState(0);
-  const [templates, setTemplates] = useState<TemplateEntry[]>([]);
+  const [templates, setTemplates] = useState<WorkMenuTemplate[]>([]);
   const [published, setPublished] = useState<{ id: string; title: string }[]>([]);
-  const [slots, setSlots] = useState<Slot[]>(loadSlots);
   const [sideWidth, setSideWidth] = useSideWidth();
+  const [showWorkMenu, setShowWorkMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [postingSnapshot, setPostingSnapshot] = useState<{
+    scenario: Scenario;
+    projectId: string;
+    resources: LocalResource[];
+  } | null>(null);
+  const [showProjects, setShowProjects] = useState(false);
+  const [resourceUrls, setResourceUrls] = useState<Record<string, string>>({});
+  const [zipProgress, setZipProgress] = useState<{
+    phase: 'preparing' | 'creating';
+    completedBytes: number;
+    totalBytes: number;
+  } | null>(null);
+  const [postPreparing, setPostPreparing] = useState(false);
+  const preparingSnapshot = zipProgress?.phase === 'preparing' || postPreparing;
   const openHelp = useHelp();
 
   const problems = useMemo(() => findProblems(scenario), [scenario]);
@@ -53,8 +68,19 @@ export function App() {
   const [focusRequest, setFocusRequest] = useState<{ id: string }>();
 
   useEffect(() => {
+    const urls = Object.fromEntries(
+      store.resources.map((resource) => [resource.path, URL.createObjectURL(resource.blob)]),
+    );
+    const timer = window.setTimeout(() => setResourceUrls(urls), 0);
+    return () => {
+      window.clearTimeout(timer);
+      for (const url of Object.values(urls)) URL.revokeObjectURL(url);
+    };
+  }, [store.resources]);
+
+  useEffect(() => {
     fetch(`${TEMPLATE_BASE}templates.json`)
-      .then((r) => r.json() as Promise<TemplateEntry[]>)
+      .then((r) => r.json() as Promise<WorkMenuTemplate[]>)
       .then(setTemplates, () => {});
     fetch(`${SCENARIO_BASE}index.json`)
       .then((r) => r.json() as Promise<{ id: string; title: string; listed: boolean }[]>)
@@ -68,6 +94,7 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      if (preparingSnapshot) return;
       if ((e.target as HTMLElement | null)?.closest('input, textarea, select')) return;
       e.preventDefault();
       if (e.shiftKey) store.redo();
@@ -75,21 +102,34 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [store]);
+  }, [store, preparingSnapshot]);
+
+  if (!store.ready || store.transitioning)
+    return (
+      <div className="pg-loading" role="status">
+        {store.ready
+          ? '作品を保存して切り替えています…'
+          : 'このブラウザーに保存されたシナリオを読み込んでいます…'}
+      </div>
+    );
 
   const flash = (text: string) => {
     setMessage(text);
     setTimeout(() => setMessage((m) => (m === text ? null : m)), 4000);
   };
 
-  const open = (s: Scenario, note: string) => {
+  const open = async (s: Scenario, note: string) => {
     const laid = autoLayout(s);
-    store.replace(laid);
-    setFlowKey((k) => k + 1);
-    setSelected(laid.scenes[0]?.id);
-    setFocusRequest(undefined);
-    setTab('scene');
-    flash(note);
+    try {
+      await store.createProject(laid);
+      setFlowKey((k) => k + 1);
+      setSelected(laid.scenes[0]?.id);
+      setFocusRequest(undefined);
+      setTab('scene');
+      flash(note);
+    } catch (e) {
+      flash(`作品を切り替えられませんでした: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
   const openFile = async (file: File | undefined) => {
@@ -97,10 +137,13 @@ export function App() {
     try {
       const text = await file.text();
       if (/\.xml$/i.test(file.name))
-        return open(convertScenarioXml(text, {}).scenario, `${file.name} を変換して開きました`);
+        return await open(
+          convertScenarioXml(text, {}).scenario,
+          `${file.name} を変換して開きました`,
+        );
       const data = JSON.parse(text) as Record<string, unknown>;
       if (Array.isArray(data['edges']))
-        return open(
+        return await open(
           convertPlaygroundJson(data, {}).scenario,
           `${file.name}（旧 Playground）を変換して開きました`,
         );
@@ -109,7 +152,7 @@ export function App() {
         throw new Error(
           `stext/2 のシナリオとして読めません：${v.issues[0]?.path} ${v.issues[0]?.message}`,
         );
-      open(v.scenario, `${file.name} を開きました`);
+      await open(v.scenario, `${file.name} を開きました`);
     } catch (e) {
       flash(e instanceof Error ? e.message : String(e));
     }
@@ -119,21 +162,89 @@ export function App() {
     try {
       const v = validateScenario(await (await fetch(url)).json());
       if (!v.ok) throw new Error('シナリオの形式が正しくありません');
-      open(v.scenario, note);
+      await open(v.scenario, note);
     } catch (e) {
       flash(e instanceof Error ? e.message : String(e));
     }
   };
 
-  const download = () => {
-    const url = URL.createObjectURL(
-      new Blob([JSON.stringify(scenario, null, 2) + '\n'], { type: 'application/json' }),
-    );
+  const downloadBlob = (blob: Blob, fileName: string) => {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${scenario.meta.id || 'scenario'}.json`;
+    a.download = fileName;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const download = () => {
+    downloadBlob(
+      new Blob([JSON.stringify(scenario, null, 2) + '\n'], { type: 'application/json' }),
+      `${scenario.meta.id || 'scenario'}.json`,
+    );
+  };
+
+  const downloadArchive = async () => {
+    if (zipProgress) return;
+    const idError = validateArchiveId(scenario.meta.id);
+    if (idError) {
+      flash(idError);
+      return;
+    }
+
+    setZipProgress({ phase: 'preparing', completedBytes: 0, totalBytes: 0 });
+    try {
+      const snapshot = await store.createExportSnapshot();
+      const snapshotId = snapshot.scenario.meta.id;
+      const snapshotIdError = validateArchiveId(snapshotId);
+      if (snapshotIdError) throw new Error(snapshotIdError);
+      const missing = findMissingResources(store.projectId, snapshot.scenario, snapshot.resources);
+      if (
+        missing.length > 0 &&
+        !window.confirm(
+          `次の素材は未登録のためZIPに含まれません。\n\n${missing.join('\n')}\n\nこのままZIPを作成しますか？`,
+        )
+      )
+        return;
+      setZipProgress({ phase: 'creating', completedBytes: 0, totalBytes: 0 });
+      const archive = await createScenarioArchive(
+        store.projectId,
+        snapshot.scenario,
+        snapshot.resources,
+        ({ completedBytes, totalBytes }) =>
+          setZipProgress({ phase: 'creating', completedBytes, totalBytes }),
+      );
+      downloadBlob(archive, `${snapshotId}.zip`);
+      flash('ZIPをダウンロードしました');
+    } catch (error) {
+      flash(`ZIPを作成できませんでした: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setZipProgress(null);
+    }
+  };
+
+  const preparePost = async () => {
+    if (postPreparing || zipProgress) return;
+    const cleanupError = clearLegacyPostData();
+    if (cleanupError) {
+      flash(`旧投稿フォームの保存情報を削除できませんでした: ${cleanupError}`);
+      return;
+    }
+    setPostPreparing(true);
+    try {
+      const snapshot = await store.createExportSnapshot();
+      setPostingSnapshot({
+        ...snapshot,
+        projectId: store.projectId,
+      });
+      setPosting(true);
+    } catch (error) {
+      flash(
+        `提出用の作品を保存できませんでした: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      setPostPreparing(false);
+    }
   };
 
   const newScene = (from?: string) => {
@@ -155,6 +266,7 @@ export function App() {
           className="pg-title"
           aria-label="シナリオのタイトル"
           value={scenario.meta.title}
+          disabled={preparingSnapshot}
           onChange={(e) =>
             store.update(
               { ...scenario, meta: { ...scenario.meta, title: e.target.value } },
@@ -162,94 +274,16 @@ export function App() {
             )
           }
         />
-        <div className="pg-menu">
-          <select
-            aria-label="新しく始める"
-            value=""
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === 'empty') open(emptyScenario(), '新しいシナリオを始めました');
-              else if (v.startsWith('t:'))
-                void openUrl(`${TEMPLATE_BASE}${v.slice(2)}.json`, 'テンプレートを開きました');
-              else if (v.startsWith('s:'))
-                void openUrl(
-                  `${SCENARIO_BASE}${v.slice(2)}/scenario.json`,
-                  '公開シナリオを開きました',
-                );
-            }}
-          >
-            <option value="">新規・テンプレート…</option>
-            <option value="empty">新しいシナリオ</option>
-            <optgroup label="テンプレート">
-              {templates.map((t) => (
-                <option key={t.id} value={`t:${t.id}`}>
-                  {t.name}（{t.scenes} シーン）
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="公開シナリオ">
-              {published.map((p) => (
-                <option key={p.id} value={`s:${p.id}`}>
-                  {p.title}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <label className="pg-button">
-            開く…
-            <input
-              id="open-file"
-              type="file"
-              accept=".json,.xml"
-              hidden
-              onChange={(e) => void openFile(e.target.files?.[0])}
-            />
-          </label>
-          <button type="button" onClick={download}>
-            保存（JSON）
+        <div className="pg-menu" inert={preparingSnapshot}>
+          <button type="button" onClick={() => setShowWorkMenu(true)}>
+            作品…
           </button>
-          <button type="button" onClick={() => setPosting(true)}>
-            投稿…
+          <button type="button" onClick={() => setShowExportMenu(true)}>
+            エクスポート…
           </button>
-          <select
-            aria-label="マイストレージ"
-            value=""
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === 'save') {
-                const name = scenario.meta.title || '無題';
-                setSlots(saveSlot(name, scenario));
-                flash(`マイストレージに「${name}」を保存しました`);
-              } else if (v.startsWith('load:')) {
-                const slot = slots.find((s) => s.name === v.slice(5));
-                if (slot) open(slot.scenario, `マイストレージの「${slot.name}」を開きました`);
-              } else if (v.startsWith('del:')) {
-                setSlots(deleteSlot(v.slice(4)));
-                flash(`マイストレージから「${v.slice(4)}」を消しました`);
-              }
-            }}
-          >
-            <option value="">マイストレージ…</option>
-            <option value="save">いまのシナリオを保存</option>
-            {slots.length > 0 && (
-              <optgroup label="開く">
-                {slots.map((s) => (
-                  <option key={s.name} value={`load:${s.name}`}>
-                    {s.name}（{new Date(s.savedAt).toLocaleString('ja-JP')}）
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {slots.length > 0 && (
-              <optgroup label="消す">
-                {slots.map((s) => (
-                  <option key={s.name} value={`del:${s.name}`}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-          </select>
+          <button type="button" onClick={() => void preparePost()}>
+            提出…
+          </button>
           <button
             type="button"
             onClick={store.undo}
@@ -272,14 +306,48 @@ export function App() {
             </button>
           )}
         </div>
+        {zipProgress && (
+          <div className="pg-save-state" role="status" aria-live="polite">
+            {zipProgress.phase === 'preparing'
+              ? 'ZIP作成用のデータを保存しています…'
+              : `ZIPを作成しています… ${
+                  zipProgress.totalBytes
+                    ? Math.floor((zipProgress.completedBytes / zipProgress.totalBytes) * 100)
+                    : 0
+                }%`}
+          </div>
+        )}
+        {postPreparing && (
+          <div className="pg-save-state" role="status" aria-live="polite">
+            提出用の作品を保存しています…
+          </div>
+        )}
       </header>
       {message && (
         <div className="pg-message" role="status">
           {message}
         </div>
       )}
+      <div
+        className={`pg-save-state${store.saveStatus === 'error' ? ' error' : ''}`}
+        role={store.saveStatus === 'error' ? 'alert' : 'status'}
+        aria-live="polite"
+      >
+        {store.saveStatus === 'pending' && '変更を保存します…'}
+        {store.saveStatus === 'saving' && 'このブラウザーに保存中…'}
+        {store.saveStatus === 'saved' && 'このブラウザーに保存済み'}
+        {store.saveStatus === 'error' && (
+          <>
+            <span>自動保存に失敗しました: {store.saveError}</span>
+            <button type="button" onClick={store.retrySave}>
+              再試行
+            </button>
+          </>
+        )}
+      </div>
       <main
         className="pg-main"
+        inert={preparingSnapshot}
         style={
           sideWidth === undefined
             ? undefined
@@ -370,6 +438,17 @@ export function App() {
             <button
               type="button"
               role="tab"
+              aria-selected={tab === 'resources'}
+              onClick={() => setTab('resources')}
+            >
+              素材
+              {store.resources.length > 0 && (
+                <span className="pg-badge">{store.resources.length}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={tab === 'problems'}
               onClick={() => setTab('problems')}
             >
@@ -407,6 +486,17 @@ export function App() {
                 <p className="pg-hint">フロー図でシーンを選んでください。</p>
               ))}
             {tab === 'defs' && <Definitions scenario={scenario} onChange={store.update} />}
+            {tab === 'resources' && (
+              <ResourcesPanel
+                scenario={scenario}
+                resources={store.resources}
+                ready={store.resourcesReady}
+                error={store.resourceError}
+                urls={resourceUrls}
+                onRegister={store.registerResource}
+                onDelete={store.deleteResource}
+              />
+            )}
             {tab === 'problems' && (
               <Problems
                 problems={problems}
@@ -416,12 +506,95 @@ export function App() {
                 }}
               />
             )}
-            {tab === 'play' && <TestPlay scenario={scenario} startScene={selected} />}
+            {tab === 'play' && (
+              <TestPlay scenario={scenario} startScene={selected} resourceUrls={resourceUrls} />
+            )}
           </div>
         </aside>
       </main>
-      {posting && (
-        <PostDialog scenario={scenario} errors={errors} onClose={() => setPosting(false)} />
+      {showWorkMenu && (
+        <WorkDialog
+          templates={templates}
+          published={published}
+          onNew={() => {
+            setShowWorkMenu(false);
+            void open(emptyScenario(), '新しいシナリオを始めました');
+          }}
+          onOpenTemplate={(id) => {
+            setShowWorkMenu(false);
+            void openUrl(`${TEMPLATE_BASE}${id}.json`, 'テンプレートを開きました');
+          }}
+          onOpenPublished={(id) => {
+            setShowWorkMenu(false);
+            void openUrl(`${SCENARIO_BASE}${id}/scenario.json`, '公開シナリオを開きました');
+          }}
+          onOpenFile={(file) => {
+            setShowWorkMenu(false);
+            void openFile(file);
+          }}
+          onOpenSavedProjects={() => setShowProjects(true)}
+          onClose={() => setShowWorkMenu(false)}
+        />
+      )}
+      {showExportMenu && (
+        <ExportDialog
+          onExportZip={() => void downloadArchive()}
+          onExportJson={download}
+          onClose={() => setShowExportMenu(false)}
+          zipDisabled={zipProgress !== null}
+        />
+      )}
+      {posting && postingSnapshot && (
+        <PostDialog
+          scenario={postingSnapshot.scenario}
+          projectId={postingSnapshot.projectId}
+          resources={postingSnapshot.resources}
+          errors={
+            findProblems(postingSnapshot.scenario).filter((problem) => problem.severity === 'error')
+              .length
+          }
+          onClose={() => {
+            setPosting(false);
+            setPostingSnapshot(null);
+          }}
+        />
+      )}
+      {showProjects && (
+        <ProjectDialog
+          projects={store.projects}
+          currentId={store.projectId}
+          onClose={() => setShowProjects(false)}
+          onDelete={async (id) => {
+            const wasCurrent = await store.deleteProject(id);
+            if (wasCurrent) {
+              setSelected('0');
+              setFocusRequest(undefined);
+              setFlowKey((key) => key + 1);
+              setTab('scene');
+              setShowProjects(false);
+              flash('編集中の作品と登録素材を削除し、新しいシナリオを開始しました');
+            } else {
+              flash('保存済みの作品と登録素材を削除しました');
+            }
+            return wasCurrent;
+          }}
+          onOpen={(id) => {
+            void store.openProject(id).then(
+              (loaded) => {
+                setSelected(loaded.scenes[0]?.id);
+                setFocusRequest(undefined);
+                setFlowKey((key) => key + 1);
+                setTab('scene');
+                setShowProjects(false);
+                flash(`「${loaded.meta.title || '無題'}」を開きました`);
+              },
+              (error: unknown) =>
+                flash(
+                  `作品を開けませんでした: ${error instanceof Error ? error.message : String(error)}`,
+                ),
+            );
+          }}
+        />
       )}
     </div>
   );

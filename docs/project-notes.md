@@ -34,10 +34,10 @@
 | 7 | 画像・BGM・効果音は**新リポジトリ（`assets/`）に移す**。ゲームの実行方法を README に書く |
 | 8 | プレイヤーはこのリポジトリの **GitHub Pages で公開する** |
 | 9 | 旧エンジンの残りの機能（ステータス編集、撃破チェック、バックアップ／リストア、ランク・ボーナス一覧、ツイートボタン、`${effect}`、アイテムの使用）を実装する |
-| 10 | Playground（Phase 6）を作る。サーバーへの投稿、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）は作らない |
+| 10 | Playground（Phase 6）を作る。作品提出に使うPHP受け口以外の独自投稿受け口、シーン ID のシャッフル、範囲を絞った表示、旧 PgEditor（jsTree）は作らない |
 | 11 | シナリオに関係する画像・BGM は、シナリオごとのフォルダー（`scenarios/<id>/capture/`・`bgm/`）にまとめる。`assets/` には共通の素材だけを置く |
 | 12 | 旧サイトのページをプレイヤーに移す。「音楽室」「案内」（SText とは・ソーサリアンとは・スタッフ・ギャラリー・関連リンク）「投稿」（作り方・手順・zip の中身・募集企画・制作者向けの素材）の3画面と、全画面のフッターの CONTACT にまとめる。文章は今の仕組みに合わせて書き直す。旧サイトの画像は `assets/site/` に取り込む。投稿先は今と同じ GitHub Discussions（snext1220/stext#299） |
-| 13 | Playground に旧版と同じ投稿機能（「投稿…」）を付ける。送り先は旧版と同じ `upload.php`。シナリオは `scenario.json`（stext/2）で送る（`upload.php` の許可する拡張子に `json` を加える前提）。投稿先は CORS に対応していないので、応答は読まずに送る（no-cors） |
+| 13 | Playgroundの提出は作品と登録素材をZIPにして利用者がギガファイル便へアップロードし、投稿情報とURLをPHP 8.4受け口へ送る。PHPは検証後、`mail()` で管理者宛てに通知する。ZIP本体は送らず、連絡先・ダウンロードキーをブラウザーに保存せず、受付と公開を分ける。オレンジフォームは採用しない。旧 `upload.php` はクライアントから呼ばず、サーバー側でも停止する |
 | 14 | プレイヤーのメニューを「書庫」「道具箱」（記録・変換所・音楽室・制作者向けの素材）「案内所」（ソーサリアン Text とは・投稿・募集中の企画・関連リンク・画廊・作り手たち）にまとめる。道具箱・案内所は押すと開くサブメニュー。長かった案内・投稿は項目ごとの画面に分ける（ソーサリアンとはは「ソーサリアン Text とは」の後半、投稿は作り方・手順・zip の中身の3節を1画面に）。メニューと画面の見出しのカタカナは和語にする（ギャラリー→画廊、スタッフ→作り手たち）。英語の小見出し（About など）は飾りなので残す。以前の章の URL は移った先へ転送する |
 
 ---
@@ -105,7 +105,6 @@
 | `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元 |
 | `VITE_SCENARIO_BASE` | シナリオの配信元（`scenario.json`、挿絵、BGM） |
 | `VITE_PLAYGROUND_URL` | プレイヤーの投稿の画面から開く Playground（既定はプレイヤーの隣の `playground/`） |
-| `VITE_POST_URL` | Playground の「投稿…」の送り先（既定は旧 Playground Flow と同じ `upload.php`） |
 
 ---
 
@@ -133,11 +132,12 @@
   - `layout.ts`：dagre で左から右へ並べる。
   - `store.ts`：
     - 元に戻す／やり直す（100件まで。同じキーの変更は1秒以内ならまとめる）
-    - 自動保存（キー `stext-next:playground:current`）
-    - マイストレージ（キー `stext-next:playground:slots`）
+    - IndexedDBへの自動保存と作品管理。旧マイストレージの名前付き保存機能は廃止
   - `FlowView.tsx`、`SceneEditor.tsx`、`Definitions.tsx`、`checks.ts`、`Problems.tsx`、`TestPlay.tsx`、`App.tsx`、`fields.tsx`、`playground.css`
   - `help/`：ダイナミックヘルプ。`reference.md`（旧 `reference.xml` を移した内容と移行メモ）、`help.ts`（読み込み・検索）、`HelpPanel.tsx`（表示。`main.tsx` の `HelpProvider` が状態を持つ）
-  - `post.ts`、`PostDialog.tsx`：投稿。旧 Playground Flow と同じ項目名（key・email・tag・level・intro・comment・ftp・scenario・bgms[]・ses[]・pics[]）で `upload.php` に送る。入力内容はキー `stext-next:playground:post`、投稿者のキーは `stext-next:playground:post-key` に保存する
+  - `archive.ts`：作品スナップショットと登録素材からZIPを作る。ID・パスを検査し、未登録の参照素材を見つける
+  - `post.ts`、`PostDialog.tsx`：提出用ZIPの作成、作品情報表示、PHP受け口へのフォームPOST。連絡先・キーは永続保存せず、公開用コピーにも含めない。PHP応答を画面に表示する。旧 `upload.php` への送信コードは削除済み
+  - `server/submit.php`：PHP 8.4の提出受け口。CORS、入力検証、honeypot、送信回数制限、環境変数でのメール設定を行い、管理者宛てにメールを送る
 - **テンプレート**：`scripts/import-playground-templates.mjs` で、旧 Playground の7本を `apps/playground/public/templates/` に変換する。
 - **フロー図の表示**
   - 上部のシーン選択ボックスはグループ別に表示する。グループは最初のシーンID順、各グループ内はシーンID順（数字は数値順）。未所属は末尾にまとめる。選ぶとシーン編集とフロー図の表示位置を切り替えるが、フロー図は絞り込まない。

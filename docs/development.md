@@ -23,7 +23,20 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 | `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときは、`common/` を含む URL を末尾 `/` 付きで指定） |
 | `VITE_SCENARIO_BASE` | シナリオの配信元（既定はビルド結果の `scenarios/`。`<id>/scenario.json` と、挿絵・BGM もここから読む） |
 | `VITE_PLAYGROUND_URL` | 投稿の画面の「Playground を開く」のリンク先（既定はプレイヤーの隣の `playground/`。開発サーバーで試すときは `http://localhost:5174/` を指定） |
-| `VITE_POST_URL` | Playground の「投稿…」の送り先（既定は旧 Playground Flow と同じ `https://www.web-deli.com/sorcerian/text/playground/upload.php`） |
+| `VITE_SUBMISSION_URL` | 提出情報を送るPHP受け口（既定は `https://www.web-deli.com/sorcerian/text/playground/submit.php`） |
+
+提出フォームの送信先は [post.ts](../apps/playground/src/post.ts) で設定します。PHP 8.4 用の受け口は [submit.php](../apps/playground/server/submit.php) です。配備先の `/sorcerian/text/playground/submit.php` に配置し、次のサーバー環境変数を設定してください。
+
+| PHP環境変数 | 内容 |
+| --- | --- |
+| `STEXT_ALLOWED_ORIGINS` | 許可するページのOriginをカンマ区切りで指定（本番は `https://snext1220.github.io`。開発時は `http://localhost:5174` も追加） |
+| `STEXT_MAIL_TO` | 提出通知の受信先メールアドレス |
+| `STEXT_MAIL_FROM` | 配備先で送信を許可された送信元メールアドレス |
+| `STEXT_RATE_LIMIT_DIR` | 送信回数制限ファイルを置く、PHP実行ユーザーが書き込める共有ディレクトリ（省略時はシステム一時ディレクトリ） |
+
+PHPの `mail()` が利用できるようサーバー側のメール配送も設定します。受け口はCORSのOrigin制限、入力検査、空欄honeypot、IPごとの1時間5回の送信制限を行います。CORSだけでは自動送信を防げないため、実運用ではWebサーバー側の追加の迷惑投稿対策も検討してください。メールのキー・連絡先は受信メールに含まれるため、メールボックスの閲覧権限と保管期間を管理します。
+
+PHPを変更した場合は `php -l apps/playground/server/submit.php` で構文を確認します。実際のメール送信・CORS・受信メール確認は配備先で、テスト用の投稿情報を使って行ってください。PlaywrightのE2Eは実メールを送らず、PHP応答をモックします。旧Orange Form用のコードは削除済みです。旧 `upload.php` は別途停止が必要です。
 
 `npm run build` の結果（`apps/player/dist/`）には `scenarios/` と `assets/` も含まれるので、そのまま静的サイトとして公開できます。
 
@@ -151,7 +164,7 @@ macOS の Safari では、大きなシナリオ（`gods` など）を開いた�
 
 Safari では、移動・ズームに応じて必要なシーンと接続線が描画されます。シナリオのデータや自動配置、ミニマップは共通です。描画の変更を確認するときは、Safari とそれ以外のブラウザで同じシナリオを開き、表示範囲を移動してシーンを選べることも確認してください。
 
-`scripts/e2e-playground.mjs` は、Playground をブラウザで一通り操作して確かめます（テンプレート、シーンの追加と ID の変更、条件の入力、ヘルプ、元に戻す、定義、検査、試遊、自動保存、マイストレージ、JSON の保存、XML を開く、公開シナリオ、スマホ幅）。旧リポジトリ（`../stext`）の mini の XML も使います。
+`scripts/e2e-playground.mjs` は、Playground をブラウザで一通り操作して確かめます（テンプレート、シーンの追加と ID の変更、条件の入力、ヘルプ、元に戻す、定義、検査、試遊、自動保存、保存済み作品の切り替え、JSON の保存、XML を開く、公開シナリオ、スマホ幅）。旧リポジトリ（`../stext`）の mini の XML も使います。
 
 ```bash
 npm run dev:playground

@@ -65,18 +65,14 @@ export function Post({ section }: { section?: string }) {
             でシナリオを書き、「試遊」で最後まで遊べるか確かめます。「検査」のタブに出た問題も直しておきましょう。
           </li>
           <li>
-            ツールバーの「保存（JSON）」でシナリオをファイルに保存し、ファイルの名前を{' '}
-            <code>scenario.json</code> に変えます。
+            Playground の「提出…」から提出用 ZIP
+            を作成し、表示される手順に沿ってアップロードと投稿情報の入力を行います。ZIP 内の
+            <code>scenario.json</code> がシナリオ本体です。
           </li>
           <li>
-            挿絵や独自の BGM があれば、「
-            <a href={href({ name: 'post', section: 'folder' })}>zip の中身</a>
-            」の形でフォルダーにまとめ、.zip に圧縮します。
-          </li>
-          <li>
-            GitHub Discussions
-            の投稿スレッドを開き、そこに載っているテンプレートに沿って必要な情報を書いて、スレッドへの返信として投稿します。.zip
-            は、入力欄にドラッグ＆ドロップすると添付できます（GitHub のアカウントが必要です）。
+            PlaygroundからPHP受け口への送信が利用できない場合は、下の GitHub Discussions
+            を代替の提出先として利用してください。.zip は投稿に添付できます（GitHub
+            のアカウントが必要です）。
           </li>
           <li>管理者が確認したあと、書庫に公開されます。公開まで、しばらくお待ちください。</li>
         </ol>
@@ -86,8 +82,8 @@ export function Post({ section }: { section?: string }) {
           </a>
         </div>
         <p className="doc-small">
-          ※ Playground のツールバーの「投稿…」からも、編集中のシナリオと挿絵・BGM
-          を直接投稿できます（旧 Playground Flow の［シナリオを投稿］と同じ投稿先です）。
+          ※
+          ギガファイル便の保持期間は7日以上を選んでください。連絡先やダウンロードキーを公開の投稿欄に書かないでください。
         </p>
       </DocSection>
 

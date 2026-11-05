@@ -265,7 +265,7 @@ scenario.xml ─ readScenarioXml ─┐
 | --- | --- |
 | [App.tsx](../apps/playground/src/App.tsx) | 全体の配置、ファイルを開く・保存する、タブの切り替え、Ctrl+Z |
 | [model.ts](../apps/playground/src/model.ts) | 編集操作（シーン・選択肢の追加／削除／改名など）。**純粋関数**なのでテストしやすい |
-| [store.ts](../apps/playground/src/store.ts) | 元に戻す／やり直す、自動保存、マイストレージ |
+| [store.ts](../apps/playground/src/store.ts) | 元に戻す／やり直す、IndexedDBへの自動保存、作品の切り替え・削除 |
 | [FlowView.tsx](../apps/playground/src/FlowView.tsx)、[layout.ts](../apps/playground/src/layout.ts) | React Flow のフロー図と、dagre による自動配置。グラフは `model.ts` の `toGraph` で `choices` から作る |
 | [SceneEditor.tsx](../apps/playground/src/SceneEditor.tsx)、[Definitions.tsx](../apps/playground/src/Definitions.tsx)、[fields.tsx](../apps/playground/src/fields.tsx) | 「シーン」「定義」タブの入力フォーム |
 | [checks.ts](../apps/playground/src/checks.ts)、[Problems.tsx](../apps/playground/src/Problems.tsx) | 「検査」タブ（`checkScenario` の結果を表示） |
