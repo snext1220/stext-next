@@ -1,6 +1,8 @@
 import {
   createEngine,
   emptyGlobalState,
+  GLOBAL_SAVE_KEY,
+  readLegacyGlobal,
   type GameEvent,
   type GameState,
   type GlobalState,
@@ -18,14 +20,27 @@ export function TestPlay({
   scenario,
   startScene,
   resourceUrls,
+  scenarioResultTotals,
+  scenarioIndexError,
 }: {
   scenario: Scenario;
   startScene: string | undefined;
   resourceUrls: Readonly<Record<string, string>>;
+  scenarioResultTotals: ReadonlyMap<string, number> | null;
+  scenarioIndexError: string | null;
 }) {
+  const [playerGlobal, setPlayerGlobal] = useState<GlobalState>(() => emptyGlobalState());
   const engine = useMemo(
-    () => createEngine(scenario, { scenarioId: scenario.meta.id ?? 'playground' }),
-    [scenario],
+    () =>
+      createEngine(scenario, {
+        scenarioId: scenario.meta.id ?? 'playground',
+        scenarioResults: (id) => {
+          const all = scenarioResultTotals?.get(id);
+          if (all === undefined) return undefined;
+          return { count: playerGlobal.results[id]?.length ?? 0, all };
+        },
+      }),
+    [scenario, scenarioResultTotals, playerGlobal],
   );
   const [run, setRun] = useState<{ state: GameState; global: GlobalState; log: string[] } | null>(
     null,
@@ -48,7 +63,10 @@ export function TestPlay({
 
   const start = (from?: string) => {
     try {
-      let step = engine.start(emptyGlobalState());
+      const rawGlobal = localStorage.getItem(GLOBAL_SAVE_KEY);
+      const global = rawGlobal ? readLegacyGlobal(rawGlobal) : emptyGlobalState();
+      setPlayerGlobal(global);
+      let step = engine.start(global);
       if (from && from !== '0') step = engine.enterScene(step.state, step.global, from);
       setRun({ state: step.state, global: step.global, log: describe(step.events) });
       setError(null);
@@ -118,10 +136,24 @@ export function TestPlay({
           </button>
         )}
       </div>
-      {(error ?? shown.error) && <p className="pg-error">{error ?? shown.error}</p>}
+      {scenarioIndexError && (
+        <p className="pg-error" role="alert">
+          他シナリオの実績数を読み込めませんでした: {scenarioIndexError}
+        </p>
+      )}
+      {!scenarioResultTotals && !scenarioIndexError && (
+        <p className="pg-hint" role="status">
+          他シナリオの実績数を読み込んでいます…
+        </p>
+      )}
+      {(error ?? shown.error) && (
+        <p className="pg-error" role="alert">
+          {error ?? shown.error}
+        </p>
+      )}
       {!run && !error && (
         <p className="pg-hint">
-          新しいキャラクターで、編集中のシナリオを遊べます。セーブデータには残りません。
+          新しいキャラクターで、編集中のシナリオを遊べます。プレイヤーに保存済みの実績を参照しますが、試遊の結果は保存しません。
         </p>
       )}
       {run && view && (

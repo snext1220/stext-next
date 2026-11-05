@@ -629,8 +629,6 @@ Markdown に加えて、文字色・ルビ・条件付きの文章・変数な�
 @legacy scene/text
 @related text.if, text.import, text.input, text.ruby, text.color, text.secret, text.effect, text.tweet
 @mark 誤り: 旧版は `${state?正常:毒:凍結:石化:忘却}` としていましたが、呪いが抜けていました。正しくは「正常:毒:凍結:石化:呪い:忘却」の6つです。
-@mark 未実装: `${result?id}`・`${result_rate?id}` は、新しいプレイヤーと試遊ではまだ他のシナリオの実績を受け取らないため、常に「?????」になります。
-
 `${…}` の形で、本文の好きな場所に値を埋め込めます。
 
 - `${title}`：キャラクターの称号
@@ -648,7 +646,9 @@ Markdown に加えて、文字色・ルビ・条件付きの文章・変数な�
 - `${var?r01:name}`／`${var?r01:level}`／`${var?r01:text}`：実績の名前・レベル・説明
 - `${var?p01:text}`／`${var?p01:value}`：パラメーターの説明・現在の値
 - `${result?シナリオID}`：そのシナリオで得た実績の数
-- `${result_rate?シナリオID}`：そのシナリオの実績の達成率
+- `${result_rate?シナリオID}`：そのシナリオの実績の達成率（%）
+
+プレイヤーでは保存済みの実績を使います。Playground の試遊でも、同じブラウザーのプレイヤーに保存されている実績を参照します。実績情報を参照できないシナリオ ID は「?????」と表示します。
 
 race、sex、age、state、msg では、`?` のあとに `:` 区切りで表示したい言葉を書きます。
 

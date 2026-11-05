@@ -41,6 +41,11 @@ export function App() {
   const [flowKey, setFlowKey] = useState(0);
   const [templates, setTemplates] = useState<WorkMenuTemplate[]>([]);
   const [published, setPublished] = useState<{ id: string; title: string }[]>([]);
+  const [scenarioResultTotals, setScenarioResultTotals] = useState<ReadonlyMap<
+    string,
+    number
+  > | null>(null);
+  const [scenarioIndexError, setScenarioIndexError] = useState<string | null>(null);
   const [sideWidth, setSideWidth] = useSideWidth();
   const [showWorkMenu, setShowWorkMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -83,10 +88,20 @@ export function App() {
       .then((r) => r.json() as Promise<WorkMenuTemplate[]>)
       .then(setTemplates, () => {});
     fetch(`${SCENARIO_BASE}index.json`)
-      .then((r) => r.json() as Promise<{ id: string; title: string; listed: boolean }[]>)
-      .then(
-        (list) => setPublished(list.filter((e) => e.listed)),
-        () => {},
+      .then((r) => {
+        if (!r.ok) throw new Error(`シナリオ一覧を読み込めませんでした（${r.status}）`);
+        return r.json() as Promise<
+          { id: string; title: string; listed: boolean; results: number }[]
+        >;
+      })
+      .then((list) => {
+        setPublished(list.filter((e) => e.listed));
+        setScenarioResultTotals(new Map(list.map((entry) => [entry.id, entry.results])));
+      })
+      .catch((e: unknown) =>
+        setScenarioIndexError(
+          e instanceof Error ? e.message : 'シナリオ一覧を読み込めませんでした',
+        ),
       );
   }, []);
 
@@ -507,7 +522,13 @@ export function App() {
               />
             )}
             {tab === 'play' && (
-              <TestPlay scenario={scenario} startScene={selected} resourceUrls={resourceUrls} />
+              <TestPlay
+                scenario={scenario}
+                startScene={selected}
+                resourceUrls={resourceUrls}
+                scenarioResultTotals={scenarioResultTotals}
+                scenarioIndexError={scenarioIndexError}
+              />
             )}
           </div>
         </aside>

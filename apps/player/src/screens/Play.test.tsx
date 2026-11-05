@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 import { createEngine, emptyGlobalState } from '@stext/core';
 import type { Scenario } from '@stext/schema';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioDirector } from '../audio.js';
 import { Play } from './Play.js';
+
+vi.mock('../data.js', () => ({
+  loadIndex: () => Promise.resolve([{ id: 'past', results: 4 }]),
+}));
 
 const scenario: Scenario = {
   format: 'stext/2',
@@ -63,6 +67,28 @@ function renderPlay() {
 }
 
 describe('scene scrolling', () => {
+  it('renders achievement macros from the saved global results', async () => {
+    const withMacro: Scenario = {
+      ...scenario,
+      scenes: [{ ...scenario.scenes[0]!, text: '${result?past}:${result_rate?past}' }],
+    };
+    const global = { ...emptyGlobalState(), results: { past: ['r01', 'r02'] } };
+    const { state } = createEngine(withMacro).start(global);
+    render(
+      <Play
+        id="scroll-test"
+        scenario={withMacro}
+        initial={state}
+        global={global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText('2:50')).toBeTruthy());
+  });
+
   it('scrolls instantly only after the new scene has been rendered', () => {
     const { scroll } = renderPlay();
     expect(scroll).not.toHaveBeenCalled();

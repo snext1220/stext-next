@@ -74,6 +74,25 @@ describe('createEngine', () => {
     expect(e.view(state, global).markdown).toBe(`こんにちは、${state.chara.name}。`);
   });
 
+  it('expands other-scenario achievement counts and completion rates', () => {
+    const e = createEngine(
+      scenario([{ id: '0', text: '${result?past}:${result_rate?past}', choices: [] }]),
+      {
+        random: fixed(0),
+        scenarioResults: (id) => (id === 'past' ? { count: 2, all: 4 } : undefined),
+      },
+    );
+    const { state, global } = e.start(emptyGlobalState());
+    expect(e.view(state, global).markdown).toBe('2:50');
+
+    const empty = createEngine(
+      scenario([{ id: '0', text: '${result?past}:${result_rate?past}', choices: [] }]),
+      { random: fixed(0), scenarioResults: () => ({ count: 0, all: 0 }) },
+    );
+    const emptyStep = empty.start(emptyGlobalState());
+    expect(empty.view(emptyStep.state, emptyStep.global).markdown).toBe('0:0');
+  });
+
   it('shows only the choices whose conditions hold, and expands labels', () => {
     const e = createEngine(
       scenario([

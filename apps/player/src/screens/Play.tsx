@@ -35,6 +35,7 @@ import {
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AudioDirector } from '../audio.js';
 import { bgmUrl, charaImageUrl, imageUrl, seUrl, trophyUrl } from '../config.js';
+import { loadIndex } from '../data.js';
 import { href } from '../router.js';
 import { saveGame, saveGlobal, type Settings } from '../storage.js';
 
@@ -99,7 +100,10 @@ export function Play({
   settings,
   onSettings,
 }: PlayProps) {
-  const engine = useMemo(() => createEngine(scenario, { scenarioId: id }), [scenario, id]);
+  const [scenarioResultTotals, setScenarioResultTotals] = useState<ReadonlyMap<string, number>>(
+    () => new Map(),
+  );
+  const [scenarioIndexError, setScenarioIndexError] = useState<string | null>(null);
   const [state, setStateRaw] = useState(initial);
   const [history, setHistory] = useState<{ state: GameState; entry: HistoryEntry }[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -108,6 +112,30 @@ export function Play({
   const [editing, setEditing] = useState(false);
   const toastId = useRef(0);
   const pendingSceneScroll = useRef(false);
+
+  useEffect(() => {
+    loadIndex().then(
+      (entries) =>
+        setScenarioResultTotals(new Map(entries.map((entry) => [entry.id, entry.results]))),
+      (e: unknown) =>
+        setScenarioIndexError(
+          e instanceof Error ? e.message : 'シナリオ一覧を読み込めませんでした',
+        ),
+    );
+  }, []);
+
+  const engine = useMemo(
+    () =>
+      createEngine(scenario, {
+        scenarioId: id,
+        scenarioResults: (otherId) => {
+          const all = scenarioResultTotals.get(otherId);
+          if (all === undefined) return undefined;
+          return { count: global.results[otherId]?.length ?? 0, all };
+        },
+      }),
+    [scenario, id, global, scenarioResultTotals],
+  );
 
   useLayoutEffect(() => {
     if (!pendingSceneScroll.current) return;
@@ -421,6 +449,11 @@ export function Play({
 
   return (
     <div className="play">
+      {scenarioIndexError && (
+        <p className="error-box" role="alert">
+          他シナリオの実績数を読み込めませんでした: {scenarioIndexError}
+        </p>
+      )}
       <Parchment
         as="article"
         seed={7}

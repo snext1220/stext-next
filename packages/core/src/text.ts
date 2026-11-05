@@ -150,7 +150,13 @@ function interpolate(match: string, sub: string, ctx: TextContext): string {
     case 'result_rate': {
       const info = ctx.scenarioResults?.(args[0] ?? '');
       if (!info) return '?????';
-      return String(name === 'result' ? info.count : Math.floor((info.count / info.all) * 100));
+      return String(
+        name === 'result'
+          ? info.count
+          : info.all === 0
+            ? 0
+            : Math.floor((info.count / info.all) * 100),
+      );
     }
     case 'race':
       return choose(c.race, ['FIGHTER', 'WIZARD', 'DWARF', 'ELF'], 'Unknown Race');
