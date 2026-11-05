@@ -32,7 +32,7 @@ import {
   type HistoryEntry,
   type Toast,
 } from '@stext/ui';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AudioDirector } from '../audio.js';
 import { bgmUrl, charaImageUrl, imageUrl, seUrl, trophyUrl } from '../config.js';
 import { href } from '../router.js';
@@ -107,6 +107,14 @@ export function Play({
   const [sheet, setSheet] = useState<PanelTab | null>(null);
   const [editing, setEditing] = useState(false);
   const toastId = useRef(0);
+  const pendingSceneScroll = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!pendingSceneScroll.current) return;
+    pendingSceneScroll.current = false;
+    // シーンのDOM更新後に移動し、描画更新とスムーズスクロールの競合を避ける。
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [state]);
 
   const toast = useCallback((kind: Toast['kind'], title: string, message: string) => {
     const t = { id: ++toastId.current, kind, title, message };
@@ -282,9 +290,9 @@ export function Play({
       ]);
       for (const [next, s] of Object.entries(r.carryOver ?? {})) if (next !== id) saveGame(next, s);
       // 続編が同じシナリオなら、旧エンジンと同じく引き継ぎ用のデータで保存を上書きする（表示はエンディングのまま）
+      pendingSceneScroll.current = true;
       setState(r.state, r.global, r.carryOver?.[id] ?? r.state);
       showEvents(r.events);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (r.kind === 'back') {
       back();
     } else {
@@ -304,6 +312,7 @@ export function Play({
     const prev = history[history.length - 1];
     if (!prev || state.isEnded) return;
     setHistory((h) => h.slice(0, -1));
+    pendingSceneScroll.current = true;
     setState(prev.state);
   };
   const cast = (name: MagicName) => {
@@ -412,7 +421,15 @@ export function Play({
 
   return (
     <div className="play">
-      <Parchment as="article" seed={7} style={{ ['--book-size' as string]: fontSize }}>
+      <Parchment
+        as="article"
+        seed={7}
+        style={{
+          ['--book-size' as string]: fontSize,
+          // ゴシックのときは本文の中だけ --f-book を差し替える（冒険者パネルや他の画面は明朝のまま）
+          ...(settings.fontFamily === 'gothic' ? { ['--f-book' as string]: 'var(--f-ui)' } : {}),
+        }}
+      >
         <header className="page-head">
           <span className="title">
             {scenario.meta.title}
@@ -568,6 +585,19 @@ export function Play({
                 onClick={() => onSettings({ ...settings, fontSize: k })}
               >
                 {['小', '中', '大'][i]}
+              </button>
+            ))}
+          </span>
+          <span>書体</span>
+          <span className="seg">
+            {(['mincho', 'gothic'] as const).map((k, i) => (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={settings.fontFamily === k}
+                onClick={() => onSettings({ ...settings, fontFamily: k })}
+              >
+                {['明朝', 'ゴシック'][i]}
               </button>
             ))}
           </span>

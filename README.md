@@ -1,7 +1,6 @@
-# stext-next
-ソーサリアンTextのアーキテクチャ、UI移行計画です。
+# stext-next（ソーサリアンText v2）
 
-https://snext1220.github.io/stext-next/prototype/design/index.html
+ソーサリアンTextのアーキテクチャ、UI移行計画です。
 
 ## ゲームを遊ぶ
 

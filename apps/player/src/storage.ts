@@ -60,6 +60,8 @@ export function saveGame(id: string, state: GameState) {
 export interface Settings {
   theme: 'system' | 'light' | 'dark';
   fontSize: 'small' | 'medium' | 'large';
+  /** プレイ画面の本文の書体 */
+  fontFamily: 'mincho' | 'gothic';
   /** 最後に遊んだシナリオ */
   recent?: string;
 }
@@ -71,10 +73,11 @@ export function loadSettings(): Settings {
     return {
       theme: 'system',
       fontSize: 'medium',
+      fontFamily: 'mincho',
       ...(JSON.parse(readRaw(SETTINGS_KEY) ?? '{}') as Partial<Settings>),
     };
   } catch {
-    return { theme: 'system', fontSize: 'medium' };
+    return { theme: 'system', fontSize: 'medium', fontFamily: 'mincho' };
   }
 }
 

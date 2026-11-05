@@ -5,7 +5,7 @@ import { bgmUrl, imageUrl, seUrl, siteImageUrl } from './config.js';
 import type { ScenarioEntry } from './data.js';
 import { BGM_GROUPS, bgmUsage } from './music.js';
 import { href, parseRoute } from './router.js';
-import { loadGame, loadGlobal, saveGame, saveGlobal } from './storage.js';
+import { loadGame, loadGlobal, loadSettings, saveGame, saveGlobal } from './storage.js';
 
 describe('router', () => {
   it('reads and writes hash routes', () => {
@@ -93,6 +93,15 @@ describe('storage', () => {
     localStorage.setItem('sorcerian_text', '{broken');
     expect(loadGame('scepter')).toBeUndefined();
     expect(loadGlobal()).toEqual(emptyGlobalState());
+  });
+
+  it('defaults the reading font to mincho, keeping settings saved before it existed', () => {
+    expect(loadSettings().fontFamily).toBe('mincho');
+    localStorage.setItem(
+      'stext-next:settings',
+      JSON.stringify({ theme: 'dark', fontSize: 'large' }),
+    );
+    expect(loadSettings()).toEqual({ theme: 'dark', fontSize: 'large', fontFamily: 'mincho' });
   });
 });
 

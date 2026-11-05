@@ -26,7 +26,7 @@ const entries: ScenarioEntry[] = [
 
 vi.mock('../data.js', () => ({ loadIndex: () => Promise.resolve(entries) }));
 
-const settings = { theme: 'system', fontSize: 'medium' } as const;
+const settings = { theme: 'system', fontSize: 'medium', fontFamily: 'mincho' } as const;
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
