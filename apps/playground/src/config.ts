@@ -22,6 +22,18 @@ export function bgmUrl(scenarioId: string, name: string): string {
     : `${SCENARIO_BASE}${scenarioId}/bgm/${name}.mp3`;
 }
 
+/** キャラクターの顔画像（imageSet が custom ならシナリオの chara/、それ以外は共通の画像） */
+export function charaImageUrl(
+  scenarioId: string,
+  imageSet: string | undefined,
+  chara: { race: string; sex: string; age: string },
+): string {
+  const file = `${chara.sex}_${chara.age}_${chara.race}.png`.toLowerCase();
+  return imageSet === 'custom'
+    ? `${SCENARIO_BASE}${scenarioId}/chara/${file}`
+    : `${ASSET_BASE}common/${file}`;
+}
+
 /** シナリオ固有の効果音 */
 export function seUrl(scenarioId: string, name: string): string {
   return `${SCENARIO_BASE}${scenarioId}/bgm/se/${name}.mp3`;

@@ -127,7 +127,7 @@ export function HeroPanel({
         </div>
       )}
       <div className="state">
-        <span>状態</span>
+        <span>{label('state')}</span>
         <b>{STATE_NAMES[c.state] ?? c.state}</b>
       </div>
       {state.bonus && (

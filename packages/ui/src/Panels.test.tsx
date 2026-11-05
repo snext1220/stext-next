@@ -9,7 +9,7 @@ afterEach(cleanup);
 
 const scenario: Scenario = {
   format: 'stext/2',
-  meta: { title: 'デモ', labels: { free1: '所持金' } },
+  meta: { title: 'デモ', labels: { state: '状態異常', free1: '所持金' } },
   items: [{ id: 'i01', name: 'こいし', text: 'ただの石' }],
   flags: [
     { id: 'f01', text: '扉を調べた。' },
@@ -39,6 +39,7 @@ describe('panels', () => {
   it('shows the character with the scenario labels', () => {
     const { getByText } = render(<HeroPanel scenario={scenario} state={state()} />);
     expect(getByText('所持金')).toBeTruthy();
+    expect(getByText('状態異常')).toBeTruthy();
     expect(getByText('50')).toBeTruthy();
   });
 

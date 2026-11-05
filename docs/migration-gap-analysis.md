@@ -14,26 +14,26 @@
 
 | 機能 | 旧版 | 現行 | 影響・確認根拠 |
 |---|---|---|---|
-| ランダム遷移の結果保持 | `randomCacheDays` に相当する設定で、選んだ遷移先を Cookie に指定日数保持する | コアエンジンには保持用の仕組みがあるが、プレイヤーと Playground の試遊から渡されていない | 設定しても保持されず、再度選ぶと別の遷移先になることがある。周回時も結果を固定する意図のシナリオに影響する。設定欄は [SceneEditor.tsx](../apps/playground/src/SceneEditor.tsx)、保持処理は [engine.ts](../packages/core/src/engine.ts)、アプリからのエンジン生成は [Play.tsx](../apps/player/src/screens/Play.tsx) と [TestPlay.tsx](../apps/playground/src/TestPlay.tsx)。 |
+| ランダム遷移の結果保持 | `randomCacheDays` に相当する設定で、選んだ遷移先を Cookie に指定日数保持する | プレイヤーと Playground の試遊で、選択結果を `randomCacheDays` の日数だけ Cookie に保持する | 周回しても保持期間中は同じ遷移先を選ぶ。設定欄は [SceneEditor.tsx](../apps/playground/src/SceneEditor.tsx)、保持処理は [engine.ts](../packages/core/src/engine.ts) と [randomCache.ts](../packages/ui/src/randomCache.ts)、アプリからのエンジン生成は [Play.tsx](../apps/player/src/screens/Play.tsx) と [TestPlay.tsx](../apps/playground/src/TestPlay.tsx)。 |
 
-**対応の考え方：** ランダム遷移の保持をプレイヤーと試遊に接続する。
+**対応内容：** ランダム遷移の保持をプレイヤーと試遊に接続した。
 
 ## 対応済み
 
 | 機能 | 対応内容 | 確認根拠 |
 |---|---|---|
 | 他シナリオの実績を参照する本文マクロ | `${result?id}` と `${result_rate?id}` が、プレイヤーでは保存済みの実績とシナリオ一覧の実績総数を使って展開される。Playground の試遊では同じブラウザーのプレイヤー保存データを読み取り専用で参照する。 | 実績情報を参照できないシナリオ ID は `?????` を表示する。[Play.tsx](../apps/player/src/screens/Play.tsx)、[TestPlay.tsx](../apps/playground/src/TestPlay.tsx)、[text.ts](../packages/core/src/text.ts)、[reference.md](../apps/playground/src/help/reference.md)。 |
+| 試遊中の状態指定 | 試遊の開始前にアイテム・フラグ・パラメーター・星を指定し、その状態で分岐を確認できる。 | 指定値は試遊だけに使い、プレイヤーの保存データには反映しない。[TestPlay.tsx](../apps/playground/src/TestPlay.tsx)、[manual-playground.md](./manual-playground.md)。 |
+| シナリオ全体・シーンの設定欄 | `meta.showSummary`、`meta.imageSet`、HP〜KRM の表示名、`effects.max` も編集できる。 | Playground の定義で全ステータス名を編集でき、シーンの効果欄で HP・MP・STR〜KRM の最大値・初期値を設定できる。試遊にもサマリー見出しとキャラクター画像を反映する。[Definitions.tsx](../apps/playground/src/Definitions.tsx)、[SceneEditor.tsx](../apps/playground/src/SceneEditor.tsx)、[TestPlay.tsx](../apps/playground/src/TestPlay.tsx)。 |
 
 ## P2：Playground の制作・確認機能
 
 | 機能 | 旧版 | 現行 | 影響・確認根拠 |
 |---|---|---|---|
-| 試遊中の状態指定 | デバッグ画面で Items／Flags などの状態を入力して分岐を確認できた | 状態は表示のみ。任意のアイテム・フラグ等を試遊状態に設定する操作はない | 特定の状態を前提とする分岐を試すには、最初からプレイして状態を作る必要がある。試遊の実装は [TestPlay.tsx](../apps/playground/src/TestPlay.tsx)、差分は [manual-playground.md](./manual-playground.md) に記載。 |
 | 試遊中の戦闘操作 | 旧プレイヤー相当の戦闘を試せた | 敵名を表示する簡易確認で、戦闘操作はできない | 敵の攻撃・回避・ダメージ・戦利品などの最終確認にはプレイヤーを開く必要がある。現行マニュアルもプレイヤーでの確認を案内している。[TestPlay.tsx](../apps/playground/src/TestPlay.tsx)、[manual-playground.md](./manual-playground.md)。 |
 | 試遊中に直前のシーンへ戻る | 戻る操作で直前のシーンに戻れた | 「戻る」はログに案内を出すだけで、試遊の履歴を戻せない | 戻る遷移を含む分岐の確認に、最初からやり直す手間がかかる。[TestPlay.tsx](../apps/playground/src/TestPlay.tsx)。 |
-| シナリオ全体・シーンの設定欄 | 旧 Editor で設定項目を編集できた | `meta.showSummary`、`meta.imageSet`、HP〜KRM の表示名、`effects.max` は編集欄がない。JSON ファイルを外部で編集すれば設定できる | 対応シナリオを変換した後、これらの値を直すには外部編集が必要。現行プレイヤーは `showSummary` と `imageSet` に対応しているが、Playground の編集欄・試遊表示は揃っていない。`meta.labels` は FREE1〜3 のみ編集可能。[Definitions.tsx](../apps/playground/src/Definitions.tsx)、[SceneEditor.tsx](../apps/playground/src/SceneEditor.tsx)、[config.ts](../apps/player/src/config.ts)、[reference.md](../apps/playground/src/help/reference.md)。 |
 
-**対応の考え方：** まず状態を指定して再現できる試遊を検討し、次に不足している設定欄と戻る操作を補う。戦闘試遊はプレイヤー側の戦闘機能があるため、制作上の必要性・実装規模を見て判断する。
+**対応の考え方：** 試遊で直前のシーンへ戻る操作を検討する。戦闘試遊はプレイヤー側の戦闘機能があるため、制作上の必要性・実装規模を見て判断する。
 
 ## P3：表示・操作上の差
 

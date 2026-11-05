@@ -327,7 +327,7 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
     if (choice.to.length > 1 && choice.randomCacheDays && options.cache) {
       const key = `random_${scenarioId}${state.scene}`;
       const cached = options.cache.get(key);
-      if (cached) to = cached;
+      if (cached && choice.to.includes(cached)) to = cached;
       else options.cache.set(key, to, choice.randomCacheDays);
     }
     if (to === BACK_SCENE_ID) {

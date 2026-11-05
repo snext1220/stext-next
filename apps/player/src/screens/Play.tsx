@@ -28,6 +28,7 @@ import {
   SceneText,
   StatusEditor,
   Toasts,
+  createCookieRandomCache,
   statusLabel,
   type HistoryEntry,
   type Toast,
@@ -128,6 +129,7 @@ export function Play({
     () =>
       createEngine(scenario, {
         scenarioId: id,
+        cache: createCookieRandomCache(),
         scenarioResults: (otherId) => {
           const all = scenarioResultTotals.get(otherId);
           if (all === undefined) return undefined;

@@ -1,6 +1,6 @@
 import type { Scenario } from '@stext/schema';
 import { useId, useState } from 'react';
-import { TextArea, TextField, fromList, toList } from './fields.js';
+import { Field, SelectField, TextArea, TextField, fromList, toList } from './fields.js';
 import { HelpButton } from './help/HelpPanel.js';
 import { setList } from './model.js';
 
@@ -37,6 +37,18 @@ const STATS: Options = [
   ['dex', 'DEX'],
   ['krm', 'KRM'],
 ];
+const STATUS_LABELS = [
+  ['hp', 'HP'],
+  ['mp', 'MP'],
+  ['state', '状態異常'],
+  ['str', 'STR'],
+  ['int', 'INT'],
+  ['dex', 'DEX'],
+  ['krm', 'KRM'],
+  ['free1', 'FREE1'],
+  ['free2', 'FREE2'],
+  ['free3', 'FREE3'],
+] as const;
 const FREES: Options = [
   ['free1', 'FREE1'],
   ['free2', 'FREE2'],
@@ -426,10 +438,35 @@ function MetaEditor({
           onChange={(v) => set({ footerScene: v }, 'footerScene')}
           placeholder="99998"
         />
-        {(['free1', 'free2', 'free3'] as const).map((k) => (
+        <SelectField
+          label="キャラクター画像"
+          help="meta.imageSet"
+          value={m.imageSet}
+          options={[
+            ['', '共通画像'],
+            ['custom', 'シナリオ独自の画像'],
+          ]}
+          onChange={(v) => set({ imageSet: v || undefined }, 'imageSet')}
+        />
+        <Field label="見出しにサマリーを表示" help="meta.showSummary">
+          {(id) => (
+            <label className="pg-check">
+              <input
+                id={id}
+                type="checkbox"
+                checked={Boolean(m.showSummary)}
+                onChange={(ev) =>
+                  set({ showSummary: ev.target.checked || undefined }, 'showSummary')
+                }
+              />
+              シーン番号の代わりに表示
+            </label>
+          )}
+        </Field>
+        {STATUS_LABELS.map(([k, label]) => (
           <TextField
             key={k}
-            label={`${k.toUpperCase()} の表示名`}
+            label={`${label} の表示名`}
             help="meta.labels"
             value={m.labels?.[k]}
             onChange={(v) => {

@@ -550,6 +550,39 @@ body {
 .pg-play-page::after {
   display: none;
 }
+.pg-play-setup {
+  border: 1px solid var(--desk-line);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.pg-play-setup summary {
+  cursor: pointer;
+  font-size: var(--step--1);
+}
+.pg-play-setup fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--desk-line);
+  padding: 8px 0 0;
+}
+.pg-play-setup legend {
+  padding: 0 6px 0 0;
+  color: var(--on-desk-soft);
+  font-size: var(--step--1);
+}
+.pg-play-setup label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--step--1);
+}
+.pg-play-setup input[type='number'],
+.pg-play-setup input[type='text'] {
+  width: 100px;
+}
 .pg-play-status summary {
   cursor: pointer;
   font-size: var(--step--1);

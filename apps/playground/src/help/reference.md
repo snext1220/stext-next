@@ -58,7 +58,6 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 @legacy init/basic/summary
 @related scene.summary
 @mark 変更: 旧形式の `<basic summary="true">` は `"showSummary": true` になりました。
-@mark 未実装: Playground の「定義」にはまだ入力欄がありません。JSON に直接書いてください。
 
 `true` にすると、パラグラフ番号を出さないモードになります。シーンの冒頭に、シーン番号の代わりに [サマリー](#help/scene.summary) を表示します。
 
@@ -66,7 +65,6 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 
 @legacy init/basic/imgset
 @related meta.constraint
-@mark 未実装: Playground には入力欄がありません。JSON に直接書いてください。試遊の冒険者欄も、キャラクター画像ではなく種族の紋章を表示します。
 
 キャラクターの画像をシナリオ独自のものにするときに `"custom"` を指定します（値は `custom` だけです）。プレイヤーの［冒険者］タブには、キャラクターの性別・年齢・種族に応じた画像が表示されます。指定しないときは共通の画像（`assets/common/性別_年齢_種族.png`）を使います。
 
@@ -164,7 +162,6 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 
 @legacy init/label, init/label/status, init/label/free
 @mark 変更: 旧形式の `<label>` は `meta.labels`（`{ "free1": "所持金" }` のような対応表）になりました。
-@mark 未実装: Playground の入力欄は FREE1〜3 の表示名だけです。HP〜KRM の表示名は JSON に直接書いてください。
 @mark 変更: 旧版の「BattleSheet 下部の簡易ステータス表示に Free1〜3 が追加される」は、新しいプレイヤーでは「表示名を付けたか、値が 0 でない FREE をキャラクター欄に表示する」になりました。
 
 ステータス欄の表示名を置き換えます。キーは `hp`、`mp`、`state`、`str`、`int`、`dex`、`krm`、`free1`、`free2`、`free3` です。指定しなければ HP、MP、STATE、STR…、FREE1… と表示します。
@@ -790,9 +787,8 @@ ${/if}
 @legacy scene/edge_common
 @related choice.to
 @mark 変更: 旧形式では遷移先の末尾に `;2` のように書いていました。
-@mark 未実装: 旧エンジンは Cookie（`stext_cache_…`）で保持していましたが、新しいプレイヤーと試遊はまだ保持の仕組みを渡していないため、毎回ランダムに選びます。
 
-ランダムの結果を保持する日数です。たとえば 2 なら、2日のあいだ最初に選ばれた遷移先が変わりません。
+ランダムの結果を Cookie に保持する日数です。たとえば 2 なら、2日のあいだ最初に選ばれた遷移先が変わりません。
 
 ## choice.if | 表示条件
 
@@ -944,8 +940,6 @@ ${/if}
 そのシーンに入ったときに得る実績です。一つだけ書けます。
 
 ## effects.max | 最大値・初期値の増減
-
-@mark 未実装: Playground にはまだ入力欄がありません。JSON に直接書いてください。
 
 そのシーンに入ったときに、HP・MP の最大値や STR〜KRM の初期値を増減します（旧形式の `hp_max` など）。
 

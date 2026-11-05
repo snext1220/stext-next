@@ -122,6 +122,12 @@ export function SceneEditor({
     );
   };
   const e = scene.effects ?? {};
+  const setMax = (key: keyof NonNullable<Effects['max']>, value: string) => {
+    const max = Object.fromEntries(
+      Object.entries({ ...e.max, [key]: toValue(value) }).filter(([, v]) => v !== undefined),
+    ) as Effects['max'];
+    setEffects({ max: max && Object.keys(max).length ? max : undefined }, `max.${key}`);
+  };
 
   const rename = () => {
     try {
@@ -302,6 +308,18 @@ export function SceneEditor({
             options={STATE_OPTIONS}
             onChange={(v) => setEffects({ state: v }, 'state')}
           />
+        </div>
+        <div className="pg-grid">
+          {(['hp', 'mp', 'str', 'int', 'dex', 'krm'] as const).map((k) => (
+            <TextField
+              key={k}
+              label={`${k.toUpperCase()} の最大値・初期値`}
+              help="effects.max"
+              value={e.max?.[k]}
+              onChange={(v) => setMax(k, v)}
+              placeholder="10 / 1..5"
+            />
+          ))}
         </div>
       </section>
 

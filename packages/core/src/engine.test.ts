@@ -249,6 +249,21 @@ describe('createEngine', () => {
     expect(store).toEqual(new Map([['random_demo0', '2']]));
   });
 
+  it('replaces a cached random destination that is no longer an option', () => {
+    const store = new Map([['random_demo0', 'missing']]);
+    const cache: RandomCache = { get: (k) => store.get(k), set: (k, v) => void store.set(k, v) };
+    const scenes: Scenario['scenes'] = [
+      { id: '0', text: '', choices: [{ label: '運試し', to: ['1', '2'], randomCacheDays: 7 }] },
+      { id: '1', text: '', choices: [], end: 'bad' },
+      { id: '2', text: '', choices: [], end: 'bad' },
+    ];
+    const engine = createEngine(scenario(scenes), { random: fixed(0.9), cache });
+    const { state, global } = engine.start(emptyGlobalState());
+
+    expect(engine.choose(state, global, 0)).toMatchObject({ kind: 'moved', state: { scene: '2' } });
+    expect(store.get('random_demo0')).toBe('2');
+  });
+
   it('ends the adventure, awards a bonus item and carries the character over to sequels', () => {
     const e = createEngine(
       scenario([

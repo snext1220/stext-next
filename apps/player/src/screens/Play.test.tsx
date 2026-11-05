@@ -44,6 +44,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  document.cookie =
+    'stext_cache_random_player-random-cache-test0=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
   vi.restoreAllMocks();
 });
 
@@ -67,6 +69,45 @@ function renderPlay() {
 }
 
 describe('scene scrolling', () => {
+  it('keeps random destinations in cookies during play', () => {
+    const randomScenario: Scenario = {
+      ...scenario,
+      meta: { id: 'player-random-cache-test', title: 'Random cache test' },
+      scenes: [
+        {
+          id: '0',
+          text: '開始',
+          choices: [{ label: '運試し', to: ['1', '2'], randomCacheDays: 7 }],
+        },
+        { id: '1', text: '分岐1', choices: [] },
+        { id: '2', text: '分岐2', choices: [] },
+      ],
+    };
+    const global = emptyGlobalState();
+    const { state } = createEngine(randomScenario).start(global);
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    render(
+      <Play
+        id="player-random-cache-test"
+        scenario={randomScenario}
+        initial={state}
+        global={global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /運試し/ }));
+    expect(screen.getByText('分岐2')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '← 戻る' }));
+    random.mockReturnValue(0);
+    fireEvent.click(screen.getByRole('button', { name: /運試し/ }));
+    expect(screen.getByText('分岐2')).toBeTruthy();
+  });
+
   it('renders achievement macros from the saved global results', async () => {
     const withMacro: Scenario = {
       ...scenario,

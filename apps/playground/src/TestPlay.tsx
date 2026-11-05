@@ -8,10 +8,33 @@ import {
   type GlobalState,
 } from '@stext/core';
 import type { Scenario } from '@stext/schema';
-import { ChoiceList, HeroPanel, SceneText } from '@stext/ui';
+import { ChoiceList, HeroPanel, SceneText, createCookieRandomCache } from '@stext/ui';
 import { useCallback, useMemo, useState } from 'react';
-import { bgmUrl, imageUrl, seUrl } from './config.js';
+import { bgmUrl, charaImageUrl, imageUrl, seUrl } from './config.js';
 import { localAudioPath } from './resources.js';
+
+const STAR_NAMES = ['月', '火星', '水星', '木星', '金星', '土星', '太陽'];
+
+interface StartOverrides {
+  items: string[];
+  flags: string[];
+  params: Record<string, string>;
+  stars: string[];
+}
+
+function emptyStartOverrides(scenario: Scenario): StartOverrides {
+  return {
+    items: [],
+    flags: [],
+    params: Object.fromEntries(
+      scenario.params.map((param) => [
+        param.id,
+        param.initial === undefined ? '' : String(param.initial),
+      ]),
+    ),
+    stars: Array(7).fill(''),
+  };
+}
 
 /**
  * 試遊：編集中のシナリオをその場で遊ぶ。保存はせず、この画面の中だけで進む。
@@ -30,10 +53,19 @@ export function TestPlay({
   scenarioIndexError: string | null;
 }) {
   const [playerGlobal, setPlayerGlobal] = useState<GlobalState>(() => emptyGlobalState());
+  const scenarioKey = scenario.meta.id ?? scenario.meta.title;
+  const [draft, setDraft] = useState(() => ({
+    scenarioKey,
+    overrides: emptyStartOverrides(scenario),
+  }));
+  const overrides =
+    draft.scenarioKey === scenarioKey ? draft.overrides : emptyStartOverrides(scenario);
+  const setOverrides = (next: StartOverrides) => setDraft({ scenarioKey, overrides: next });
   const engine = useMemo(
     () =>
       createEngine(scenario, {
         scenarioId: scenario.meta.id ?? 'playground',
+        cache: createCookieRandomCache(),
         scenarioResults: (id) => {
           const all = scenarioResultTotals?.get(id);
           if (all === undefined) return undefined;
@@ -66,7 +98,36 @@ export function TestPlay({
       const rawGlobal = localStorage.getItem(GLOBAL_SAVE_KEY);
       const global = rawGlobal ? readLegacyGlobal(rawGlobal) : emptyGlobalState();
       setPlayerGlobal(global);
-      let step = engine.start(global);
+      const character = engine.newCharacter(global);
+      const itemIds = new Set(scenario.items.map((item) => item.id));
+      const flagIds = new Set(scenario.flags.map((flag) => flag.id));
+      character.items = overrides.items.filter((id) => itemIds.has(id));
+      character.flags = overrides.flags.filter((id) => flagIds.has(id));
+      for (const param of scenario.params) {
+        const value = overrides.params[param.id]?.trim() ?? '';
+        if (!value) continue;
+        if (
+          typeof param.initial === 'number' ||
+          param.min !== undefined ||
+          param.max !== undefined
+        ) {
+          const number = Number(value);
+          if (!Number.isFinite(number))
+            throw new Error(`パラメーター「${param.id}」は数値で入力してください`);
+          character.params[param.id] = number;
+        } else {
+          character.params[param.id] = value;
+        }
+      }
+      character.stars = character.stars.map((initial, index) => {
+        const value = overrides.stars[index]?.trim() ?? '';
+        if (!value) return initial;
+        const number = Number(value);
+        if (!Number.isFinite(number) || number < 0)
+          throw new Error(`${STAR_NAMES[index]}の星は0以上の数値で入力してください`);
+        return number;
+      });
+      let step = engine.begin(character, global);
       if (from && from !== '0') step = engine.enterScene(step.state, step.global, from);
       setRun({ state: step.state, global: step.global, log: describe(step.events) });
       setError(null);
@@ -97,6 +158,15 @@ export function TestPlay({
     soundName && soundPath
       ? (resourceUrls[soundPath] ?? seUrl(scenario.meta.id ?? 'playground', soundName))
       : undefined;
+  const portraitPath = run
+    ? `chara/${run.state.chara.sex}_${run.state.chara.age}_${run.state.chara.race}.png`.toLowerCase()
+    : undefined;
+  const portraitUrl = run
+    ? scenario.meta.imageSet === 'custom' && portraitPath
+      ? (resourceUrls[portraitPath] ??
+        charaImageUrl(scenario.meta.id ?? 'playground', scenario.meta.imageSet, run.state.chara))
+      : charaImageUrl(scenario.meta.id ?? 'playground', scenario.meta.imageSet, run.state.chara)
+    : undefined;
 
   const choose = (index: number, input?: string) => {
     if (!run) return;
@@ -136,6 +206,109 @@ export function TestPlay({
           </button>
         )}
       </div>
+      <details className="pg-play-setup">
+        <summary>試遊の開始状態を指定</summary>
+        <p className="pg-hint">
+          ここで指定した状態でシーン0から開始し、選択中のシーンがあれば続けて移動します。
+        </p>
+        {scenario.items.length > 0 && (
+          <fieldset>
+            <legend>アイテム</legend>
+            {scenario.items.map((item) => (
+              <label key={item.id}>
+                <input
+                  type="checkbox"
+                  aria-label={`試遊アイテム ${item.name}`}
+                  checked={overrides.items.includes(item.id)}
+                  onChange={(event) =>
+                    setOverrides({
+                      ...overrides,
+                      items: event.target.checked
+                        ? [...overrides.items, item.id]
+                        : overrides.items.filter((id) => id !== item.id),
+                    })
+                  }
+                />
+                {item.name}
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {scenario.flags.length > 0 && (
+          <fieldset>
+            <legend>フラグ</legend>
+            {scenario.flags.map((flag) => (
+              <label key={flag.id}>
+                <input
+                  type="checkbox"
+                  aria-label={`試遊フラグ ${flag.id}`}
+                  checked={overrides.flags.includes(flag.id)}
+                  onChange={(event) =>
+                    setOverrides({
+                      ...overrides,
+                      flags: event.target.checked
+                        ? [...overrides.flags, flag.id]
+                        : overrides.flags.filter((id) => id !== flag.id),
+                    })
+                  }
+                />
+                {flag.text || flag.id}（{flag.id}）
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {scenario.params.length > 0 && (
+          <fieldset>
+            <legend>パラメーター</legend>
+            {scenario.params.map((param) => (
+              <label key={param.id}>
+                {param.text || param.id}（{param.id}）
+                <input
+                  type={
+                    typeof param.initial === 'number' ||
+                    param.min !== undefined ||
+                    param.max !== undefined
+                      ? 'number'
+                      : 'text'
+                  }
+                  step="any"
+                  aria-label={`試遊パラメーター ${param.id}`}
+                  value={overrides.params[param.id] ?? ''}
+                  onChange={(event) =>
+                    setOverrides({
+                      ...overrides,
+                      params: { ...overrides.params, [param.id]: event.target.value },
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </fieldset>
+        )}
+        <fieldset>
+          <legend>星</legend>
+          {STAR_NAMES.map((name, index) => (
+            <label key={name}>
+              {name}
+              <input
+                type="number"
+                min="0"
+                step="any"
+                aria-label={`試遊の星 ${name}`}
+                value={overrides.stars[index] ?? ''}
+                onChange={(event) =>
+                  setOverrides({
+                    ...overrides,
+                    stars: overrides.stars.map((value, i) =>
+                      i === index ? event.target.value : value,
+                    ),
+                  })
+                }
+              />
+            </label>
+          ))}
+        </fieldset>
+      </details>
       {scenarioIndexError && (
         <p className="pg-error" role="alert">
           他シナリオの実績数を読み込めませんでした: {scenarioIndexError}
@@ -162,8 +335,10 @@ export function TestPlay({
             <div className="page-head">
               <span className="title">{scenario.meta.title}</span>
               <span className="para">
-                <small>{view.end ? `${view.end} end` : '節'}</small>
-                {view.id}
+                <small>
+                  {view.end ? `${view.end} end` : scenario.meta.showSummary ? '' : '節'}
+                </small>
+                {scenario.meta.showSummary && view.summary ? view.summary : view.id}
               </span>
             </div>
             <SceneText
@@ -197,7 +372,7 @@ export function TestPlay({
           </div>
           <details className="pg-play-status">
             <summary>状態</summary>
-            <HeroPanel scenario={scenario} state={run.state} />
+            <HeroPanel scenario={scenario} state={run.state} portraitUrl={portraitUrl} />
             <p className="pg-hint">
               アイテム：{run.state.items.join(', ') || 'なし'} ／ フラグ：
               {run.state.flags.join(', ') || 'なし'} ／ 星：{run.state.stars.join(' ')}
