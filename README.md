@@ -1,6 +1,11 @@
 # stext-next（ソーサリアンText v2）
 
-ソーサリアンTextのアーキテクチャ、UI移行計画です。
+# SORCERIAN Text v2 (Web-based Gamebook Engine) [![](https://img.shields.io/github/repo-size/snext1220/stext)](https://snext1220.github.io/stext/) [![](https://img.shields.io/github/last-commit/snext1220/stext)](https://github.com/snext1220/stext/commits/master) [![](https://img.shields.io/github/release-date/snext1220/stext)](https://github.com/snext1220/stext/releases) [![](https://img.shields.io/twitter/follow/snext1220?label=Follow)](https://twitter.com/snext1220)
+
+Automatically generate game books from scenario data.
+
+People called this plugin.....**Sorcerian Text**.
+
 
 ## ゲームを遊ぶ
 
