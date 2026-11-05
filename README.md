@@ -1,6 +1,6 @@
 # stext-next（ソーサリアンText v2）
 
-# SORCERIAN Text v2 (Web-based Gamebook Engine) [![](https://img.shields.io/github/repo-size/snext1220/stext)](https://snext1220.github.io/stext/) [![](https://img.shields.io/github/last-commit/snext1220/stext)](https://github.com/snext1220/stext/commits/master) [![](https://img.shields.io/github/release-date/snext1220/stext)](https://github.com/snext1220/stext/releases) [![](https://img.shields.io/twitter/follow/snext1220?label=Follow)](https://twitter.com/snext1220)
+# SORCERIAN Text v2 (Web-based Gamebook Engine) [![](https://img.shields.io/github/repo-size/snext1220/stext-next)](https://snext1220.github.io/stext-next/) [![](https://img.shields.io/github/last-commit/snext1220/stext-next)](https://github.com/snext1220/stext-next/commits/master) [![](https://img.shields.io/github/release-date/snext1220/stext-next)](https://github.com/snext1220/stext-next/releases) [![](https://img.shields.io/twitter/follow/snext1220?label=Follow)](https://twitter.com/snext1220)
 
 Automatically generate game books from scenario data.
 
