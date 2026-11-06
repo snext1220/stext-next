@@ -15,21 +15,13 @@ export const MENU: readonly { label: string; items: readonly MenuEntry[] }[] = [
       { page: 'records', label: '冒険の記録' },
       { page: 'music', label: '音楽室' },
       {
-        label: '作品の広場',
+        label: '資料室',
         items: [
           { page: 'gallery', label: '画廊' },
           { page: 'staff', label: '作り手たち' },
           { page: 'links', label: '関連リンク' },
         ],
       },
-    ],
-  },
-  {
-    label: '制作工房',
-    items: [
-      { page: 'materials', label: '制作者向けの素材' },
-      { page: 'recruit', label: '募集中の企画' },
-      { page: 'convert', label: '記録の変換所' },
     ],
   },
 ];
@@ -45,18 +37,18 @@ export function Menu({ route }: { route: Route }) {
       >
         書庫
       </a>
-      {MENU.map((g) => (
-        <SubMenu key={g.label} label={g.label} items={g.items} current={route.name} />
-      ))}
       {route.name !== 'play' && (
         <a
-          className="chip-btn post-link"
+          className="chip-btn"
           aria-current={route.name === 'post' ? 'page' : undefined}
           href={href({ name: 'post' })}
         >
-          作品を投稿
+          制作工房
         </a>
       )}
+      {MENU.map((g) => (
+        <SubMenu key={g.label} label={g.label} items={g.items} current={route.name} />
+      ))}
     </nav>
   );
 }

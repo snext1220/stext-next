@@ -1972,17 +1972,6 @@ a.btn:hover {
   color: var(--on-desk);
   border-color: var(--gold);
 }
-/* 投稿はサブメニューに埋もれないように強調する */
-.screens .post-link {
-  color: var(--on-desk);
-  background: color-mix(in srgb, var(--gold) 18%, transparent);
-  border-color: var(--gold);
-  font-weight: 700;
-}
-.screens .post-link:hover,
-.screens .post-link:focus-visible {
-  background: color-mix(in srgb, var(--gold) 28%, transparent);
-}
 /* ヘッダーのサブメニュー */
 .submenu {
   position: relative;

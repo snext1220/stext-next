@@ -245,7 +245,7 @@ scenario.xml ─ readScenarioXml ─┐
 | ファイル | 役割 |
 | --- | --- |
 | [main.tsx](../apps/player/src/main.tsx) → [App.tsx](../apps/player/src/App.tsx) | 起点。ヘッダーと画面の切り替え、`GlobalState` と設定を持つ |
-| [screens/Menu.tsx](../apps/player/src/screens/Menu.tsx) | ヘッダーのメニュー（書庫、案内所、制作工房、投稿ボタン。案内所内に作品の広場を配置） |
+| [screens/Menu.tsx](../apps/player/src/screens/Menu.tsx) | ヘッダーのメニュー（書庫、案内所、制作工房リンク。案内所内に資料室を配置） |
 | [router.ts](../apps/player/src/router.ts) | ハッシュによる画面遷移（`#/play/<id>` など）。ライブラリは使っていない。以前の URL（`#/about/staff` など）は移った先の画面へ |
 | [data.ts](../apps/player/src/data.ts) | `index.json` とシナリオの読み込み・検証・キャッシュ |
 | [storage.ts](../apps/player/src/storage.ts) | localStorage への保存（使えないときはメモリ） |

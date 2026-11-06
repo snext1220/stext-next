@@ -59,6 +59,8 @@ describe('guide and toolbox pages', () => {
     render(<About section="sorcerian" />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ソーサリアン Text とは');
     expect(screen.queryByRole('navigation', { name: '目次' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'ソーサリアン Text から NText へ' })).toBeTruthy();
+    expect(screen.getByText(/ソーサリアン NText/)).toBeTruthy();
     expect(document.getElementById('about-sorcerian')).not.toBeNull();
   });
 
@@ -83,7 +85,7 @@ describe('guide and toolbox pages', () => {
   });
 
   it('explains how to post and points to the creator materials', () => {
-    render(<Post />);
+    const { container } = render(<Post />);
     expect(
       screen.getByRole('link', { name: 'GitHub から投稿する（要ログイン）' }).getAttribute('href'),
     ).toBe('https://github.com/snext1220/stext/discussions/299');
@@ -91,6 +93,17 @@ describe('guide and toolbox pages', () => {
     expect(screen.getByRole('link', { name: '素材と資料を見る' }).getAttribute('href')).toBe(
       '#/materials',
     );
+    expect(screen.getByRole('link', { name: '募集中の企画を見る' }).getAttribute('href')).toBe(
+      '#/recruit',
+    );
+    expect(screen.getByRole('link', { name: '記録の変換所' }).getAttribute('href')).toBe(
+      '#/convert',
+    );
+    expect(
+      [...container.querySelector('.end-actions')!.querySelectorAll('a')].map((link) =>
+        link.textContent?.trim(),
+      ),
+    ).toEqual(['Playground を開く', '募集中の企画を見る', '素材と資料を見る']);
   });
 
   it('offers the recruitments and the creator materials on their own pages', () => {
@@ -104,13 +117,12 @@ describe('guide and toolbox pages', () => {
 });
 
 describe('Menu', () => {
-  it('nests the gallery, staff, and links under the guide', () => {
+  it('nests the gallery, staff, and links under the resource room', () => {
     render(<Menu route={{ name: 'library' }} />);
     const guide = screen.getByRole('button', { name: '案内所' });
-    const creators = screen.getByRole('button', { name: '制作工房' });
-    const post = screen.getByRole('link', { name: '作品を投稿' });
+    const post = screen.getByRole('link', { name: '制作工房' });
     expect(post.getAttribute('href')).toBe('#/post');
-    expect(post.classList.contains('post-link')).toBe(true);
+    expect(post.classList.contains('post-link')).toBe(false);
 
     fireEvent.click(guide);
     const guideList = document.getElementById(guide.getAttribute('aria-controls')!)!;
@@ -119,7 +131,7 @@ describe('Menu', () => {
       '冒険の記録',
       '音楽室',
     ]);
-    const works = screen.getByRole('button', { name: '作品の広場' });
+    const works = screen.getByRole('button', { name: '資料室' });
     fireEvent.click(works);
     const worksList = document.getElementById(works.getAttribute('aria-controls')!)!;
     expect([...worksList.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
@@ -127,24 +139,20 @@ describe('Menu', () => {
       '作り手たち',
       '関連リンク',
     ]);
-    fireEvent.click(guide);
-    fireEvent.click(creators);
-    const creatorList = document.getElementById(creators.getAttribute('aria-controls')!)!;
-    expect([...creatorList.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
-      '制作者向けの素材',
-      '募集中の企画',
-      '記録の変換所',
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      '案内所',
+      '資料室',
     ]);
   });
 
-  it('shows posting outside play and marks nested pages as active', () => {
+  it('shows creator guidance outside play and marks nested pages as active', () => {
     render(<Menu route={{ name: 'staff' }} />);
-    expect(screen.queryByRole('link', { name: '作品を投稿' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: '制作工房' })).toBeTruthy();
     const guide = screen.getByRole('button', { name: '案内所' });
     expect(guide.hasAttribute('data-active')).toBe(true);
 
     fireEvent.click(guide);
-    const works = screen.getByRole('button', { name: '作品の広場' });
+    const works = screen.getByRole('button', { name: '資料室' });
     expect(works.hasAttribute('data-active')).toBe(true);
     fireEvent.click(works);
     expect(screen.getByRole('link', { name: '作り手たち' }).getAttribute('aria-current')).toBe(
@@ -153,14 +161,14 @@ describe('Menu', () => {
 
     cleanup();
     render(<Menu route={{ name: 'play', id: 'scepter' }} />);
-    expect(screen.queryByRole('link', { name: '作品を投稿' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '制作工房' })).toBeNull();
   });
 
   it('closes menus with Escape or outside interaction', () => {
     render(<Menu route={{ name: 'staff' }} />);
     const guide = screen.getByRole('button', { name: '案内所' });
     fireEvent.click(guide);
-    const works = screen.getByRole('button', { name: '作品の広場' });
+    const works = screen.getByRole('button', { name: '資料室' });
     fireEvent.click(works);
     fireEvent.keyDown(screen.getByRole('link', { name: '画廊' }), { key: 'Escape' });
     expect(guide.getAttribute('aria-expanded')).toBe('false');

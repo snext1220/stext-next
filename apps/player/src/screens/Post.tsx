@@ -25,7 +25,7 @@ export function Post({ section }: { section?: string }) {
       page="post"
       section={section}
       eyebrow="Post"
-      title="シナリオを投稿する"
+      title="制作工房（シナリオを投稿する）"
       lede="ソーサリアン Text は、プレイヤーの皆さん一人ひとりが物語を紡ぎ、世界を創るプラットフォームです。新しいシナリオを、いつでも、いつまでも（！）募集しています。"
     >
       <DocSection page="post" chapter={CHAPTERS.create} eyebrow="Create" seed={53}>
@@ -45,6 +45,9 @@ export function Post({ section }: { section?: string }) {
           <a className="btn" href={PLAYGROUND_URL} target="_blank" rel="noopener noreferrer">
             Playground を開く
           </a>
+          <a className="btn ghost" href={href({ name: 'recruit' })}>
+            募集中の企画を見る
+          </a>
           <a className="btn ghost" href={href({ name: 'materials' })}>
             素材と資料を見る
           </a>
@@ -52,7 +55,7 @@ export function Post({ section }: { section?: string }) {
         <h3>旧形式のシナリオ</h3>
         <p>
           旧 Playground（Playground Flow／Editor）や旧形式（scenario.xml）で書いたシナリオは、「
-          <a href={href({ name: 'convert' })}>変換所</a>
+          <a href={href({ name: 'convert' })}>記録の変換所</a>
           」で新しい形式（stext/2）に変換して、そのまま遊んだり保存したりできます。保存したファイルは
           Playground で開いて、続きを書けます。
         </p>

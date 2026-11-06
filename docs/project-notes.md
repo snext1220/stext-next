@@ -80,7 +80,7 @@
 | `packages/convert` | `@stext/convert` | Universal | `convertScenarioXml`、`convertPlaygroundJson`（旧 Playground の `edges` 形式） |
 | `packages/cli` | `@stext/cli` | Node | `stext` コマンド（convert-all、play など） |
 | `packages/ui` | `@stext/ui` | Browser | Parchment、SceneText（marked、旧記法の前処理、DOMPurify、html-react-parser）、ChoiceList、HeroPanel、MagicPanel、ItemsPanel、RecordPanel、StatusEditor、EnemyCard、Effect、Toasts、`styles.css`（デザイントークン） |
-| `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法。メニューは「案内所」（ソーサリアンTextとは？・冒険の記録・音楽室・作品の広場［画廊・作り手たち・関連リンク］）と「制作工房」（制作者向けの素材・募集中の企画・記録の変換所）に分類。投稿はプレイ画面以外、音切替はプレイ画面のみ表示。フッターに CONTACT） |
+| `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法。メニューは「案内所」（ソーサリアンTextとは？・冒険の記録・音楽室・資料室［画廊・作り手たち・関連リンク］）と「制作工房」（投稿ページへのリンク）。素材・募集中の企画・記録の変換所は投稿ページから案内。制作工房はプレイ画面以外、音切替はプレイ画面のみ表示。フッターに CONTACT） |
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（React Flow、dagre） |
 | `prototype/` | — | — | デザインプロトタイプ |
 | `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json`（書庫の一覧。音楽室が使う `bgm` も入れる）。`gods`（新・天の神々たち）は旧シナリオの変換ではなく、stext/2 で直接書いたシナリオ |
@@ -162,7 +162,7 @@
 | 制作者向けの素材（`#/materials`） | For Creator | BGM 素材・キャラ画像素材集（`assets/common/face/` の24点）・書き方の資料 |
 | フッター | CONTACT | X、公式マニュアル、質問・要望箱、GitHub、シナリオへの感想（`#/library/quest` でアンケートのあるシナリオだけの書庫を開く）。冒険の画面では出さない |
 
-- **メニュー**：ヘッダーは「書庫」、「案内所」（ソーサリアンTextとは？・冒険の記録・音楽室・「作品の広場」［画廊・作り手たち・関連リンク］）、「制作工房」（制作者向けの素材・募集中の企画・記録の変換所）、独立した「作品を投稿」ボタン。投稿はプレイ画面以外に表示し、音切替はプレイ画面のみ表示する。サブメニューは押すと開き、外を押す・Esc・項目を選ぶと閉じる（`screens/Menu.tsx`）。
+- **メニュー**：ヘッダーは「書庫」、「案内所」（ソーサリアンTextとは？・冒険の記録・音楽室・「資料室」［画廊・作り手たち・関連リンク］）、「制作工房」（投稿ページへのリンク）。「制作者向けの素材」「募集中の企画」「記録の変換所」は投稿ページから案内し、企画へのリンクは Playground のボタンと並べる。制作工房はプレイ画面以外、音切替はプレイ画面のみ表示する。サブメニューは押すと開き、外を押す・Esc・項目を選ぶと閉じる（`screens/Menu.tsx`）。
 - **以前の URL**：はじめは案内・投稿の2画面に章を並べていた。章だった `#/about/staff`・`#/about/gallery`・`#/about/links`・`#/about/stext`・`#/post/recruit`・`#/post/materials` は、分けた画面へ移す（アドレス欄も書き換える。`router.ts` の `MOVED`）。
 - **主なファイル**（`apps/player/src/`）：`screens/Music.tsx`、`screens/About.tsx`、`screens/Post.tsx`、`screens/Recruit.tsx`、`screens/Links.tsx`、`screens/Gallery.tsx`、`screens/Staff.tsx`、`screens/Materials.tsx`、`screens/Doc.tsx`（読み物の画面の共通部品）、`screens/Menu.tsx`、`screens/Footer.tsx`、`music.ts`（曲の分類と使用シナリオの集計）、`links.ts`（外部リンク）。読み物の画面は開いたときに読み込む（lazy）。
 - **画像**：旧サイトにしかない画像36点を `scripts/import-site-images.mjs` で `assets/site/` に取り込んだ（約5.7MB）。旧 UI の画面写真、旧ツール構成の図、原作の画面と思われる画像は取り込んでいない。

@@ -42,12 +42,10 @@ export function Footer() {
           <a href={href({ name: 'about' })}>ソーサリアン Text とは</a>
           <a href={href({ name: 'about', section: 'sorcerian' })}>ソーサリアンとは</a>
           <a href={href({ name: 'post' })}>シナリオを投稿する</a>
-          <a href={href({ name: 'recruit' })}>募集中の企画</a>
           <a href={href({ name: 'links' })}>関連リンク</a>
           <a href={href({ name: 'gallery' })}>画廊</a>
           <a href={href({ name: 'staff' })}>作り手たち</a>
           <a href={href({ name: 'music' })}>音楽室</a>
-          <a href={href({ name: 'materials' })}>制作者向けの素材</a>
         </nav>
         <p className="footer-copy">2017–, SORCERIAN Next Team</p>
       </div>
