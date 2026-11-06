@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ScenarioEntry } from '../data.js';
+import { App } from '../App.js';
 import { About } from './About.js';
 import { Footer } from './Footer.js';
 import { Gallery } from './Gallery.js';
@@ -26,7 +27,10 @@ const entries: ScenarioEntry[] = [
   { id: 'test', title: '開発用テスト', listed: false, scenes: 3, results: 0, bgm: ['town01'] },
 ];
 
-vi.mock('../data.js', () => ({ loadIndex: () => Promise.resolve(entries) }));
+vi.mock('../data.js', () => ({
+  loadIndex: () => Promise.resolve(entries),
+  loadScenario: () => Promise.reject(new Error('test scenario load failure')),
+}));
 
 afterEach(cleanup);
 
@@ -100,62 +104,85 @@ describe('guide and toolbox pages', () => {
 });
 
 describe('Menu', () => {
-  it('groups the pages into the toolbox and the guide', () => {
+  it('nests the gallery, staff, and links under the guide', () => {
     render(<Menu route={{ name: 'library' }} />);
-    const toolbox = screen.getByRole('button', { name: '道具箱' });
     const guide = screen.getByRole('button', { name: '案内所' });
-    expect(toolbox.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByRole('link', { name: '記録' })).toBeNull();
-
-    fireEvent.click(toolbox);
-    expect(toolbox.getAttribute('aria-expanded')).toBe('true');
-    const list = document.getElementById(toolbox.getAttribute('aria-controls')!)!;
-    expect([...list.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
-      '記録',
-      '変換所',
-      '音楽室',
-      '制作者向けの素材',
-    ]);
+    const creators = screen.getByRole('button', { name: '制作工房' });
+    const post = screen.getByRole('link', { name: '作品を投稿' });
+    expect(post.getAttribute('href')).toBe('#/post');
+    expect(post.classList.contains('post-link')).toBe(true);
 
     fireEvent.click(guide);
-    expect(guide.getAttribute('aria-expanded')).toBe('true');
-    // ほかのサブメニューを押したら（フォーカスが移ったら）、開いていたほうは閉じる
-    fireEvent.focusIn(guide);
-    expect(toolbox.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getAllByRole('link').map((a) => [a.textContent, a.getAttribute('href')])).toEqual(
-      [
-        ['書庫', '#/library'],
-        ['ソーサリアン Text とは', '#/about'],
-        ['投稿', '#/post'],
-        ['募集中の企画', '#/recruit'],
-        ['関連リンク', '#/links'],
-        ['画廊', '#/gallery'],
-        ['作り手たち', '#/staff'],
-      ],
-    );
+    const guideList = document.getElementById(guide.getAttribute('aria-controls')!)!;
+    expect([...guideList.querySelectorAll(':scope > li > a')].map((a) => a.textContent)).toEqual([
+      'ソーサリアンTextとは？',
+      '冒険の記録',
+      '音楽室',
+    ]);
+    const works = screen.getByRole('button', { name: '作品の広場' });
+    fireEvent.click(works);
+    const worksList = document.getElementById(works.getAttribute('aria-controls')!)!;
+    expect([...worksList.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
+      '画廊',
+      '作り手たち',
+      '関連リンク',
+    ]);
+    fireEvent.click(guide);
+    fireEvent.click(creators);
+    const creatorList = document.getElementById(creators.getAttribute('aria-controls')!)!;
+    expect([...creatorList.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
+      '制作者向けの素材',
+      '募集中の企画',
+      '記録の変換所',
+    ]);
   });
 
-  it('closes with Escape or when an item is chosen, and marks the current page', () => {
+  it('shows posting outside play and marks nested pages as active', () => {
     render(<Menu route={{ name: 'staff' }} />);
+    expect(screen.queryByRole('link', { name: '作品を投稿' })).toBeTruthy();
     const guide = screen.getByRole('button', { name: '案内所' });
     expect(guide.hasAttribute('data-active')).toBe(true);
-    expect(screen.getByRole('button', { name: '道具箱' }).hasAttribute('data-active')).toBe(false);
 
     fireEvent.click(guide);
+    const works = screen.getByRole('button', { name: '作品の広場' });
+    expect(works.hasAttribute('data-active')).toBe(true);
+    fireEvent.click(works);
     expect(screen.getByRole('link', { name: '作り手たち' }).getAttribute('aria-current')).toBe(
       'page',
     );
-    fireEvent.keyDown(screen.getByRole('link', { name: '画廊' }), { key: 'Escape' });
-    expect(guide.getAttribute('aria-expanded')).toBe('false');
-    expect(document.activeElement).toBe(guide);
 
+    cleanup();
+    render(<Menu route={{ name: 'play', id: 'scepter' }} />);
+    expect(screen.queryByRole('link', { name: '作品を投稿' })).toBeNull();
+  });
+
+  it('closes menus with Escape or outside interaction', () => {
+    render(<Menu route={{ name: 'staff' }} />);
+    const guide = screen.getByRole('button', { name: '案内所' });
     fireEvent.click(guide);
-    fireEvent.click(screen.getByRole('link', { name: '画廊' }));
+    const works = screen.getByRole('button', { name: '作品の広場' });
+    fireEvent.click(works);
+    fireEvent.keyDown(screen.getByRole('link', { name: '画廊' }), { key: 'Escape' });
     expect(guide.getAttribute('aria-expanded')).toBe('false');
 
     fireEvent.click(guide);
     fireEvent.pointerDown(document.body);
     expect(guide.getAttribute('aria-expanded')).toBe('false');
+  });
+});
+
+describe('header controls', () => {
+  it('shows the sound toggle only on the play screen', async () => {
+    window.location.hash = '#/records';
+    render(<App />);
+    expect(screen.queryByRole('button', { name: /音あり|音なし/ })).toBeNull();
+
+    cleanup();
+    window.location.hash = '#/play/scepter';
+    render(<App />);
+    expect(await screen.findByRole('button', { name: /音あり|音なし/ })).toBeTruthy();
+    cleanup();
+    window.location.hash = '';
   });
 });
 

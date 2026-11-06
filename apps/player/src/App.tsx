@@ -23,7 +23,7 @@ import {
 
 // 変換所は変換器（XML パーサを含む）を使うので、開いたときに読み込む
 const Convert = lazy(() => import('./screens/Convert.js').then((m) => ({ default: m.Convert })));
-// 音楽室・案内所の読み物は遊ぶのに要らないので、開いたときに読み込む
+// 音楽室や案内ページの読み物は遊ぶのに要らないので、開いたときに読み込む
 const Music = lazy(() => import('./screens/Music.js').then((m) => ({ default: m.Music })));
 const About = lazy(() => import('./screens/About.js').then((m) => ({ default: m.About })));
 const Post = lazy(() => import('./screens/Post.js').then((m) => ({ default: m.Post })));
@@ -91,14 +91,16 @@ export function App() {
           </a>
           <Menu route={route} />
           <div className="tools">
-            <button
-              type="button"
-              className="chip-btn"
-              onClick={toggleSound}
-              aria-pressed={global.bgm}
-            >
-              {global.bgm ? '音あり' : '音なし'}
-            </button>
+            {route.name === 'play' && (
+              <button
+                type="button"
+                className="chip-btn"
+                onClick={toggleSound}
+                aria-pressed={global.bgm}
+              >
+                {global.bgm ? '音あり' : '音なし'}
+              </button>
+            )}
             <button
               type="button"
               className="chip-btn"

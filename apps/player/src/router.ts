@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/** 引数のない画面（道具箱・案内所の項目） */
+/** 引数のない画面（メニュー項目） */
 export const SIMPLE_PAGES = [
   'records',
   'convert',

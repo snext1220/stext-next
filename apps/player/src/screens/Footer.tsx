@@ -2,7 +2,7 @@ import { siteImageUrl } from '../config.js';
 import { CONTACTS } from '../links.js';
 import { href } from '../router.js';
 
-/** 全画面のフッター：CONTACT（旧サイトの CONTACT タブ）と、案内所・道具箱の読み物への近道 */
+/** 全画面のフッター：CONTACT（旧サイトの CONTACT タブ）と、読み物ページへの近道 */
 export function Footer() {
   return (
     <footer className="site-footer">

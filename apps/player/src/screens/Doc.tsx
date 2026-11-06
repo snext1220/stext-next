@@ -2,7 +2,7 @@ import { Parchment } from '@stext/ui';
 import type { ReactNode } from 'react';
 import { useSectionScroll } from '../router.js';
 
-/** 案内所・道具箱の読み物の画面 */
+/** 案内ページの読み物の画面 */
 export type DocPageName =
   'about' | 'post' | 'recruit' | 'links' | 'gallery' | 'staff' | 'materials';
 
