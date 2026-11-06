@@ -23,20 +23,16 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 | `VITE_ASSET_BASE` | 共通の画像・BGM・効果音の配信元（既定はビルド結果の `assets/`。別の場所に置くときは、`common/` を含む URL を末尾 `/` 付きで指定） |
 | `VITE_SCENARIO_BASE` | シナリオの配信元（既定はビルド結果の `scenarios/`。`<id>/scenario.json` と、挿絵・BGM もここから読む） |
 | `VITE_PLAYGROUND_URL` | 投稿の画面の「Playground を開く」のリンク先（既定はプレイヤーの隣の `playground/`。開発サーバーで試すときは `http://localhost:5174/` を指定） |
-| `VITE_SUBMISSION_URL` | 提出情報を送るPHP受け口（既定は `https://www.web-deli.com/sorcerian/text/playground/submit.php`） |
 
-提出フォームの送信先は [post.ts](../apps/playground/src/post.ts) で設定します。PHP 8.4 用の受け口は [submit.php](../apps/playground/server/submit.php) です。配備先の `/sorcerian/text/playground/submit.php` に配置し、次のサーバー環境変数を設定してください。
+### 作品提出フォーム
 
-| PHP環境変数 | 内容 |
-| --- | --- |
-| `STEXT_ALLOWED_ORIGINS` | 許可するページのOriginをカンマ区切りで指定（本番は `https://snext1220.github.io`。開発時は `http://localhost:5174` も追加） |
-| `STEXT_MAIL_TO` | 提出通知の受信先メールアドレス |
-| `STEXT_MAIL_FROM` | 配備先で送信を許可された送信元メールアドレス |
-| `STEXT_RATE_LIMIT_DIR` | 送信回数制限ファイルを置く、PHP実行ユーザーが書き込める共有ディレクトリ（省略時はシステム一時ディレクトリ） |
+送信先と発行HTMLの項目名・hidden値は [post.ts](../apps/playground/src/post.ts) にまとめています。オレンジフォーム（フォームID `261098`）へUTF-8の通常のフォームPOSTを行い、別タブで確認・最終送信します。`fetch` やCORSによる応答読み取りは使いません。提供元の `of_lib.js` が行うPOSTをブラウザー標準のフォーム送信で置き換えるため、jQuery・メール誤入力補助・Cookie保存用scriptは読み込みません。発行HTMLのhoneypot `of_dummy_note` と「Powered by」の表示は残します。
 
-PHPの `mail()` が利用できるようサーバー側のメール配送も設定します。受け口はCORSのOrigin制限、入力検査、空欄honeypot、IPごとの1時間5回の送信制限を行います。CORSだけでは自動送信を防げないため、実運用ではWebサーバー側の追加の迷惑投稿対策も検討してください。メールのキー・連絡先は受信メールに含まれるため、メールボックスの閲覧権限と保管期間を管理します。
+管理画面で、管理者通知の宛先と本文、`mail` を宛先とする投稿者への自動返信（確認メール）、必須項目、迷惑投稿対策、完了画面を設定してください。確認メールにダウンロードURL・キーを含めるかは必要性を確認し、個人情報の保存期間と閲覧権限も決めます。分類は発行HTMLに合わせて必須、保持期間は7日以上（初期値 `7`）です。`7日` / `7日間` の入力も受け付け、送信時は数値文字列に整形します。
 
-PHPを変更した場合は `php -l apps/playground/server/submit.php` で構文を確認します。実際のメール送信・CORS・受信メール確認は配備先で、テスト用の投稿情報を使って行ってください。PlaywrightのE2Eは実メールを送らず、PHP応答をモックします。旧Orange Form用のコードは削除済みです。旧 `upload.php` は別途停止が必要です。
+Playgroundでは受付・メール送信の完了を判定しません。実際の確認画面、最終送信、管理者通知、確認メールの到達・文字化け・迷惑メール判定は、管理者が許可したテスト投稿で確認します。PlaywrightのE2Eでは別タブの送信先をモックし、外部フォームへ実送信しません。
+
+独自PHP受け口と `VITE_SUBMISSION_URL` は削除しました。公開環境に配備済みの `submit.php` と旧 `upload.php` は別途停止してください。フォームが利用できない場合はGitHub Discussionsを案内します。
 
 `npm run build` の結果（`apps/player/dist/`）には `scenarios/` と `assets/` も含まれるので、そのまま静的サイトとして公開できます。
 

@@ -6,7 +6,7 @@ import { HelpButton } from './help/HelpPanel.js';
 import type { LocalResource } from './resources.js';
 import {
   DISCUSSION_URL,
-  FORM_FIELDS,
+  FORM_HIDDEN_FIELDS,
   initialForm,
   LEVELS,
   publicSubmissionText,
@@ -47,7 +47,6 @@ export function PostDialog({
   const [zipNotice, setZipNotice] = useState<string | null>(null);
   const [copyNotice, setCopyNotice] = useState<string | null>(null);
   const [creatingZip, setCreatingZip] = useState(false);
-  const [sending, setSending] = useState(false);
   const [submittedNotice, setSubmittedNotice] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const scenarioIdError = validateArchiveId(scenario.meta.id);
@@ -70,11 +69,11 @@ export function PostDialog({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !creatingZip && !sending) onClose();
+      if (event.key === 'Escape' && !creatingZip) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [creatingZip, onClose, sending]);
+  }, [creatingZip, onClose]);
 
   const set = (patch: Partial<PostForm>) => setForm((current) => ({ ...current, ...patch }));
 
@@ -117,53 +116,22 @@ export function PostDialog({
     }
   };
 
-  const submit = async () => {
+  const validateSubmission = () => {
     const found = validatePost(form);
     if (scenarioIdError) found.unshift(scenarioIdError);
     setIssues(found);
-    if (found.length > 0) return;
-    if (sending) return;
-    setSending(true);
-    setSubmittedNotice(null);
-    try {
-      const response = await fetch(SUBMISSION_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: new URLSearchParams(Object.entries(submissionValues(form))),
-        credentials: 'omit',
-        cache: 'no-store',
-      });
-      const result: unknown = await response.json();
-      if (
-        !response.ok ||
-        typeof result !== 'object' ||
-        result === null ||
-        !('accepted' in result) ||
-        result.accepted !== true
-      ) {
-        const message =
-          typeof result === 'object' &&
-          result !== null &&
-          'error' in result &&
-          typeof result.error === 'string'
-            ? result.error
-            : '提出を受け付けられませんでした。入力内容を確認して再度お試しください。';
-        throw new Error(message);
-      }
-      setSubmittedNotice(
-        '提出情報を受け付けました。メール配送の完了は確認できないため、実際に届かない場合があります。公開前に管理者が内容を確認します。',
-      );
-    } catch (error) {
-      setIssues([
-        `提出できませんでした: ${error instanceof Error ? error.message : String(error)}`,
-      ]);
-    } finally {
-      setSending(false);
+    if (found.length > 0) {
+      setSubmittedNotice(null);
+      return false;
     }
+    setSubmittedNotice(
+      '別タブのオレンジフォームで内容を確認し、最終送信してください。この画面では受付・メール送信の完了を確認できません。別タブが開かない場合はブラウザーの設定を確認してください。',
+    );
+    return true;
   };
 
   return (
-    <div className="pg-dialog-backdrop" onClick={() => !creatingZip && !sending && onClose()}>
+    <div className="pg-dialog-backdrop" onClick={() => !creatingZip && onClose()}>
       <div
         ref={panel}
         className="pg-dialog"
@@ -177,25 +145,34 @@ export function PostDialog({
           <h2 id="pg-post-title">作品を提出</h2>
           <HelpButton topic="post" />
           <span className="pg-spacer" />
-          <button type="button" onClick={onClose} disabled={creatingZip || sending}>
+          <button type="button" onClick={onClose} disabled={creatingZip}>
             閉じる
           </button>
         </header>
         <form
           className="pg-dialog-body pg-editor"
+          action={SUBMISSION_ENDPOINT}
+          method="post"
+          target="_blank"
+          rel="noopener noreferrer"
+          acceptCharset="UTF-8"
           noValidate
           onSubmit={(event) => {
-            event.preventDefault();
-            void submit();
+            if (creatingZip || !validateSubmission()) event.preventDefault();
           }}
         >
+          {Object.entries({ ...FORM_HIDDEN_FIELDS, ...submissionValues(form) }).map(
+            ([name, value]) => (
+              <input key={name} type="hidden" name={name} value={value} />
+            ),
+          )}
           <label className="pg-honeypot" aria-hidden="true">
             Website
-            <input name="website" tabIndex={-1} autoComplete="off" />
+            <input name="of_dummy_note" tabIndex={-1} autoComplete="off" />
           </label>
           <p className="pg-hint">
             1. ZIPをダウンロードし、ギガファイル便にアップロードします。 2.
-            ダウンロードURLと投稿情報を送信します。受付後、管理者が内容を確認してから公開します。
+            ダウンロードURLと投稿情報をオレンジフォームの確認画面へ送ります。別タブで最終送信すると、管理者への通知と連絡先への確認メールが送られます。受付後、管理者が内容を確認してから公開します。
           </p>
           {errors > 0 && (
             <p className="pg-error">
@@ -272,7 +249,6 @@ export function PostDialog({
                 {(id) => (
                   <input
                     id={id}
-                    name={FORM_FIELDS.author}
                     value={form.author}
                     onChange={(event) => set({ author: event.target.value })}
                     autoComplete="nickname"
@@ -283,7 +259,6 @@ export function PostDialog({
                 {(id) => (
                   <input
                     id={id}
-                    name={FORM_FIELDS.email}
                     type="email"
                     value={form.email}
                     onChange={(event) => set({ email: event.target.value })}
@@ -296,7 +271,6 @@ export function PostDialog({
                 {(id) => (
                   <input
                     id={id}
-                    name={FORM_FIELDS.tag}
                     value={form.tag}
                     onChange={(event) => set({ tag: event.target.value })}
                     placeholder="短編, 謎解き"
@@ -307,7 +281,6 @@ export function PostDialog({
                 {(id) => (
                   <select
                     id={id}
-                    name={FORM_FIELDS.level}
                     value={form.level}
                     onChange={(event) => set({ level: event.target.value })}
                   >
@@ -324,7 +297,6 @@ export function PostDialog({
               {(id) => (
                 <textarea
                   id={id}
-                  name={FORM_FIELDS.intro}
                   rows={5}
                   value={form.intro}
                   onChange={(event) => set({ intro: event.target.value })}
@@ -335,7 +307,6 @@ export function PostDialog({
               {(id) => (
                 <textarea
                   id={id}
-                  name={FORM_FIELDS.comment}
                   rows={3}
                   value={form.comment}
                   onChange={(event) => set({ comment: event.target.value })}
@@ -350,7 +321,6 @@ export function PostDialog({
                 {(id) => (
                   <input
                     id={id}
-                    name={FORM_FIELDS.downloadUrl}
                     type="url"
                     value={form.downloadUrl}
                     onChange={(event) => set({ downloadUrl: event.target.value })}
@@ -362,10 +332,10 @@ export function PostDialog({
                 {(id) => (
                   <input
                     id={id}
-                    name={FORM_FIELDS.retention}
                     value={form.retention}
                     onChange={(event) => set({ retention: event.target.value })}
-                    placeholder="例：7日"
+                    inputMode="numeric"
+                    placeholder="例：7"
                   />
                 )}
               </Field>
@@ -373,7 +343,6 @@ export function PostDialog({
                 {(id) => (
                   <input
                     id={id}
-                    name={FORM_FIELDS.key}
                     type="password"
                     autoComplete="new-password"
                     value={form.key}
@@ -404,22 +373,28 @@ export function PostDialog({
                 </span>
               )}
               <span className="pg-spacer" />
-              <button type="button" onClick={onClose} disabled={creatingZip || sending}>
+              <button type="button" onClick={onClose} disabled={creatingZip}>
                 閉じる
               </button>
               <button
                 type="submit"
                 className="pg-submit-button"
-                disabled={sending || creatingZip || !!scenarioIdError}
+                disabled={creatingZip || !!scenarioIdError}
               >
-                {sending ? '送信しています…' : '提出情報を送信'}
+                オレンジフォームで確認
               </button>
             </div>
             <p className="pg-hint">
               コピーする文面には作品名・ID・作者名・分類・難易度・紹介・作者よりが含まれます。メールアドレス、ダウンロードURL、保持期間、キーは公開投稿に含めないためコピーしません。
             </p>
             <p className="pg-hint">
-              連絡先とダウンロードキーは管理者宛てのメールに含まれますが、この画面を閉じてもブラウザーには保存されません。送信結果はPHPサーバーからの応答で表示します。
+              連絡先とダウンロード情報はオレンジフォームへ送られます。この画面の入力内容はブラウザーに永続保存しません。受付結果は別タブで確認し、確認メールが届かない場合は迷惑メールフォルダーも確認してください。
+            </p>
+            <p className="pg-hint">
+              Powered by{' '}
+              <a href="https://orange-cloud7.net/form/" target="_blank" rel="noopener noreferrer">
+                メールフォーム 『オレンジフォーム』
+              </a>
             </p>
           </section>
         </form>

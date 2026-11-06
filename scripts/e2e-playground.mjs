@@ -264,15 +264,15 @@ check(
   (await page.getByText('chara/e2e.png', { exact: true }).count()) === 1,
 );
 
-// 提出画面（PHP受け口への送信はテスト応答に置き換える）
+// 提出画面（別タブのPOSTはモックし、外部サービスへ実送信しない）
 const submissions = [];
-const submissionEndpoint = 'https://www.web-deli.com/sorcerian/text/playground/submit.php';
-await page.route(submissionEndpoint, (route) => {
+const submissionEndpoint = 'https://form.os7.biz/form/submit/';
+await ctx.route('https://form.os7.biz/**', (route) => {
   submissions.push(new URLSearchParams(route.request().postData() ?? ''));
   return route.fulfill({
-    status: 202,
-    contentType: 'application/json',
-    body: JSON.stringify({ accepted: true }),
+    status: 200,
+    contentType: 'text/html',
+    body: '<!doctype html><html lang="ja"><meta charset="utf-8"><title>確認画面（テスト）</title><h1>確認画面（テスト）</h1></html>',
   });
 });
 await page.getByRole('button', { name: '提出…' }).click();
@@ -286,23 +286,29 @@ const formNames = await postDialog
   .locator('[name]')
   .evaluateAll((fields) => fields.map((field) => field.getAttribute('name')));
 check(
-  '提出：PHP受け口用の項目名を使い、ファイル添付欄を置かない',
+  '提出：オレンジフォームの項目名を使い、ファイル添付欄を置かない',
   [
-    'author',
-    'email',
-    'tag',
-    'level',
-    'intro',
-    'comment',
-    'downloadUrl',
-    'retention',
-    'key',
-    'website',
+    'single_seimei',
+    'mail',
+    'free1',
+    'free2',
+    'free3',
+    'free4',
+    'free5',
+    'free6',
+    'free7',
+    'of_dummy_note',
+    'form_id',
+    'encoding_test',
+    'base_url',
+    'urlhash',
+    'oid',
   ].every((name) => formNames.includes(name)) &&
     (await postDialog.locator('input[type="file"]').count()) === 0,
 );
 await postDialog.getByLabel('ペンネーム（作者名）', { exact: true }).fill('e2e作者');
 await postDialog.getByLabel('連絡先（メールアドレス）', { exact: true }).fill('e2e@example.com');
+await postDialog.getByLabel('分類', { exact: true }).fill('短編');
 await postDialog
   .getByLabel('シナリオ紹介（2〜300文字）', { exact: true })
   .fill('E2E提出の確認用シナリオです。');
@@ -324,26 +330,37 @@ check(
     submissionArchive['e2e-archive/chara/e2e.png'],
   ),
 );
-const [submissionResponse] = await Promise.all([
-  page.waitForResponse((response) => response.url() === submissionEndpoint),
-  postDialog.getByRole('button', { name: '提出情報を送信' }).click(),
+const [submissionPage] = await Promise.all([
+  ctx.waitForEvent('page'),
+  postDialog.getByRole('button', { name: 'オレンジフォームで確認' }).click(),
 ]);
+await submissionPage.waitForLoadState();
 check(
-  '提出：PHP受け口から受付応答を受け取る',
-  submissionResponse.status() === 202 &&
+  '提出：別タブへPOSTし、発行HTMLのhidden値と投稿情報を送る',
+  submissionPage.url() === submissionEndpoint &&
+    (await submissionPage.locator('h1').textContent()) === '確認画面（テスト）' &&
+    (await submissionPage.evaluate(() => window.opener === null)) &&
     submissions.length === 1 &&
-    submissions[0].get('email') === 'e2e@example.com' &&
-    submissions[0].get('downloadUrl') === 'https://gigafile.nu/e2e',
+    submissions[0].get('form_id') === '261098' &&
+    submissions[0].get('encoding_test') === 'あいうえお眉幅ABC' &&
+    submissions[0].get('mail') === 'e2e@example.com' &&
+    submissions[0].get('single_seimei') === 'e2e作者' &&
+    submissions[0].get('free5') === 'https://gigafile.nu/e2e' &&
+    submissions[0].get('free6') === '7' &&
+    submissions[0].get('of_dummy_note') === '',
 );
 check(
-  '提出：サーバー応答を成功表示する',
+  '提出：元の画面に入力を残し、受付成功とは表示しない',
   (await postDialog.getByRole('status').allTextContents()).some((text) =>
-    text.includes('提出情報を受け付けました'),
-  ),
+    text.includes('受付・メール送信の完了を確認できません'),
+  ) &&
+    (await postDialog.getByLabel('連絡先（メールアドレス）', { exact: true }).inputValue()) ===
+      'e2e@example.com',
 );
+await submissionPage.close();
 await shot('7-submission');
 await postDialog.getByRole('button', { name: '閉じる' }).first().click();
-await page.unroute(submissionEndpoint);
+await ctx.unroute('https://form.os7.biz/**');
 
 // 旧形式の XML を開く
 await page.getByRole('button', { name: '作品…' }).click();

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emptyScenario } from './model.js';
 import {
   FORM_FIELDS,
+  FORM_HIDDEN_FIELDS,
   initialForm,
   LEVELS,
   publicSubmissionText,
@@ -37,7 +38,7 @@ describe('提出フォーム', () => {
       intro: '紹介文',
       comment: '',
       downloadUrl: '',
-      retention: '',
+      retention: '7',
       key: '',
     });
   });
@@ -48,6 +49,7 @@ describe('提出フォーム', () => {
       '連絡先（メールアドレス）を入力してください',
     );
     expect(validatePost({ ...form, email: 'bad' })[0]).toContain('形式');
+    expect(validatePost({ ...form, tag: ' ' })).toContain('分類を入力してください');
     expect(validatePost({ ...form, intro: 'a' })[0]).toContain('2〜300文字');
     expect(validatePost({ ...form, intro: 'あ'.repeat(301) })[0]).toContain('301 文字');
     expect(validatePost({ ...form, level: '6' })).toContain('難易度を1〜5から選択してください');
@@ -59,6 +61,11 @@ describe('提出フォーム', () => {
       '保持期間は7日以上の日数で入力してください',
     );
     expect(validatePost({ ...form, retention: '10000日' })).toContain(
+      '保持期間は7日以上の日数で入力してください',
+    );
+    expect(validatePost({ ...form, retention: '7' })).toEqual([]);
+    expect(validatePost({ ...form, retention: '30日間' })).toEqual([]);
+    expect(validatePost({ ...form, retention: '6' })).toContain(
       '保持期間は7日以上の日数で入力してください',
     );
     expect(validatePost({ ...form, author: '😀'.repeat(100) })).toEqual([]);
@@ -74,7 +81,25 @@ describe('提出フォーム', () => {
     ]);
   });
 
-  it('PHP受け口へ送るフォーム項目を整形し、honeypotは空にする', () => {
+  it('発行HTMLどおりの項目名とhidden値を使う', () => {
+    expect(FORM_FIELDS).toEqual({
+      author: 'single_seimei',
+      email: 'mail',
+      tag: 'free1',
+      level: 'free2',
+      intro: 'free3',
+      comment: 'free4',
+      downloadUrl: 'free5',
+      retention: 'free6',
+      key: 'free7',
+    });
+    expect(FORM_HIDDEN_FIELDS).toEqual({
+      form_id: '261098',
+      encoding_test: 'あいうえお眉幅ABC',
+      base_url: 'https://form.os7.biz/',
+      urlhash: 'f/06d639bb/',
+      oid: '1012766',
+    });
     expect(submissionValues(form)).toEqual({
       [FORM_FIELDS.author]: '作者名',
       [FORM_FIELDS.email]: 'author@example.com',
@@ -82,14 +107,25 @@ describe('提出フォーム', () => {
       [FORM_FIELDS.level]: '3（普通）',
       [FORM_FIELDS.intro]: form.intro,
       [FORM_FIELDS.comment]: form.comment,
-      [FORM_FIELDS.retention]: '7日',
+      [FORM_FIELDS.retention]: '7',
       [FORM_FIELDS.key]: 'secret-key',
       [FORM_FIELDS.downloadUrl]: 'https://gigafile.nu/example',
-      website: '',
     });
-    expect(SUBMISSION_ENDPOINT).toBe(
-      'https://www.web-deli.com/sorcerian/text/playground/submit.php',
-    );
+    expect(SUBMISSION_ENDPOINT).toBe('https://form.os7.biz/form/submit/');
+  });
+
+  it('送信するテキストを整形し、任意のキーは変更しない', () => {
+    const values = submissionValues({
+      ...form,
+      author: ' 作者名 ',
+      email: ' author@example.com ',
+      retention: ' 30 日間 ',
+      key: ' key ',
+    });
+    expect(values.single_seimei).toBe('作者名');
+    expect(values.mail).toBe('author@example.com');
+    expect(values.free6).toBe('30');
+    expect(values.free7).toBe(' key ');
   });
 
   it('GitHub Discussions向けコピーに投稿情報を含め、連絡先・ダウンロードURL・キーを含めない', () => {

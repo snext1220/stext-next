@@ -70,9 +70,9 @@ export function Post({ section }: { section?: string }) {
             <code>scenario.json</code> がシナリオ本体です。
           </li>
           <li>
-            PlaygroundからPHP受け口への送信が利用できない場合は、下の GitHub Discussions
-            を代替の提出先として利用してください。.zip は投稿に添付できます（GitHub
-            のアカウントが必要です）。
+            オレンジフォームの別タブで内容を確認して最終送信すると、確認メールが送られます。フォームが利用できない場合は、下の
+            GitHub Discussions を代替の提出先として利用してください。.zip
+            は投稿に添付できます（GitHub のアカウントが必要です）。
           </li>
           <li>管理者が確認したあと、書庫に公開されます。公開まで、しばらくお待ちください。</li>
         </ol>

@@ -1,10 +1,9 @@
-# stext-next（ソーサリアンText v2）
-
 # SORCERIAN NText (Web-based Gamebook Engine) [![](https://img.shields.io/github/v/release/snext1220/stext-next)](https://snext1220.github.io/stext-next/) [![](https://img.shields.io/github/repo-size/snext1220/stext-next)](https://snext1220.github.io/stext-next/) [![](https://img.shields.io/github/last-commit/snext1220/stext-next)](https://github.com/snext1220/stext-next/commits/master) [![](https://img.shields.io/github/release-date/snext1220/stext-next)](https://github.com/snext1220/stext-next/releases) [![](https://img.shields.io/twitter/follow/snext1220?label=Follow)](https://twitter.com/snext1220)
 
 Automatically generate game books from scenario data.
 
-People called this plugin.....**Sorcerian Text**.
+People called this engine..... **Sorcerian NText** ,
+the next-gen [Sorcerian Text](https://github.com/snext1220/stext).
 
 
 ## ゲームを遊ぶ
@@ -110,7 +109,7 @@ npm run dev:playground
 - 「検査」タブには、つながっていない遷移先や書きかけの条件などの問題が並びます（クリックでそのシーンへ）。
 - 「試遊」タブで、編集中のシナリオをその場で遊べます。
 - 編集内容はブラウザに自動で保存されます。名前を付けて残すときは「マイストレージ」、ファイルにするときは「保存（JSON）」を使います。Ctrl+Z／Ctrl+Shift+Z で元に戻す／やり直すができます。
-- 「提出…」で、シナリオと登録素材をZIPにまとめ、ギガファイル便へアップロードした後、投稿情報をPHP受け口へ送信できます。提出情報は管理者宛てのメールで受け付け、内容確認後に公開します。送信先の配備・設定が完了していない場合は、[GitHub Discussions](https://github.com/snext1220/stext/discussions/299) を利用してください。
+- 「提出…」で、シナリオと登録素材をZIPにまとめ、ギガファイル便へアップロードした後、投稿情報をオレンジフォームへ送れます。別タブの確認画面で最終送信し、受付結果と確認メールを確認してください。管理者が内容を確認してから公開します。フォームが利用できない場合は、[GitHub Discussions](https://github.com/snext1220/stext/discussions/299) を利用してください。
 
 ## ドキュメント
 

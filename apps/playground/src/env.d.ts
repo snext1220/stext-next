@@ -5,6 +5,4 @@ interface ImportMetaEnv {
   readonly VITE_ASSET_BASE?: string;
   /** 公開シナリオ（scenarios/）の配信元（既定は公開サイトの ../scenarios/） */
   readonly VITE_SCENARIO_BASE?: string;
-  /** 作品提出フォームのPHP受け口 */
-  readonly VITE_SUBMISSION_URL?: string;
 }

@@ -1,20 +1,26 @@
 import type { Scenario } from '@stext/schema';
 
-export const SUBMISSION_ENDPOINT =
-  import.meta.env.VITE_SUBMISSION_URL ??
-  'https://www.web-deli.com/sorcerian/text/playground/submit.php';
+export const SUBMISSION_ENDPOINT = 'https://form.os7.biz/form/submit/';
 export const DISCUSSION_URL = 'https://github.com/snext1220/stext/discussions/299';
 
+export const FORM_HIDDEN_FIELDS = {
+  form_id: '261098',
+  encoding_test: 'あいうえお眉幅ABC',
+  base_url: 'https://form.os7.biz/',
+  urlhash: 'f/06d639bb/',
+  oid: '1012766',
+} as const;
+
 export const FORM_FIELDS = {
-  author: 'author',
-  email: 'email',
-  tag: 'tag',
-  level: 'level',
-  intro: 'intro',
-  comment: 'comment',
-  downloadUrl: 'downloadUrl',
-  retention: 'retention',
-  key: 'key',
+  author: 'single_seimei',
+  email: 'mail',
+  tag: 'free1',
+  level: 'free2',
+  intro: 'free3',
+  comment: 'free4',
+  downloadUrl: 'free5',
+  retention: 'free6',
+  key: 'free7',
 } as const;
 
 export const LEVELS = [
@@ -39,31 +45,19 @@ export interface PostForm {
   key: string;
 }
 
-export interface SubmissionValues {
-  author: string;
-  email: string;
-  tag: string;
-  level: string;
-  intro: string;
-  comment: string;
-  downloadUrl: string;
-  retention: string;
-  key: string;
-  website: string;
-}
+export type SubmissionValues = Record<(typeof FORM_FIELDS)[keyof typeof FORM_FIELDS], string>;
 
 export function submissionValues(form: PostForm): SubmissionValues {
   return {
-    author: form.author.trim(),
-    email: form.email.trim(),
-    tag: form.tag.trim(),
-    level: form.level,
-    intro: form.intro.trim(),
-    comment: form.comment.trim(),
-    downloadUrl: form.downloadUrl.trim(),
-    retention: form.retention.trim(),
-    key: form.key,
-    website: '',
+    [FORM_FIELDS.author]: form.author.trim(),
+    [FORM_FIELDS.email]: form.email.trim(),
+    [FORM_FIELDS.tag]: form.tag.trim(),
+    [FORM_FIELDS.level]: form.level,
+    [FORM_FIELDS.intro]: form.intro.trim(),
+    [FORM_FIELDS.comment]: form.comment.trim(),
+    [FORM_FIELDS.downloadUrl]: form.downloadUrl.trim(),
+    [FORM_FIELDS.retention]: form.retention.trim().replace(/\s*日(?:間)?$/, ''),
+    [FORM_FIELDS.key]: form.key,
   };
 }
 
@@ -86,7 +80,7 @@ export function initialForm(scenario: Scenario): PostForm {
     intro: scenario.meta.description ?? '',
     comment: '',
     downloadUrl: '',
-    retention: '',
+    retention: '7',
     key: '',
   };
 }
@@ -101,7 +95,9 @@ export function validatePost(form: PostForm): string[] {
     errors.push('連絡先（メールアドレス）の形式が正しくありません');
   else if (characterCount(form.email.trim()) > 254)
     errors.push('連絡先（メールアドレス）は254文字以内で入力してください');
-  if (characterCount(form.tag.trim()) > 300) errors.push('分類は300文字以内で入力してください');
+  if (!form.tag.trim()) errors.push('分類を入力してください');
+  else if (characterCount(form.tag.trim()) > 300)
+    errors.push('分類は300文字以内で入力してください');
   if (!(LEVELS as readonly (readonly [string, string])[]).some(([value]) => value === form.level))
     errors.push('難易度を1〜5から選択してください');
   const introLength = characterCount(form.intro.trim());
@@ -124,7 +120,7 @@ export function validatePost(form: PostForm): string[] {
   }
   if (!form.retention.trim()) errors.push('ZIPの保持期間を入力してください');
   else {
-    const days = /^(\d{1,4})\s*日(?:間)?$/.exec(form.retention.trim());
+    const days = /^(\d{1,4})(?:\s*日(?:間)?)?$/.exec(form.retention.trim());
     if (!days || Number(days[1]) < 7) errors.push('保持期間は7日以上の日数で入力してください');
   }
   if (characterCount(form.key) > 128)
@@ -132,7 +128,6 @@ export function validatePost(form: PostForm): string[] {
   return errors;
 }
 
-/** Convert the form state to the PHP endpoint's field names. */
 /** Public Discussion copy omits the private contact, download URL, and key. */
 export function publicSubmissionText(scenario: Scenario, form: PostForm): string {
   return [
