@@ -99,9 +99,9 @@ describe('Library', () => {
   it('starts narrowed to scenarios with a questionnaire when opened from CONTACT', async () => {
     const { container } = render(<Library global={emptyGlobalState()} settings={settings} quest />);
     await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' });
-    expect([...container.querySelectorAll('.book h2')].map((h) => h.firstChild?.textContent)).toEqual(
-      ['新・消えた王様の杖'],
-    );
+    expect(
+      [...container.querySelectorAll('.book h2')].map((h) => h.firstChild?.textContent),
+    ).toEqual(['新・消えた王様の杖']);
     expect(
       (screen.getByLabelText('アンケートのあるシナリオだけ') as HTMLInputElement).checked,
     ).toBe(true);
