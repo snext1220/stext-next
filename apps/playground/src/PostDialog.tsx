@@ -9,12 +9,12 @@ import {
   FORM_HIDDEN_FIELDS,
   initialForm,
   LEVELS,
-  publicSubmissionText,
   SUBMISSION_ENDPOINT,
   submissionValues,
   validatePost,
   type PostForm,
 } from './post.js';
+import { deletePostDraft, loadPostDraft, savePostDraft } from './postDraft.js';
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -41,11 +41,22 @@ export function PostDialog({
   errors: number;
   onClose: () => void;
 }) {
-  const [form, setForm] = useState<PostForm>(() => initialForm(scenario));
+  const [draft] = useState(() => {
+    try {
+      return { form: loadPostDraft(projectId, scenario), error: null };
+    } catch (error) {
+      return {
+        form: initialForm(scenario),
+        error: `入力内容を復元できませんでした: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  });
+  const [form, setForm] = useState<PostForm>(draft.form);
+  const [draftError, setDraftError] = useState<string | null>(draft.error);
+  const [draftNotice, setDraftNotice] = useState<string | null>(null);
   const [issues, setIssues] = useState<string[]>([]);
   const [zipError, setZipError] = useState<string | null>(null);
   const [zipNotice, setZipNotice] = useState<string | null>(null);
-  const [copyNotice, setCopyNotice] = useState<string | null>(null);
   const [creatingZip, setCreatingZip] = useState(false);
   const [submittedNotice, setSubmittedNotice] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -75,7 +86,35 @@ export function PostDialog({
     return () => window.removeEventListener('keydown', onKey);
   }, [creatingZip, onClose]);
 
-  const set = (patch: Partial<PostForm>) => setForm((current) => ({ ...current, ...patch }));
+  const set = (patch: Partial<PostForm>) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    setDraftNotice(null);
+    try {
+      savePostDraft(projectId, next);
+      setDraftError(null);
+    } catch (error) {
+      setDraftError(
+        `入力内容を保存できませんでした: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  };
+
+  const clearDraft = () => {
+    try {
+      deletePostDraft(projectId);
+      setForm(initialForm(scenario));
+      setDraftError(null);
+      setIssues([]);
+      setSubmittedNotice(null);
+      setDraftNotice('保存した入力内容を削除し、入力欄を初期値に戻しました。');
+    } catch (error) {
+      setDraftNotice(null);
+      setDraftError(
+        `入力内容を削除できませんでした: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  };
 
   const createZip = async () => {
     if (creatingZip || scenarioIdError) return;
@@ -100,19 +139,6 @@ export function PostDialog({
       );
     } finally {
       setCreatingZip(false);
-    }
-  };
-
-  const copyDiscussionText = async () => {
-    try {
-      await navigator.clipboard.writeText(publicSubmissionText(scenario, form));
-      setCopyNotice(
-        '作者名・分類・難易度・紹介・作者よりを含むGitHub用の文面をコピーしました。メールアドレスとダウンロード情報は含みません。',
-      );
-    } catch (error) {
-      setCopyNotice(
-        `コピーできませんでした: ${error instanceof Error ? error.message : String(error)}`,
-      );
     }
   };
 
@@ -240,9 +266,6 @@ export function PostDialog({
               <a href="https://gigafile.nu/" target="_blank" rel="noopener noreferrer">
                 ギガファイル便を開く
               </a>
-              <a href={DISCUSSION_URL} target="_blank" rel="noopener noreferrer">
-                GitHub Discussionsで提出する
-              </a>
             </p>
             <div className="pg-grid">
               <Field label="ペンネーム（作者名）">
@@ -314,14 +337,12 @@ export function PostDialog({
               )}
             </Field>
             <div className="pg-grid">
-              <Field
-                label="ダウンロードURL（必須）"
-                hint="HTTPSのギガファイル便URLを入力してください。ホスト名は管理者も確認します。"
-              >
+              <Field label="ダウンロードURL（必須）">
                 {(id) => (
                   <input
                     id={id}
                     type="url"
+                    aria-describedby="pg-post-download-hint"
                     value={form.downloadUrl}
                     onChange={(event) => set({ downloadUrl: event.target.value })}
                     placeholder="https://..."
@@ -351,6 +372,19 @@ export function PostDialog({
                 )}
               </Field>
             </div>
+            <p id="pg-post-download-hint" className="pg-hint">
+              HTTPSのギガファイル便URLを入力してください。ホスト名は管理者も確認します。
+            </p>
+            {draftError && (
+              <p className="pg-error" role="alert">
+                {draftError}
+              </p>
+            )}
+            {draftNotice && (
+              <p className="pg-message" role="status">
+                {draftNotice}
+              </p>
+            )}
             {issues.length > 0 && (
               <ul className="pg-error" role="alert">
                 {issues.map((message) => (
@@ -364,14 +398,9 @@ export function PostDialog({
               </p>
             )}
             <div className="pg-dialog-actions">
-              <button type="button" onClick={() => void copyDiscussionText()}>
-                GitHub用の提出文をコピー
+              <button type="button" onClick={clearDraft}>
+                保存した入力内容を削除
               </button>
-              {copyNotice && (
-                <span className="pg-hint" role="status">
-                  {copyNotice}
-                </span>
-              )}
               <span className="pg-spacer" />
               <button type="button" onClick={onClose} disabled={creatingZip}>
                 閉じる
@@ -381,14 +410,14 @@ export function PostDialog({
                 className="pg-submit-button"
                 disabled={creatingZip || !!scenarioIdError}
               >
-                オレンジフォームで確認
+                作品を提出
               </button>
             </div>
             <p className="pg-hint">
-              コピーする文面には作品名・ID・作者名・分類・難易度・紹介・作者よりが含まれます。メールアドレス、ダウンロードURL、保持期間、キーは公開投稿に含めないためコピーしません。
+              ダウンロードキー以外の入力内容（メールアドレスを含む）は、このブラウザーのCookieに作品ごとに30日間保存し、画面を閉じても復元します。ダウンロードキーは開くたびに入力してください。「保存した入力内容を削除」で、この作品の保存データを削除して入力欄を初期値に戻せます。共用端末では利用後に削除してください。
             </p>
             <p className="pg-hint">
-              連絡先とダウンロード情報はオレンジフォームへ送られます。この画面の入力内容はブラウザーに永続保存しません。受付結果は別タブで確認し、確認メールが届かない場合は迷惑メールフォルダーも確認してください。
+              連絡先とダウンロード情報はオレンジフォームへ送られます。受付結果は別タブで確認し、確認メールが届かない場合は迷惑メールフォルダーも確認してください。
             </p>
             <p className="pg-hint">
               Powered by{' '}
@@ -397,6 +426,13 @@ export function PostDialog({
               </a>
             </p>
           </section>
+          <p className="pg-hint">
+            投稿機能が正しく動作しない場合には、
+            <a href={DISCUSSION_URL} target="_blank" rel="noopener noreferrer">
+              GitHub Discussionから投稿
+            </a>
+            することも可能です。公開投稿にはメールアドレスやダウンロード情報を記載しないでください。
+          </p>
         </form>
       </div>
     </div>

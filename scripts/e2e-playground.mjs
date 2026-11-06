@@ -332,7 +332,7 @@ check(
 );
 const [submissionPage] = await Promise.all([
   ctx.waitForEvent('page'),
-  postDialog.getByRole('button', { name: 'オレンジフォームで確認' }).click(),
+  postDialog.getByRole('button', { name: '作品を提出', exact: true }).click(),
 ]);
 await submissionPage.waitForLoadState();
 check(

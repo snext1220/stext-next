@@ -127,18 +127,3 @@ export function validatePost(form: PostForm): string[] {
     errors.push('ダウンロードキーは128文字以内で入力してください');
   return errors;
 }
-
-/** Public Discussion copy omits the private contact, download URL, and key. */
-export function publicSubmissionText(scenario: Scenario, form: PostForm): string {
-  return [
-    'シナリオ提出',
-    `作品名: ${scenario.meta.title || '無題'}`,
-    `シナリオID: ${scenario.meta.id || '未設定'}`,
-    `作者名: ${form.author.trim() || '未入力'}`,
-    `分類: ${form.tag.trim() || '未入力'}`,
-    `難易度: ${form.level || '未入力'}`,
-    `シナリオ紹介: ${form.intro.trim() || '未入力'}`,
-    `作者より: ${form.comment.trim() || '未入力'}`,
-    'ZIPをこの投稿に添付してください。',
-  ].join('\n');
-}

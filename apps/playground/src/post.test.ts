@@ -5,7 +5,6 @@ import {
   FORM_HIDDEN_FIELDS,
   initialForm,
   LEVELS,
-  publicSubmissionText,
   SUBMISSION_ENDPOINT,
   submissionValues,
   validatePost,
@@ -126,22 +125,5 @@ describe('提出フォーム', () => {
     expect(values.mail).toBe('author@example.com');
     expect(values.free6).toBe('30');
     expect(values.free7).toBe(' key ');
-  });
-
-  it('GitHub Discussions向けコピーに投稿情報を含め、連絡先・ダウンロードURL・キーを含めない', () => {
-    const scenario = emptyScenario('作品');
-    scenario.meta.id = 'scenario-1';
-    const text = publicSubmissionText(scenario, form);
-    expect(text).toContain('作品名: 作品');
-    expect(text).toContain('シナリオID: scenario-1');
-    expect(text).toContain('作者名: 作者名');
-    expect(text).toContain('分類: 短編, 謎解き');
-    expect(text).toContain('難易度: 3（普通）');
-    expect(text).toContain(`シナリオ紹介: ${form.intro}`);
-    expect(text).toContain(`作者より: ${form.comment}`);
-    expect(text).not.toContain(form.email);
-    expect(text).not.toContain(form.downloadUrl);
-    expect(text).not.toContain(form.key);
-    expect(text).not.toContain('保持期間');
   });
 });
