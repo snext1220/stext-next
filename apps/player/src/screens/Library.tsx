@@ -294,7 +294,10 @@ export function Library({
                 >
                   <IntroImage id={e.id} />
                   <div>
-                    <h2>{e.title}</h2>
+                    <h2>
+                      {e.title}
+                      {e.v2 && <span className="scenario-v2-mark">［純正］</span>}
+                    </h2>
                     {e.author && <div className="by">{e.author}</div>}
                   </div>
                   <div className="book-meta">
@@ -432,7 +435,10 @@ function ScenarioDetail({
         <Parchment as="article" seed={e.id.length * 7 + 3} curl={36}>
           <header className="lib-detail-head">
             {e.series && <div className="eyebrow">{e.series}</div>}
-            <h2 id="lib-detail-title">{e.title}</h2>
+            <h2 id="lib-detail-title">
+              {e.title}
+              {e.v2 && <span className="scenario-v2-mark">［純正］</span>}
+            </h2>
             {e.author && <div className="by">{e.author} 作</div>}
           </header>
           <div className="lib-detail-body">

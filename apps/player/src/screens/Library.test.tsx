@@ -10,6 +10,7 @@ const entries: ScenarioEntry[] = [
     id: 'scepter',
     title: '新・消えた王様の杖',
     author: 'Rio',
+    v2: true,
     listed: true,
     series: '開幕シナリオ',
     tags: ['探索'],
@@ -38,10 +39,12 @@ function renderLibrary() {
 describe('Library', () => {
   it('shows each listed scenario with its intro image, scenes and level', async () => {
     const { container } = renderLibrary();
-    await screen.findByText('新・消えた王様の杖');
+    await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' });
     const books = container.querySelectorAll('.book');
     expect(books).toHaveLength(2);
     expect(screen.queryByText('開発用テスト')).toBeNull();
+    expect(books[0]!.querySelector('.scenario-v2-mark')!.textContent).toBe('［純正］');
+    expect(books[1]!.querySelector('.scenario-v2-mark')).toBeNull();
     expect(books[0]!.querySelector('img')!.getAttribute('src')).toMatch(
       /scepter\/capture\/intro\.png$/,
     );
@@ -55,7 +58,8 @@ describe('Library', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' }),
     );
-    const dialog = screen.getByRole('dialog', { name: '新・消えた王様の杖' });
+    const dialog = screen.getByRole('dialog', { name: /新・消えた王様の杖/ });
+    expect(dialog.querySelector('.scenario-v2-mark')?.textContent).toBe('［純正］');
     expect(dialog.textContent).toContain('ペンタウァ王家の象徴が盗まれてしまう。');
     expect(dialog.querySelector('.award')?.textContent).toBe('お知らせ');
     expect(dialog.textContent).toContain('作者のコメント');
@@ -94,10 +98,10 @@ describe('Library', () => {
 
   it('starts narrowed to scenarios with a questionnaire when opened from CONTACT', async () => {
     const { container } = render(<Library global={emptyGlobalState()} settings={settings} quest />);
-    await screen.findByText('新・消えた王様の杖');
-    expect([...container.querySelectorAll('.book h2')].map((h) => h.textContent)).toEqual([
-      '新・消えた王様の杖',
-    ]);
+    await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' });
+    expect([...container.querySelectorAll('.book h2')].map((h) => h.firstChild?.textContent)).toEqual(
+      ['新・消えた王様の杖'],
+    );
     expect(
       (screen.getByLabelText('アンケートのあるシナリオだけ') as HTMLInputElement).checked,
     ).toBe(true);
@@ -106,8 +110,9 @@ describe('Library', () => {
 
   it('narrows the shelf with the search conditions and clears them', async () => {
     const { container } = renderLibrary();
-    await screen.findByText('新・消えた王様の杖');
-    const books = () => [...container.querySelectorAll('.book h2')].map((h) => h.textContent);
+    await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' });
+    const books = () =>
+      [...container.querySelectorAll('.book h2')].map((h) => h.firstChild?.textContent);
 
     fireEvent.change(screen.getByLabelText('難易度'), { target: { value: '3' } });
     expect(books()).toEqual(['新・消えた王様の杖']);

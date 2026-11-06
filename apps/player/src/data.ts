@@ -6,6 +6,8 @@ export interface ScenarioEntry {
   id: string;
   title: string;
   author?: string;
+  /** stext/2 対応済み */
+  v2?: boolean;
   listed: boolean;
   series?: string;
   tags?: string[];

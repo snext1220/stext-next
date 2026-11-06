@@ -414,6 +414,7 @@
   {
     "id": "apart",
     "title": "怪竜奇術のソーサリアン・アパート",
+    "v2": true,
     "listed": true,
     "scenes": 57,
     "results": 8,

@@ -104,6 +104,8 @@ node packages/cli/dist/bin.js --help
 | `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
 | `stext play <scenario.json> [--auto <手数>] [--seed <数値>]` | シナリオをコマンドラインで遊ぶ（`--auto` は選択肢を自動で選ぶ） |
 
+`scenarios/index.json` の `v2: true` は、書庫でシナリオに［純正］マークを表示するフラグです。対応済みのシナリオにだけ設定します。
+
 シナリオ形式の詳細は [scenario-format.md](scenario-format.md)、エンジンの使い方は [engine.md](engine.md) を参照してください。
 
 ## 生成物の更新
@@ -111,7 +113,7 @@ node packages/cli/dist/bin.js --help
 | 生成物 | 更新方法 | いつ |
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
-| `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます。`index.json` は旧シナリオだけで作り直されるので、stext/2 で直接書いたシナリオ（`gods`）の項目は消えます。作り直したあとに、元の項目を戻してください |
+| `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます。`index.json` は旧シナリオだけで作り直されるので、stext/2 で直接書いたシナリオ（`gods`）の項目や、`v2` フラグは作り直したあとに戻してください |
 | `assets/common/`、`scenarios/<id>/capture/`・`bgm/`・`chara/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` と `assets/site/` は消しません |
 | `assets/site/` | `node scripts/import-site-images.mjs` | 旧サイト（https://www.web-deli.com/sorcerian/text/）の画像を取り込み直すとき。取り込む画像はスクリプトの一覧に書きます |
 
