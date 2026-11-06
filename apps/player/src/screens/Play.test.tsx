@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createEngine, emptyGlobalState } from '@stext/core';
 import type { Scenario } from '@stext/schema';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioDirector } from '../audio.js';
 import { Play } from './Play.js';
@@ -53,6 +53,7 @@ function renderPlay() {
   const global = emptyGlobalState();
   const { state } = createEngine(scenario).start(global);
   const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+  const onSettings = vi.fn();
   const result = render(
     <Play
       id="scroll-test"
@@ -62,13 +63,36 @@ function renderPlay() {
       onGlobal={vi.fn()}
       audio={new AudioDirector(false)}
       settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
-      onSettings={vi.fn()}
+      onSettings={onSettings}
     />,
   );
-  return { ...result, scroll };
+  return { ...result, scroll, onSettings };
 }
 
 describe('scene scrolling', () => {
+  it('shows reading settings in the mobile adventurer sheet', () => {
+    const { onSettings } = renderPlay();
+
+    expect(
+      within(screen.getByRole('navigation', { name: '冒険者メニュー' })).getAllByRole('button'),
+    ).toHaveLength(4);
+    fireEvent.click(screen.getByRole('button', { name: /HP/ }));
+    const dialog = within(screen.getByRole('dialog', { name: '冒険者' }));
+    fireEvent.click(dialog.getByRole('button', { name: '大' }));
+    expect(onSettings).toHaveBeenCalledWith({
+      theme: 'system',
+      fontSize: 'large',
+      fontFamily: 'mincho',
+    });
+
+    fireEvent.click(dialog.getByRole('button', { name: 'ゴシック' }));
+    expect(onSettings).toHaveBeenLastCalledWith({
+      theme: 'system',
+      fontSize: 'medium',
+      fontFamily: 'gothic',
+    });
+  });
+
   it('keeps random destinations in cookies during play', () => {
     const randomScenario: Scenario = {
       ...scenario,

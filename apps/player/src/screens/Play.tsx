@@ -609,35 +609,7 @@ export function Play({
           ))}
         </div>
         <div className="card">{panelBody(tab)}</div>
-        <div className="readset">
-          <span>文字</span>
-          <span className="seg">
-            {(['small', 'medium', 'large'] as const).map((k, i) => (
-              <button
-                key={k}
-                type="button"
-                aria-pressed={settings.fontSize === k}
-                onClick={() => onSettings({ ...settings, fontSize: k })}
-              >
-                {['小', '中', '大'][i]}
-              </button>
-            ))}
-          </span>
-          <span>書体</span>
-          <span className="seg">
-            {(['mincho', 'gothic'] as const).map((k, i) => (
-              <button
-                key={k}
-                type="button"
-                aria-pressed={settings.fontFamily === k}
-                onClick={() => onSettings({ ...settings, fontFamily: k })}
-              >
-                {['明朝', 'ゴシック'][i]}
-              </button>
-            ))}
-          </span>
-          <span>· 数字キーで選択、Backspace で戻る</span>
-        </div>
+        <ReadingSettings settings={settings} onSettings={onSettings} />
       </aside>
 
       <nav className="mtabs" aria-label="冒険者メニュー">
@@ -673,11 +645,55 @@ export function Play({
               ))}
             </div>
             {panelBody(sheet)}
+            {sheet === 'hero' && !editing && (
+              <section className="mobile-readset">
+                <h3>表示設定</h3>
+                <ReadingSettings settings={settings} onSettings={onSettings} />
+              </section>
+            )}
           </div>
         </div>
       )}
 
       <Toasts toasts={toasts} />
+    </div>
+  );
+}
+
+function ReadingSettings({ settings, onSettings }: Pick<PlayProps, 'settings' | 'onSettings'>) {
+  return (
+    <div className="readset">
+      <span className="readset-group">
+        <span>文字</span>
+        <span className="seg">
+          {(['small', 'medium', 'large'] as const).map((k, i) => (
+            <button
+              key={k}
+              type="button"
+              aria-pressed={settings.fontSize === k}
+              onClick={() => onSettings({ ...settings, fontSize: k })}
+            >
+              {['小', '中', '大'][i]}
+            </button>
+          ))}
+        </span>
+      </span>
+      <span className="readset-group">
+        <span>書体</span>
+        <span className="seg">
+          {(['mincho', 'gothic'] as const).map((k, i) => (
+            <button
+              key={k}
+              type="button"
+              aria-pressed={settings.fontFamily === k}
+              onClick={() => onSettings({ ...settings, fontFamily: k })}
+            >
+              {['明朝', 'ゴシック'][i]}
+            </button>
+          ))}
+        </span>
+      </span>
+      <span>· 数字キーで選択、Backspace で戻る</span>
     </div>
   );
 }
