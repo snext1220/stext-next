@@ -21,6 +21,7 @@ import { PostDialog } from './PostDialog.js';
 import { Problems } from './Problems.js';
 import { ProjectDialog } from './ProjectDialog.js';
 import { ResourcesPanel } from './ResourcesPanel.js';
+import { SceneSearchDialog } from './SceneSearchDialog.js';
 import type { LocalResource } from './resources.js';
 import { SceneEditor } from './SceneEditor.js';
 import { Splitter, useSideWidth } from './Splitter.js';
@@ -56,6 +57,7 @@ export function App() {
     resources: LocalResource[];
   } | null>(null);
   const [showProjects, setShowProjects] = useState(false);
+  const [showSceneSearch, setShowSceneSearch] = useState(false);
   const [resourceUrls, setResourceUrls] = useState<Record<string, string>>({});
   const [zipProgress, setZipProgress] = useState<{
     phase: 'preparing' | 'creating';
@@ -394,6 +396,9 @@ export function App() {
                 </optgroup>
               ))}
             </select>
+            <button type="button" onClick={() => setShowSceneSearch(true)}>
+              シーンを検索…
+            </button>
             <button type="button" onClick={() => newScene()}>
               ＋ シーン
             </button>
@@ -614,6 +619,18 @@ export function App() {
                   `作品を開けませんでした: ${error instanceof Error ? error.message : String(error)}`,
                 ),
             );
+          }}
+        />
+      )}
+      {showSceneSearch && (
+        <SceneSearchDialog
+          scenario={scenario}
+          onClose={() => setShowSceneSearch(false)}
+          onSelect={(id) => {
+            setSelected(id);
+            setTab('scene');
+            setFocusRequest({ id });
+            setShowSceneSearch(false);
           }}
         />
       )}
