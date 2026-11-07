@@ -37,8 +37,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { AudioDirector } from '../audio.js';
 import { bgmUrl, charaImageUrl, imageUrl, seUrl, trophyUrl } from '../config.js';
 import { loadIndex } from '../data.js';
+import { SaveDialog } from '../SaveDialog.js';
 import { href } from '../router.js';
-import { saveGame, saveGlobal, type Settings } from '../storage.js';
+import { saveGame, saveGlobal, writePersistent, type Settings } from '../storage.js';
 
 interface EnemyBattle {
   enemy: Enemy;
@@ -111,6 +112,9 @@ export function Play({
   const [tab, setTab] = useState<PanelTab>('hero');
   const [sheet, setSheet] = useState<PanelTab | null>(null);
   const [editing, setEditing] = useState(false);
+  const [saveDialog, setSaveDialog] = useState(false);
+  const [loadVersion, setLoadVersion] = useState(0);
+  const closeSaveDialog = useCallback(() => setSaveDialog(false), []);
   const toastId = useRef(0);
   const pendingSceneScroll = useRef(false);
 
@@ -223,7 +227,7 @@ export function Play({
       }),
     };
   }
-  const sceneKey = `${view.id}:${state.ellapsed_scene}`;
+  const sceneKey = `${view.id}:${state.ellapsed_scene}:${loadVersion}`;
   const lastScene = useRef(sceneKey);
   useEffect(() => {
     if (lastScene.current !== sceneKey) {
@@ -371,6 +375,7 @@ export function Play({
   // ───── 数字キーで選ぶ ─────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (saveDialog) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
       const go = view.choices.filter((c) => c.kind === 'go');
@@ -485,6 +490,9 @@ export function Play({
             {scenario.meta.showSummary && view.summary ? view.summary : view.id}
           </span>
         </header>
+        <button type="button" className="chip-btn" onClick={() => setSaveDialog(true)}>
+          セーブ／ロード
+        </button>
         <SceneText
           className="prose"
           markdown={view.markdown}
@@ -656,6 +664,25 @@ export function Play({
       )}
 
       <Toasts toasts={toasts} />
+      {saveDialog && (
+        <SaveDialog
+          id={id}
+          state={state}
+          onClose={closeSaveDialog}
+          onLoad={(loaded) => {
+            if (!scenario.scenes.some((scene) => String(scene.id) === String(loaded.scene)))
+              throw new Error('保存されたシーンがシナリオにありません');
+            writePersistent(id, JSON.stringify(loaded));
+            setHistory([]);
+            setEditing(false);
+            setSheet(null);
+            setToasts([]);
+            pendingSceneScroll.current = true;
+            setStateRaw(loaded);
+            setLoadVersion((n) => n + 1);
+          }}
+        />
+      )}
     </div>
   );
 }

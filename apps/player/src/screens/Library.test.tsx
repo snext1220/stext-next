@@ -2,9 +2,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { emptyGlobalState, newGameState } from '@stext/core';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScenarioEntry } from '../data.js';
+import { saveSlots } from '../storage.js';
 import { Library } from './Library.js';
 
 const entries: ScenarioEntry[] = [
@@ -27,7 +28,10 @@ const entries: ScenarioEntry[] = [
   { id: 'test', title: '開発用テスト', listed: false, scenes: 3, results: 0 },
 ];
 
-vi.mock('../data.js', () => ({ loadIndex: () => Promise.resolve(entries) }));
+vi.mock('../data.js', () => ({
+  loadIndex: () => Promise.resolve(entries),
+  loadScenario: () => Promise.resolve({ scenes: [{ id: '0' }] }),
+}));
 
 const settings = { theme: 'system', fontSize: 'medium', fontFamily: 'mincho' } as const;
 
@@ -39,6 +43,24 @@ function renderLibrary() {
 }
 
 describe('Library', () => {
+  it('loads a slot without an existing autosave', async () => {
+    const state = newGameState(() => 0);
+    saveSlots('scepter', [{ savedAt: '2026-11-07T00:00:00Z', state }, null, null, null, null]);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderLibrary();
+    fireEvent.click(
+      await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'セーブデータをロード' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
+    fireEvent.click(
+      within(dialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'ロード' }),
+    );
+    await waitFor(() => expect(location.hash).toBe('#/play/scepter'));
+    expect(JSON.parse(localStorage.getItem('scepter')!).scene).toBe(0);
+    vi.restoreAllMocks();
+  });
+
   it('styles the native mark as a bordered badge in the shelf and details', async () => {
     const style = document.createElement('style');
     const styles = readFileSync(resolve('packages', 'ui', 'src', 'styles.css'), 'utf8');

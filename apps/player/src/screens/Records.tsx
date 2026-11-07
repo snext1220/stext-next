@@ -1,10 +1,16 @@
 import { BONUS_ITEMS, GLOBAL_SAVE_KEY, playerRank, type GlobalState } from '@stext/core';
 import { Parchment } from '@stext/ui';
 import { useEffect, useState } from 'react';
-import { ALL, backupContent, backupFileName, downloadText, parseBackup } from '../backup.js';
+import { ALL, backupFileName, createBackup, downloadText, parseRestore } from '../backup.js';
 import { ASSET_BASE } from '../config.js';
 import { loadIndex, type ScenarioEntry } from '../data.js';
-import { loadGlobal, readRaw, writeRaw } from '../storage.js';
+import {
+  listSlotScenarioIds,
+  loadGlobal,
+  readPersistent,
+  restorePersistent,
+  slotsKey,
+} from '../storage.js';
 
 /** 冒険者の記録：プレイヤーランク、ボーナスアイテム、セーブデータのバックアップ／リストア */
 export function Records({
@@ -27,27 +33,67 @@ export function Records({
   // ランクは公開シナリオ（旧 stext.xml の scenario 一覧）で数える
   const listed = (entries ?? []).filter((e) => e.listed);
   const rank = playerRank(global, listed);
-  const withSaves = (entries ?? []).filter((e) => readRaw(e.id) !== null);
+  const { withSaves, backupIds, storageError } = (() => {
+    try {
+      const byId = new Map((entries ?? []).map((entry) => [entry.id, entry.title]));
+      for (const id of listSlotScenarioIds()) {
+        if (!byId.has(id)) byId.set(id, id);
+      }
+      return {
+        backupIds: [...byId.keys()],
+        withSaves: [...byId]
+          .map(([id, title]) => ({ id, title }))
+          .filter((e) => readPersistent(e.id) !== null || readPersistent(slotsKey(e.id)) !== null),
+        storageError: null,
+      };
+    } catch (e) {
+      return {
+        withSaves: [],
+        backupIds: [],
+        storageError: `保存データを読み込めません：${e instanceof Error ? e.message : String(e)}`,
+      };
+    }
+  })();
 
   const backup = () => {
-    const ids = (entries ?? []).filter((e) => !e.unpublished).map((e) => e.id);
-    const content = backupContent(target, ids, readRaw);
-    if (!content) return setMessage({ ok: false, text: 'バックアップするデータがありません。' });
-    downloadText(backupFileName(target), content);
-    setMessage({ ok: true, text: `${backupFileName(target)} を保存しました。` });
+    try {
+      if (!entries) throw new Error('シナリオ一覧の読み込みを待ってください');
+      if (storageError) throw new Error(storageError);
+      const content = createBackup(target, backupIds, readPersistent);
+      if (!content) return setMessage({ ok: false, text: 'バックアップするデータがありません。' });
+      const fileName = backupFileName(target);
+      downloadText(fileName, content);
+      setMessage({ ok: true, text: `${fileName} を保存しました。` });
+    } catch (e) {
+      setMessage({
+        ok: false,
+        text: `バックアップできません：${e instanceof Error ? e.message : String(e)}`,
+      });
+    }
   };
 
   const restore = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const restored = parseBackup(file.name, await file.text());
-      for (const e of restored) writeRaw(e.key, e.value);
+      if (!entries) throw new Error('シナリオ一覧の読み込みを待ってください');
+      const restored = parseRestore(file.name, await file.text());
+      const names = [
+        ...new Set(
+          restored.map((e) => {
+            if (e.key === GLOBAL_SAVE_KEY) return '基本情報';
+            const entry = entries.find((x) => e.key === x.id || e.key === slotsKey(x.id));
+            return entry?.title ?? e.key;
+          }),
+        ),
+      ];
+      if (
+        !window.confirm(
+          `以下のデータを復元します。現在の保存データが上書き・削除される場合があります：\n${names.join('、')}\nよろしいですか？`,
+        )
+      )
+        return;
+      restorePersistent(restored);
       onGlobal(loadGlobal());
-      const names = restored.map((e) =>
-        e.key === GLOBAL_SAVE_KEY
-          ? '基本情報'
-          : (entries?.find((x) => x.id === e.key)?.title ?? e.key),
-      );
       setMessage({ ok: true, text: `リストアが完了しました：${names.join('、')}` });
     } catch (e) {
       setMessage({ ok: false, text: e instanceof Error ? e.message : String(e) });
@@ -140,7 +186,8 @@ export function Records({
           <span>セーブデータ</span>
         </div>
         <p className="lede" style={{ fontSize: 'var(--step--1)', marginTop: 0 }}>
-          旧ソーサリアンText と同じ .stext ファイルで、バックアップとリストアができます。
+          自動保存と手動スロットを .stext
+          ファイルにバックアップできます。旧形式も復元できますが、新形式は旧版では読み込めません。
         </p>
         <div className="save-tools">
           <select
@@ -167,7 +214,10 @@ export function Records({
               type="file"
               accept=".stext"
               hidden
-              onChange={(e) => void restore(e.target.files?.[0])}
+              onChange={(e) => {
+                void restore(e.target.files?.[0]);
+                e.target.value = '';
+              }}
             />
           </label>
         </div>
@@ -178,6 +228,11 @@ export function Records({
             style={{ marginTop: 10 }}
           >
             {message.text}
+          </p>
+        )}
+        {storageError && (
+          <p className="error-box" role="alert">
+            {storageError}
           </p>
         )}
       </section>

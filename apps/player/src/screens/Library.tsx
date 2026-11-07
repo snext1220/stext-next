@@ -2,7 +2,7 @@ import type { GameState, GlobalState } from '@stext/core';
 import { Parchment, SceneText } from '@stext/ui';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { imageUrl } from '../config.js';
-import { loadIndex, type ScenarioEntry } from '../data.js';
+import { loadIndex, loadScenario, type ScenarioEntry } from '../data.js';
 import {
   CLEAR_STATES,
   DEFAULT_FILTER,
@@ -12,8 +12,9 @@ import {
   filterScenarios,
   type LibraryFilter,
 } from '../libraryFilter.js';
-import { href } from '../router.js';
-import { loadGame, type Settings } from '../storage.js';
+import { href, navigate } from '../router.js';
+import { SaveDialog } from '../SaveDialog.js';
+import { loadGame, writePersistent, type Settings } from '../storage.js';
 import level1 from '../images/level1.png';
 import level2 from '../images/level2.png';
 import level3 from '../images/level3.png';
@@ -384,6 +385,8 @@ function ScenarioDetail({
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDivElement>(null);
+  const [saveDialog, setSaveDialog] = useState(false);
+  const closeSaveDialog = useCallback(() => setSaveDialog(false), []);
   const playing = save && !save.isEnded ? save : undefined;
 
   useEffect(() => {
@@ -465,6 +468,9 @@ function ScenarioDetail({
             <a className={playing ? 'btn ghost' : 'btn'} href={href({ name: 'create', id: e.id })}>
               新たに冒険を始める
             </a>
+            <button type="button" className="btn ghost" onClick={() => setSaveDialog(true)}>
+              セーブデータをロード
+            </button>
             <button type="button" className="btn ghost" onClick={onClose}>
               閉じる
             </button>
@@ -512,6 +518,19 @@ function ScenarioDetail({
             )}
           </dl>
         </Parchment>
+        {saveDialog && (
+          <SaveDialog
+            id={e.id}
+            onClose={closeSaveDialog}
+            onLoad={async (state) => {
+              const scenario = await loadScenario(e.id);
+              if (!scenario.scenes.some((scene) => String(scene.id) === String(state.scene)))
+                throw new Error('保存されたシーンがシナリオにありません');
+              writePersistent(e.id, JSON.stringify(state));
+              navigate({ name: 'play', id: e.id });
+            }}
+          />
+        )}
       </div>
     </div>
   );

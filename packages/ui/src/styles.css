@@ -2756,3 +2756,49 @@ label.drop {
   font-size: 0.7rem;
   color: var(--on-desk-soft);
 }
+.save-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 65%);
+}
+
+.save-dialog {
+  width: min(100%, 42rem);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1.25rem;
+  background: var(--page);
+  color: var(--ink);
+  border: 1px solid var(--ink-soft);
+  border-radius: 0.5rem;
+}
+
+.save-dialog-modes,
+.save-slot-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.save-dialog-modes [aria-pressed='true'] {
+  font-weight: bold;
+  outline: 2px solid currentColor;
+}
+
+.save-slots {
+  list-style: none;
+  padding: 0;
+}
+
+.save-slots li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--ink-soft);
+}

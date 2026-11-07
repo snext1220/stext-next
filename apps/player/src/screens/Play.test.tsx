@@ -4,6 +4,7 @@ import type { Scenario } from '@stext/schema';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioDirector } from '../audio.js';
+import { saveSlots } from '../storage.js';
 import { Play } from './Play.js';
 
 vi.mock('../data.js', () => ({
@@ -70,6 +71,101 @@ function renderPlay() {
 }
 
 describe('scene scrolling', () => {
+  it('refuses a missing scene without replacing the current autosave', async () => {
+    const global = emptyGlobalState();
+    const { state } = createEngine(scenario).start(global);
+    const missing = { ...state, scene: 'not-found' };
+    saveSlots('scroll-test', [
+      { savedAt: '2026-11-07T00:00:00Z', state: missing },
+      null,
+      null,
+      null,
+      null,
+    ]);
+    localStorage.setItem('scroll-test', JSON.stringify(state));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPlay();
+    fireEvent.click(screen.getByRole('button', { name: 'セーブ／ロード' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'ロード', pressed: false }));
+    fireEvent.click(
+      within(dialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'ロード' }),
+    );
+    expect((await dialog.findByRole('alert')).textContent).toContain(
+      '保存されたシーンがシナリオにありません',
+    );
+    expect(localStorage.getItem('scroll-test')).toBe(JSON.stringify(state));
+    expect(screen.getByText('First scene')).toBeTruthy();
+  });
+
+  it('resets battle state even when loading the same scene', async () => {
+    const battleScenario: Scenario = {
+      ...scenario,
+      enemies: [
+        { id: 'enemy', name: '敵' },
+        { id: 'enemy2', name: '敵2' },
+      ],
+      scenes: [{ id: '0', text: '戦闘', enemies: ['enemy', 'enemy2'], choices: [] }],
+    };
+    const global = emptyGlobalState();
+    const { state } = createEngine(battleScenario).start(global);
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(
+      <Play
+        id="battle"
+        scenario={battleScenario}
+        initial={state}
+        global={global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'セーブ／ロード' }));
+    let dialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
+    fireEvent.click(
+      within(dialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'セーブ' }),
+    );
+    fireEvent.click(dialog.getByRole('button', { name: '閉じる' }));
+    const checkbox = screen.getByRole('checkbox', { name: '敵を撃破した' }) as HTMLInputElement;
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'セーブ／ロード' }));
+    dialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'ロード', pressed: false }));
+    fireEvent.click(
+      within(dialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'ロード' }),
+    );
+    await waitFor(() => expect(checkbox.checked).toBe(false));
+  });
+
+  it('loads a manual slot without replaying scene effects and replaces autosave and history', async () => {
+    renderPlay();
+    fireEvent.click(screen.getByRole('button', { name: 'セーブ／ロード' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
+    fireEvent.click(
+      within(dialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'セーブ' }),
+    );
+    fireEvent.click(dialog.getByRole('button', { name: '閉じる' }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/ }));
+    expect(screen.getByText('Second scene')).toBeTruthy();
+    const shared = localStorage.getItem('sorcerian_text');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fireEvent.click(screen.getByRole('button', { name: 'セーブ／ロード' }));
+    const loadDialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
+    fireEvent.click(loadDialog.getByRole('button', { name: 'ロード', pressed: false }));
+    fireEvent.click(
+      within(loadDialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'ロード' }),
+    );
+    await waitFor(() => expect(screen.getByText('First scene')).toBeTruthy());
+    expect(screen.queryByRole('button', { name: '← 戻る' })).toBeNull();
+    expect(JSON.parse(localStorage.getItem('scroll-test')!).scene).toBe('0');
+    expect(JSON.parse(localStorage.getItem('scroll-test')!).ellapsed_scene).toBe(1);
+    expect(localStorage.getItem('sorcerian_text')).toBe(shared);
+  });
+
   it('shows reading settings in the mobile adventurer sheet', () => {
     const { onSettings } = renderPlay();
 
