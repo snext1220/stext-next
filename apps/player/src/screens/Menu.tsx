@@ -46,9 +46,10 @@ export function Menu({ route }: { route: Route }) {
           制作工房
         </a>
       )}
-      {MENU.map((g) => (
-        <SubMenu key={g.label} label={g.label} items={g.items} current={route.name} />
-      ))}
+      {route.name !== 'play' &&
+        MENU.map((g) => (
+          <SubMenu key={g.label} label={g.label} items={g.items} current={route.name} />
+        ))}
     </nav>
   );
 }

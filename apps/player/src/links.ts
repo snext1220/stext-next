@@ -2,7 +2,8 @@
 
 /** ブログ「新時代のソーサリアンを提案する」のマニュアル（旧サイトの d.hatena から移転したもの） */
 export const MANUALS = {
-  player: 'https://sorcerian.hateblo.jp/entry/20171220',
+  player: 'https://github.com/snext1220/stext-next/blob/main/docs/manual-player.md',
+  playground: 'https://github.com/snext1220/stext-next/blob/main/docs/manual-playground.md',
   developer: 'https://sorcerian.hateblo.jp/entry/20171221',
   techniques: 'https://sorcerian.hateblo.jp/entry/20180429',
   playgroundFlow: 'https://sorcerian.hateblo.jp/entry/2019/05/03/211951',

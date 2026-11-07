@@ -1216,6 +1216,20 @@ h3 {
   font-weight: 700;
   line-height: 1.4;
 }
+.scenario-v2-mark {
+  display: inline-block;
+  margin-left: 0.45em;
+  padding: 0 0.35em;
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  color: var(--gold);
+  font-family: var(--f-ui);
+  font-size: 0.62em;
+  font-weight: 700;
+  line-height: 1.7;
+  vertical-align: 0.16em;
+  white-space: nowrap;
+}
 .book .by {
   font-size: var(--step--1);
   color: var(--on-desk-soft);
@@ -2392,6 +2406,22 @@ label.drop {
 }
 .doc .end-actions {
   margin-bottom: 1em;
+}
+.post-playground-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.post-playground-actions .btn {
+  text-align: center;
+}
+.post-playground-actions .btn:first-child {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+@media (max-width: 760px) {
+  .post-playground-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .doc-eyebrow {
   color: var(--ink-soft);

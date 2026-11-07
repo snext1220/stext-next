@@ -93,6 +93,9 @@ describe('guide and toolbox pages', () => {
     expect(screen.getByRole('link', { name: '素材と資料を見る' }).getAttribute('href')).toBe(
       '#/materials',
     );
+    expect(screen.getByRole('link', { name: '開発ツールの入門を見る' }).getAttribute('href')).toBe(
+      'https://github.com/snext1220/stext-next/blob/main/docs/manual-playground.md',
+    );
     expect(screen.getByRole('link', { name: '募集中の企画を見る' }).getAttribute('href')).toBe(
       '#/recruit',
     );
@@ -103,7 +106,15 @@ describe('guide and toolbox pages', () => {
       [...container.querySelector('.end-actions')!.querySelectorAll('a')].map((link) =>
         link.textContent?.trim(),
       ),
-    ).toEqual(['Playground を開く', '募集中の企画を見る', '素材と資料を見る']);
+    ).toEqual([
+      'Playgroundを開く',
+      '開発ツールの入門を見る',
+      '募集中の企画を見る',
+      '素材と資料を見る',
+    ]);
+    expect(container.querySelector('.post-playground-actions .btn')?.textContent?.trim()).toBe(
+      'Playgroundを開く',
+    );
   });
 
   it('offers the recruitments and the creator materials on their own pages', () => {
@@ -162,6 +173,14 @@ describe('Menu', () => {
     cleanup();
     render(<Menu route={{ name: 'play', id: 'scepter' }} />);
     expect(screen.queryByRole('link', { name: '制作工房' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '案内所' })).toBeNull();
+    expect(screen.getByRole('link', { name: '書庫' }).getAttribute('href')).toBe('#/library');
+
+    cleanup();
+    render(<Menu route={{ name: 'create', id: 'scepter' }} />);
+    expect(screen.getByRole('link', { name: '書庫' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '制作工房' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '案内所' })).toBeTruthy();
   });
 
   it('closes menus with Escape or outside interaction', () => {
@@ -184,11 +203,13 @@ describe('header controls', () => {
     window.location.hash = '#/records';
     render(<App />);
     expect(screen.queryByRole('button', { name: /音あり|音なし/ })).toBeNull();
+    expect(screen.getByRole('button', { name: '昼と夜を切り替え' })).toBeTruthy();
 
     cleanup();
     window.location.hash = '#/play/scepter';
     render(<App />);
     expect(await screen.findByRole('button', { name: /音あり|音なし/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '昼と夜を切り替え' })).toBeTruthy();
     cleanup();
     window.location.hash = '';
   });

@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { emptyGlobalState, newGameState } from '@stext/core';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,6 +39,36 @@ function renderLibrary() {
 }
 
 describe('Library', () => {
+  it('styles the native mark as a bordered badge in the shelf and details', async () => {
+    const style = document.createElement('style');
+    const styles = readFileSync(resolve('packages', 'ui', 'src', 'styles.css'), 'utf8');
+    const rule = styles.match(/\.scenario-v2-mark\s*\{[^}]*\}/)?.[0];
+    expect(rule).toBeDefined();
+    expect(rule).toContain('border: 1px solid var(--gold)');
+    // jsdom は border の CSS 変数を解決できないため、色だけ具体値に置き換える。
+    style.textContent = rule!.replaceAll('var(--gold)', '#8f6a14');
+    document.head.append(style);
+    try {
+      const { container } = renderLibrary();
+      const opener = await screen.findByRole('button', {
+        name: '「新・消えた王様の杖」の詳細を表示',
+      });
+      fireEvent.click(opener);
+      const marks = container.querySelectorAll('.scenario-v2-mark');
+      expect(marks).toHaveLength(2);
+      for (const mark of marks) {
+        const computed = getComputedStyle(mark);
+        expect(computed.display).toBe('inline-block');
+        expect(computed.borderTopStyle).toBe('solid');
+        expect(computed.borderTopWidth).toBe('1px');
+        expect(computed.whiteSpace).toBe('nowrap');
+        expect(computed.fontSize).toBe('0.62em');
+      }
+    } finally {
+      style.remove();
+    }
+  });
+
   it('shows each listed scenario with its intro image, scenes and level', async () => {
     const { container } = renderLibrary();
     await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' });

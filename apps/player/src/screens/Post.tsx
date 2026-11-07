@@ -1,5 +1,5 @@
 import { PLAYGROUND_URL } from '../config.js';
-import { POST_THREAD } from '../links.js';
+import { MANUALS, POST_THREAD } from '../links.js';
 import { href } from '../router.js';
 import { DocPage, DocSection, type DocChapter } from './Doc.js';
 
@@ -41,9 +41,17 @@ export function Post({ section }: { section?: string }) {
         <p>
           テンプレートや公開中のシナリオを開いて、書き方を真似するところから始めるのもお勧めです。各欄の「？」から、書き方の説明（ヘルプ）を読めます。
         </p>
-        <div className="end-actions">
+        <div className="end-actions post-playground-actions">
           <a className="btn" href={PLAYGROUND_URL} target="_blank" rel="noopener noreferrer">
-            Playground を開く
+            Playgroundを開く
+          </a>
+          <a
+            className="btn ghost"
+            href={MANUALS.playground}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            開発ツールの入門を見る
           </a>
           <a className="btn ghost" href={href({ name: 'recruit' })}>
             募集中の企画を見る
