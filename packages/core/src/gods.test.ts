@@ -50,6 +50,41 @@ describe('新・天の神々たち', () => {
     }
   });
 
+  it('uses the original mountain monster and places rare meteors in heaven', () => {
+    expect(scenario.enemies.find((enemy) => enemy.id === 'm14')?.name).toBe('ペリュトン');
+    expect(scenario.enemies.find((enemy) => enemy.id === 'm15')?.name).toBe('ペリュトン（瓶狙い）');
+    const scene = scenario.scenes.find((item) => item.id === '637');
+    expect(scene?.enemies).toContain('m32');
+    expect(scene?.text).toContain('流星');
+
+    const meteor = scenario.enemies.find((enemy) => enemy.id === 'm32');
+    if (!meteor?.func) throw new Error('Missing meteor damage formula');
+    const chara = setup('637').step.state.chara;
+    let hits = 0;
+    for (let left = 1; left <= 6; left++)
+      for (let right = 1; right <= 6; right++)
+        if (computeDamage(meteor.func, [left, right], chara) > 0) hits++;
+    expect(hits).toBe(3);
+  });
+
+  it('lets an aracora steal exactly one bottle and names the villagers', () => {
+    const { engine, step } = setup('202');
+    const aracora = scenario.enemies.find((enemy) => enemy.id === 'm19');
+    if (!aracora?.attack || !aracora.func) throw new Error('Missing aracora attack');
+    receiveAttack(
+      engine.effectContext(step.state, step.global, []),
+      aracora.attack,
+      aracora.func,
+      [1, 1],
+    );
+    expect(step.state.chara.free1).toBe(1);
+    expect(engine.view(step.state, step.global).choices.map((choice) => choice.label)).toContain(
+      '先へ進む',
+    );
+    expect(scenario.scenes.find((scene) => scene.id === '160')?.text).toContain('ノーマス');
+    expect(scenario.scenes.find((scene) => scene.id === '1040')?.text).toContain('ギルデン');
+  });
+
   it('initializes the wine and pot with the amounts described to the player', () => {
     const wine = setup('115').step;
     expect(wine.state.chara.free1).toBe(7);
