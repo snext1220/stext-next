@@ -18,19 +18,19 @@
 
 npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 
-| パス               | パッケージ          | 動作環境  | 役割                                                                                     |
-| ------------------ | ------------------- | --------- | ---------------------------------------------------------------------------------------- |
-| `packages/schema`  | `@stext/schema`     | Universal | stext/2 の zod スキーマ・型・条件パーサ、`validateScenario`、`checkScenario`             |
-| `packages/core`    | `@stext/core`       | Universal | ゲームエンジン `createEngine`、旧エンジン互換の GameState / GlobalState                  |
-| `packages/convert` | `@stext/convert`    | Universal | 旧形式（scenario.xml / 旧 Playground JSON）からの変換                                    |
-| `packages/cli`     | `@stext/cli`        | Node      | `stext` コマンド（convert、convert-all、validate、play）                                 |
-| `packages/ui`      | `@stext/ui`         | Browser   | React コンポーネントと `styles.css`（デザイントークン）                                  |
-| `apps/player`      | `@stext/player`     | Browser   | プレイヤー（Vite + React）                                                               |
-| `apps/playground`  | `@stext/playground` | Browser   | シナリオの編集環境（Vite + React + React Flow、dagre）                                   |
-| `prototype/`       | —                   | —         | デザインプロトタイプ「夜の書見台」                                                       |
+| パス               | パッケージ          | 動作環境  | 役割                                                                                                             |
+| ------------------ | ------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| `packages/schema`  | `@stext/schema`     | Universal | stext/2 の zod スキーマ・型・条件パーサ、`validateScenario`、`checkScenario`                                     |
+| `packages/core`    | `@stext/core`       | Universal | ゲームエンジン `createEngine`、旧エンジン互換の GameState / GlobalState                                          |
+| `packages/convert` | `@stext/convert`    | Universal | 旧形式（scenario.xml / 旧 Playground JSON）からの変換                                                            |
+| `packages/cli`     | `@stext/cli`        | Node      | `stext` コマンド（convert、convert-all、validate、play）                                                         |
+| `packages/ui`      | `@stext/ui`         | Browser   | React コンポーネントと `styles.css`（デザイントークン）                                                          |
+| `apps/player`      | `@stext/player`     | Browser   | プレイヤー（Vite + React）                                                                                       |
+| `apps/playground`  | `@stext/playground` | Browser   | シナリオの編集環境（Vite + React + React Flow、dagre）                                                           |
+| `prototype/`       | —                   | —         | デザインプロトタイプ「夜の書見台」                                                                               |
 | `scenarios/`       | —                   | —         | 変換済みの旧シナリオと、stext/2 で直接作成したシナリオ。`scenarios/<id>/` に `scenario.json`・`capture/`・`bgm/` |
-| `assets/`          | —                   | —         | 全シナリオ共通の画像・BGM・効果音（`assets/common/`）、旧サイトの画像（`assets/site/`）  |
-| `schema/`          | —                   | —         | JSON Schema（生成物）                                                                    |
+| `assets/`          | —                   | —         | 全シナリオ共通の画像・BGM・効果音（`assets/common/`）、旧サイトの画像（`assets/site/`）                          |
+| `schema/`          | —                   | —         | JSON Schema（生成物）                                                                                            |
 
 - **依存の向き**：`schema` ← `core` / `convert` ← `cli`、`ui` ← `player` / `playground`。**逆向きの依存は作らない。**
 - シナリオ固有の画像・BGM は `scenarios/<id>/capture/`・`bgm/` に置き、`assets/` には共通の素材だけを置く。
@@ -80,13 +80,13 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 
 次の生成物は手で編集せず、コマンドで作り直す。`scenarios/` にある stext/2 直接作成作品は生成物ではない。
 
-| 生成物                                              | 更新方法                                          | いつ                                                                           |
-| --------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `schema/scenario.v2.json`                           | `npm run build` のあとに `npm run schema`         | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗する） |
+| 生成物                                              | 更新方法                                          | いつ                                                                                                          |
+| --------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `schema/scenario.v2.json`                           | `npm run build` のあとに `npm run schema`         | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗する）                                |
 | `scenarios/` の旧シナリオ                           | `npm run build` のあとに `npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき（`../stext` が必要）。直接作成作品と `index.json` の項目は保持する |
-| `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs`           | 旧リポジトリの素材を取り込み直すとき（`../stext` が必要）                      |
-| `assets/site/`                                      | `node scripts/import-site-images.mjs`             | 旧サイトの画像（案内・投稿・フッターで使う）を取り込み直すとき                 |
-| `apps/playground/public/templates/`                 | `node scripts/import-playground-templates.mjs`    | 旧 Playground のテンプレートを取り込み直すとき                                 |
+| `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs`           | 旧リポジトリの素材を取り込み直すとき（`../stext` が必要）                                                     |
+| `assets/site/`                                      | `node scripts/import-site-images.mjs`             | 旧サイトの画像（案内・投稿・フッターで使う）を取り込み直すとき                                                |
+| `apps/playground/public/templates/`                 | `node scripts/import-playground-templates.mjs`    | 旧 Playground のテンプレートを取り込み直すとき                                                                |
 
 ## 確認のコマンド
 
