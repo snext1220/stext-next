@@ -28,7 +28,7 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 | `apps/player`      | `@stext/player`     | Browser   | プレイヤー（Vite + React）                                                               |
 | `apps/playground`  | `@stext/playground` | Browser   | シナリオの編集環境（Vite + React + React Flow、dagre）                                   |
 | `prototype/`       | —                   | —         | デザインプロトタイプ「夜の書見台」                                                       |
-| `scenarios/`       | —                   | —         | 変換済みの旧シナリオ（生成物）。`scenarios/<id>/` に `scenario.json`・`capture/`・`bgm/` |
+| `scenarios/`       | —                   | —         | 変換済みの旧シナリオと、stext/2 で直接作成したシナリオ。`scenarios/<id>/` に `scenario.json`・`capture/`・`bgm/` |
 | `assets/`          | —                   | —         | 全シナリオ共通の画像・BGM・効果音（`assets/common/`）、旧サイトの画像（`assets/site/`）  |
 | `schema/`          | —                   | —         | JSON Schema（生成物）                                                                    |
 
@@ -68,14 +68,22 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 - エディター用の情報は `editor`（x、y、color）、共通フッターのシーンは `meta.footerScene` に持つ。
 - 旧エンジンとの互換性を保つ（localStorage のキーはシナリオ ID と `sorcerian_text`）。
 
+### シナリオの改善
+
+- 旧シナリオの変換結果は元データと変換器を確認する。`gods` のように stext/2 で直接作成した作品は JSON が原本なので、変換結果として上書きしない。
+- 元の物語や人物像を尊重し、会話・フラグ・所持品・選択の結果が後の進行に自然につながるようにする。既存ルートと途中のセーブデータへの影響も確認する。
+- 本文はプレイヤーに見える表示名を使い、自動で適用される効果は結果として記述する。戦闘欄の判定は自動適用ではなく操作が必要なため、必要な操作・回数・順序を残す。
+- バッドエンドを追加するときは、危険を予告し、極力それぞれに実績を付ける。数値調整は複数の能力値やダイスで実際の損耗・失敗率を検証する。
+- シナリオの分析・改善手順は [scenario-improvement スキル](./skills/scenario-improvement/SKILL.md) を参照する。
+
 ## 生成物
 
-手で編集せず、コマンドで作り直す。
+次の生成物は手で編集せず、コマンドで作り直す。`scenarios/` にある stext/2 直接作成作品は生成物ではない。
 
 | 生成物                                              | 更新方法                                          | いつ                                                                           |
 | --------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `schema/scenario.v2.json`                           | `npm run build` のあとに `npm run schema`         | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗する） |
-| `scenarios/`                                        | `npm run build` のあとに `npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき（`../stext` が必要）                |
+| `scenarios/` の旧シナリオ                           | `npm run build` のあとに `npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき（`../stext` が必要）。直接作成作品と `index.json` の項目は保持する |
 | `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs`           | 旧リポジトリの素材を取り込み直すとき（`../stext` が必要）                      |
 | `assets/site/`                                      | `node scripts/import-site-images.mjs`             | 旧サイトの画像（案内・投稿・フッターで使う）を取り込み直すとき                 |
 | `apps/playground/public/templates/`                 | `node scripts/import-playground-templates.mjs`    | 旧 Playground のテンプレートを取り込み直すとき                                 |
