@@ -15,7 +15,7 @@ export function imageUrl(scenarioId: string, src: string): string {
 export function bgmUrl(scenarioId: string, name: string): string {
   return name.startsWith('@')
     ? `${ASSET_BASE}common/bgm/${name.slice(1)}.mp3`
-    : `${SCENARIO_BASE}${scenarioId}/bgm/${name}.mp3`;
+    : `${SCENARIO_BASE}${scenarioId}/bgm/${/\.[^/]+$/.test(name) ? name : `${name}.mp3`}`;
 }
 
 /** キャラクターの顔画像（性別_年齢_種族.png。imageSet が custom ならシナリオの chara/、それ以外は共通の画像） */

@@ -111,6 +111,8 @@ describe('asset paths', () => {
     expect(imageUrl('scepter', 'https://example.com/a.png')).toBe('https://example.com/a.png');
     expect(bgmUrl('scepter', '@field05')).toBe('/assets/common/bgm/field05.mp3');
     expect(bgmUrl('hero', 'hero-room')).toBe('/scenarios/hero/bgm/hero-room.mp3');
+    expect(bgmUrl('gods', 'village.m4a')).toBe('/scenarios/gods/bgm/village.m4a');
+    expect(bgmUrl('gods', 'ending.mp3')).toBe('/scenarios/gods/bgm/ending.mp3');
     expect(seUrl('slayer', 'hit')).toBe('/scenarios/slayer/bgm/se/hit.mp3');
     expect(seUrl('slayer', 'dice', true)).toBe('/assets/common/se/dice.mp3');
     expect(siteImageUrl('gallery/cute.jpg')).toBe('/assets/site/gallery/cute.jpg');

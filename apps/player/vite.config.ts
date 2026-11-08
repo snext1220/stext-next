@@ -16,6 +16,7 @@ const TYPES: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.gif': 'image/gif',
   '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
   '.md': 'text/markdown; charset=utf-8',
 };
 
