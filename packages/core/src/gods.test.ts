@@ -20,8 +20,8 @@ function choose(engine: Engine, step: Step, label: string, input?: string): Step
   return next;
 }
 
-function setup(scene: string, flags: string[] = []) {
-  const engine = createEngine(scenario, { random: () => 0 });
+function setup(scene: string, flags: string[] = [], random: () => number = () => 0) {
+  const engine = createEngine(scenario, { random });
   const initial = engine.start(emptyGlobalState());
   initial.state.flags.push(...flags);
   initial.state.chara.free1 = 2;
@@ -93,6 +93,77 @@ describe('新・天の神々たち', () => {
     expect(pot.state.chara.free2).toBe(18);
   });
 
+  it('lets the player infer the priest’s deceit from the villagers’ accounts', () => {
+    const incomplete = setup('100', ['f01', 'f02']);
+    const tavernBeforeMeetingThePriest = choose(incomplete.engine, incomplete.step, '酒場');
+    expect(
+      incomplete.engine
+        .view(tavernBeforeMeetingThePriest.state, tavernBeforeMeetingThePriest.global)
+        .choices.map((choice) => choice.label),
+    ).not.toContain('聞いた話を整理する');
+
+    const { engine, step: initial } = setup('100', ['f01', 'f02', 'f08']);
+    let step = choose(engine, initial, '酒場');
+    expect(step.state.scene).toBe('112');
+    expect(engine.view(step.state, step.global).markdown).toContain('人形まで巫女に渡した');
+    step = choose(engine, step, '聞いた話を整理する');
+    expect(step.state.scene).toBe('1181');
+
+    const answerChoice = engine
+      .view(step.state, step.global)
+      .choices.find((choice) => 'kind' in choice && choice.kind === 'answer');
+    if (!answerChoice) throw new Error('Missing village answer choice');
+    const incorrect = engine.choose(step.state, step.global, answerChoice.index, '酒場');
+    if (incorrect.kind !== 'moved') throw new Error(`Unexpected answer result: ${incorrect.kind}`);
+    expect(incorrect.state.scene).toBe('1182');
+
+    step = choose(engine, incorrect, '考え直す');
+    const retry = engine
+      .view(step.state, step.global)
+      .choices.find((choice) => 'kind' in choice && choice.kind === 'answer');
+    if (!retry) throw new Error('Missing village answer retry');
+    const correct = engine.choose(step.state, step.global, retry.index, '巫女');
+    if (correct.kind !== 'moved') throw new Error(`Unexpected answer result: ${correct.kind}`);
+    expect(correct.state.scene).toBe('1183');
+
+    const selfDelivery = choose(engine, correct, '自分で神々の庭園へ届ける');
+    expect(selfDelivery.state.scene).toBe('115');
+    expect(selfDelivery.state.chara.free1).toBe(7);
+    expect(selfDelivery.state.flags).toContain('f10');
+
+    const misplacedWine = choose(engine, correct, '巫女を信じて、葡萄酒を預ける');
+    expect(misplacedWine.state.isEnded).toBe(true);
+    expect(misplacedWine.global.results.gods).toContain('r05');
+  });
+
+  it('rewards reading the fish and uses dice to resolve a poor maneuver', () => {
+    const countEvades = (label: string) => {
+      let evades = 0;
+      for (let roll = 0; roll < 6; roll++) {
+        const run = setup('822', [], () => roll / 6);
+        if (choose(run.engine, run.step, label).state.scene === '824') evades++;
+      }
+      return evades;
+    };
+    expect(countEvades('魚影の反対へ、瓶を左に動かす')).toBe(5);
+    expect(countEvades('魚影へ、瓶を右に引き寄せる')).toBe(2);
+
+    const run = setup('820');
+    const step = follow(run.engine, run.step, [
+      '瓶を沈める',
+      '魚影の反対へ、瓶を左に動かす',
+      '次の魚に備える',
+      '魚影の反対へ、瓶を上に引く',
+      '次の魚に備える',
+      '魚影の反対へ、瓶を右に動かす',
+      '次の魚に備える',
+      '瓶を泉から引き上げる',
+    ]);
+    expect(step.state.scene).toBe('830');
+    expect(step.state.chara.free1).toBe(1);
+    expect(step.global.results.gods).toContain('r21');
+  });
+
   it('makes bottle damage more likely on the exposed mountain route', () => {
     const { step } = setup('205');
     const chara = { ...step.state.chara, dex: 6 };
@@ -110,6 +181,7 @@ describe('新・天の神々たち', () => {
     expect(average('m10')).toBeGreaterThan(1.5);
     expect(average('m15')).toBeGreaterThan(0.9);
     expect(average('m11')).toBeGreaterThan(2);
+    expect(average('m59')).toBeLessThan(average('m11'));
     expect(average('m18')).toBeGreaterThan(0.5);
   });
 
@@ -267,7 +339,7 @@ describe('新・天の神々たち', () => {
       '先へ進む',
       '＜赤い果実＞を採る',
       '逃げろ！',
-      '茂みに飛び込む',
+      '葉の茂みに身を隠す',
       '木の洞をくぐり抜ける',
       '虫の隙間を縫って全力疾走',
       '広間へ戻る',
@@ -295,6 +367,26 @@ describe('新・天の神々たち', () => {
     expect(step.state.scene).toBe('600');
     expect(step.state.items).toContain('i05');
     expect(step.global.results.gods).toContain('r46');
+  });
+
+  it('improves escape odds when the player follows clues or uses high dexterity', () => {
+    const countEscapes = (scene: string, label: string, dex?: number) => {
+      let escapes = 0;
+      for (let roll = 0; roll < 6; roll++) {
+        const run = setup(scene, [], () => roll / 6);
+        if (dex !== undefined) run.step.state.chara.dex = dex;
+        const result = choose(run.engine, run.step, label);
+        if (result.state.scene === '732' || result.state.scene === '738') {
+          escapes++;
+        }
+      }
+      return escapes;
+    };
+
+    expect(countEscapes('730', '葉の茂みに身を隠す')).toBe(5);
+    expect(countEscapes('730', '見通しのよい傾斜を駆け下りる')).toBe(3);
+    expect(countEscapes('734', '枝の裏側にぶら下がって、手繰って進む', 8)).toBe(6);
+    expect(countEscapes('734', '枝の裏側にぶら下がって、手繰って進む', 7)).toBe(2);
   });
 
   it('lets the player borrow the mirror again after returning it', () => {
@@ -381,19 +473,60 @@ describe('新・天の神々たち', () => {
     expect(engine.view(step.state, step.global).markdown).toContain('炎の種');
   });
 
-  it('requires the harp player to omit the human verse and reverse the final pair', () => {
+  it('gives progressive hints for both harp puzzles', () => {
     const { engine, step: initial } = setup('902');
     let step = choose(engine, initial, '', '4852');
     expect(step.state.scene).toBe('904');
     step = choose(engine, step, 'もう一度弾く');
+    expect(engine.view(step.state, step.global).markdown).toContain('人の子の弦は弾かない');
+    step = choose(engine, step, '', '8524');
+    expect(step.state.scene).toBe('904');
+    step = choose(engine, step, 'もう一度弾く');
+    expect(engine.view(step.state, step.global).markdown).toContain('山道の石像');
     step = choose(engine, step, '', '452');
     expect(step.state.scene).toBe('906');
-    const finale = setup('932');
+    const finale = setup('932', ['f20', 'f21', 'f22', 'f23', 'f24', 'f25']);
     step = choose(finale.engine, finale.step, '', '138456');
     expect(step.state.scene).toBe('934');
     step = choose(finale.engine, step, 'もう一度弾く');
+    expect(finale.engine.view(step.state, step.global).markdown).toContain(
+      '各行の主語から神を見つける',
+    );
+    step = choose(finale.engine, step, '', '138456');
+    expect(step.state.scene).toBe('934');
+    step = choose(finale.engine, step, 'もう一度弾く');
+    expect(finale.engine.view(step.state, step.global).markdown).toContain('呼び名と紋章');
+    expect(finale.engine.view(step.state, step.global).markdown).not.toContain('ノーネーム');
+    step = choose(finale.engine, step, '', '138456');
+    expect(step.state.scene).toBe('934');
+    step = choose(finale.engine, step, 'もう一度弾く');
+    expect(finale.engine.view(step.state, step.global).markdown).toContain('ノーネーム');
+    step = choose(finale.engine, step, '', '138456');
+    expect(step.state.scene).toBe('934');
+    step = choose(finale.engine, step, 'もう一度弾く');
+    expect(finale.engine.view(step.state, step.global).markdown).toContain('138465');
     step = choose(finale.engine, step, '', '138465');
     expect(step.state.scene).toBe('940');
+  });
+
+  it('lets the pot reduce bottle risks on the mountain routes', () => {
+    const rocky = setup('205');
+    rocky.step.state.items.push('i01');
+    const protectedRoute = choose(rocky.engine, rocky.step, '大鍋で瓶を包み、岩棚を慎重に進む');
+    expect(protectedRoute.state.scene).toBe('211');
+    expect(scenario.scenes.find((scene) => scene.id === '211')?.enemies).toEqual(['m15']);
+
+    const lizard = setup('225');
+    lizard.step.state.items.push('i01');
+    const lure = choose(lizard.engine, lizard.step, '大鍋で音を立て、岩トカゲを誘い出す');
+    expect(lure.state.scene).toBe('226');
+    expect(scenario.scenes.find((scene) => scene.id === '226')?.enemies).toEqual(['m14']);
+
+    const tornado = setup('240');
+    tornado.step.state.items.push('i01');
+    const deflected = choose(tornado.engine, tornado.step, '大鍋で背負い袋を覆い、風を受け流す');
+    expect(deflected.state.scene).toBe('244');
+    expect(scenario.scenes.find((scene) => scene.id === '244')?.enemies).toEqual(['m59']);
   });
 
   it('gives stars at optional encounters only once', () => {
