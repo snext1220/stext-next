@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { checkScenario, validateScenario } from '@stext/schema';
 import { describe, expect, it } from 'vitest';
-import { computeDamage, receiveAttack } from './battle.js';
+import { applyDrop, computeDamage, dropFor, receiveAttack, rollDice } from './battle.js';
 import { createEngine, type Engine, type Step } from './engine.js';
 import { emptyGlobalState } from './state.js';
 
@@ -48,6 +48,170 @@ describe('新・天の神々たち', () => {
         if ('label' in c) expect(c.label, scene.id).not.toMatch(/\bFREE(?:[123]|I{1,3})\b/i);
       }
     }
+  });
+
+  it('lets the player read optional hints and combine only the clues they found', () => {
+    const { engine, step: initial } = setup('1101');
+    let step = choose(engine, initial, '石板を読む');
+    step = choose(engine, step, '控え室を見回す');
+    expect(engine.view(step.state, step.global).choices.map((c) => c.label)).not.toContain(
+      '手掛かりを整理する',
+    );
+    step = choose(engine, step, '帳面を調べる');
+    const book = engine.view(step.state, step.global).markdown;
+    expect(book).toContain('stext-secret');
+    expect(book).toContain('橋は重みに預け、魚には影を見せよ');
+    step = follow(engine, step, ['控え室を見回す', '手掛かりを整理する']);
+    const summary = engine.view(step.state, step.global).markdown;
+    expect(summary).toContain('重りと留め具');
+    expect(summary).toContain('魚が光を追い');
+    expect(summary).not.toContain('博学の王');
+    step = engine.enterScene(step.state, step.global, '1130');
+    expect(engine.view(step.state, step.global).markdown).toContain(
+      '橋は重みに預け、魚には影を見せよ',
+    );
+  });
+
+  it('offers the ridge puzzle without blocking the old route or repeating statue rewards', () => {
+    const { engine, step: initial } = setup('270');
+    expect(engine.view(initial.state, initial.global).choices.map((c) => c.label)).toContain(
+      '先へ進む',
+    );
+    let step = choose(engine, initial, '二体の間の石板を調べる');
+    const jump = engine.view(step.state, step.global).choices.find((c) => c.kind === 'jump');
+    if (!jump) throw new Error('Missing ridge jump choice');
+    expect(engine.choose(step.state, step.global, jump.index, '303')).toMatchObject({
+      kind: 'rejected',
+      reason: 'notAllowed',
+    });
+    step = choose(engine, step, '', '302');
+    expect(engine.view(step.state, step.global).markdown).toContain('太陽の印');
+    step = follow(engine, step, ['尾根に戻る', '日輪を戴いた石像を調べる']);
+    const stars = [...step.state.stars];
+    step = follow(engine, step, ['尾根に戻る', '二体の間の石板を調べる']);
+    step = choose(engine, step, '', '301');
+    expect(step.state.flags).toContain('f90');
+    expect(engine.view(step.state, step.global).markdown).toContain('日輪は太陽の神フェリス');
+    step = follow(engine, step, ['尾根に戻る', '二体の間の石板を調べる']);
+    step = choose(engine, step, '', '301');
+    expect(step.state.stars).toEqual(stars);
+    step = engine.enterScene(step.state, step.global, '902');
+    step = choose(engine, step, '', 'wrong');
+    step = choose(engine, step, 'もう一度弾く');
+    expect(engine.view(step.state, step.global).markdown).toContain('日輪がフェリス');
+  });
+
+  it('uses the smith’s counted fasteners once at each optional mechanism', () => {
+    const { engine, step: initial } = setup('635', ['f42']);
+    let step = choose(engine, initial, '工房の小道具について尋ねる');
+    expect(step.state.params.pi13).toBe(2);
+    step = choose(engine, step, '広間へ戻る');
+    step = choose(engine, step, '鍛冶の神ペトスの工房');
+    expect(engine.view(step.state, step.global).choices.map((c) => c.label)).not.toContain(
+      '工房の小道具について尋ねる',
+    );
+    step = engine.enterScene(step.state, step.global, '1104');
+    step = choose(engine, step, '留め具で鎖を支え、重りを下ろす');
+    expect(step.state.params.pi13).toBe(1);
+    step = choose(engine, step, '重りを下ろす');
+    expect(step.state.scene).toBe('1110');
+    step.state.flags.push('f85');
+    step = engine.enterScene(step.state, step.global, '1130');
+    step = choose(engine, step, '留め具で東側の鏡を支える');
+    expect(step.state.params.pi13).toBe(0);
+    expect(step.state.items).not.toContain('i13');
+    step = choose(engine, step, '鏡の向きを選ぶ');
+    step = choose(engine, step, '鏡の表を東（日の方）に向ける');
+    expect(step.state.scene).toBe('1134');
+  });
+
+  it('consumes fasteners from the inventory and retains the ordinary bridge route', () => {
+    const { engine, step: initial } = setup('750');
+    const used = engine.useItem(initial.state, initial.global, 'i13');
+    expect(used.state.params.pi13).toBe(1);
+    const usedAgain = engine.useItem(used.state, used.global, 'i13');
+    expect(usedAgain.state.params.pi13).toBe(0);
+    expect(usedAgain.state.items).not.toContain('i13');
+    const bridge = engine.enterScene(usedAgain.state, usedAgain.global, '1104');
+    expect(engine.view(bridge.state, bridge.global).choices.map((c) => c.label)).toContain(
+      '重りを下ろす',
+    );
+  });
+
+  it('allows avoiding the guardian and taking its item drop only after combat', () => {
+    const { engine, step: initial } = setup('220');
+    let step = follow(engine, initial, ['岩陰に残された道具を調べる', '道具は諦めて山道へ戻る']);
+    expect(step.state.flags).not.toContain('f91');
+    step = follow(engine, step, ['岩陰に残された道具を調べる', '妖と戦って道具を取り戻す']);
+    const enemy = scenario.enemies.find((e) => e.id === 'm60');
+    if (!enemy) throw new Error('Missing guardian');
+    expect(step.state.items).not.toContain('i14');
+    const drop = dropFor(() => 0, enemy);
+    expect(drop?.drop).toBe('item/i14/旅人の薬草');
+    applyDrop(engine.effectContext(step.state, step.global, []), drop!.drop);
+    expect(step.state.items).toContain('i14');
+    step = choose(engine, step, '妖を撃退して山道へ戻る');
+    step = engine.enterScene(step.state, step.global, '220');
+    expect(engine.view(step.state, step.global).choices.map((c) => c.label)).not.toContain(
+      '岩陰に残された道具を調べる',
+    );
+  });
+
+  it('uses two eight-sided dice for a harmless fortune with all sums covered', () => {
+    const { engine, step: initial } = setup('690', ['f52']);
+    const step = choose(engine, initial, '杯占いを頼む');
+    const view = engine.view(step.state, step.global);
+    expect(view.dice).toBe('8:2');
+    expect(view.enemies.map((e) => e.id)).toEqual(['m61']);
+    const counts = [0, 0, 0];
+    for (let left = 0; left < 8; left++) {
+      for (let right = 0; right < 8; right++) {
+        const values = [left / 8, right / 8];
+        const dice = rollDice(() => values.shift()!, view.dice).values;
+        const sum = dice[0]! + dice[1]!;
+        counts[sum <= 7 ? 0 : sum <= 11 ? 1 : 2]!++;
+      }
+    }
+    expect(counts).toEqual([21, 28, 15]);
+    for (const label of ['合計が2〜7', '合計が8〜11', '合計が12〜16']) {
+      const result = choose(engine, step, label);
+      expect(result.state.stars).toEqual(step.state.stars);
+      expect(result.state.items).toEqual(step.state.items);
+      expect(choose(engine, result, 'デュオンの部屋へ戻る').state.scene).toBe('690');
+    }
+  });
+
+  it('adapts rest, greetings, previous achievements and the ending share text', () => {
+    const { engine, step: initial } = setup('758');
+    expect(engine.view(initial.state, initial.global).markdown).toContain('星はまだ遠い');
+    expect(engine.view(initial.state, initial.global).choices.map((c) => c.label)).not.toContain(
+      '星を眺める',
+    );
+    initial.state.stars[0] = 1;
+    let step = choose(engine, initial, '星を眺める');
+    step = choose(engine, step, '休息所へ戻る');
+    expect(step.state.stars[0]).toBe(1);
+    expect(engine.view(step.state, step.global).choices.map((c) => c.label)).not.toContain(
+      '星を眺める',
+    );
+    step = engine.enterScene(step.state, step.global, '119');
+    expect(engine.view(step.state, step.global).markdown).not.toContain('${name}');
+    step = engine.enterScene(step.state, step.global, '1040');
+    expect(engine.view(step.state, step.global).choices.map((c) => c.label)).not.toContain(
+      'これまでの旅の記録を振り返る',
+    );
+    step.global.results.gods = ['r36'];
+    step = choose(engine, step, 'これまでの旅の記録を振り返る');
+    expect(step.state.scene).toBe('759');
+    const totalsEngine = createEngine(scenario, {
+      random: () => 0,
+      scenarioResults: () => ({ count: 1, all: 54 }),
+    });
+    expect(totalsEngine.view(step.state, step.global).markdown).toContain(
+      '実績は 1 個、達成率は 1％',
+    );
+    const ending = engine.enterScene(step.state, step.global, '1080');
+    expect(engine.view(ending.state, ending.global).tweet).toContain('麓の村に朝を取り戻した');
   });
 
   it('uses the original mountain monster and places rare meteors in heaven', () => {

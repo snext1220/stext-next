@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createEngine, emptyGlobalState } from '@stext/core';
-import type { Scenario } from '@stext/schema';
+import { validateScenario, type Scenario } from '@stext/schema';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioDirector } from '../audio.js';
@@ -69,6 +71,76 @@ function renderPlay() {
   );
   return { ...result, scroll, onSettings };
 }
+
+describe('gods feature demonstrations', () => {
+  function renderGods(sceneId: string) {
+    const data: unknown = JSON.parse(
+      readFileSync(resolve('scenarios', 'gods', 'scenario.json'), 'utf8'),
+    );
+    const result = validateScenario(data);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+    const global = emptyGlobalState();
+    const engine = createEngine(result.scenario);
+    const initial = engine.start(global);
+    const step = engine.enterScene(initial.state, initial.global, sceneId);
+    if (sceneId === '305') step.state.chara.str = 20;
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <Play
+        id="gods"
+        scenario={result.scenario}
+        initial={step.state}
+        global={step.global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+  }
+
+  it('reveals and hides the bridge keeper’s optional hint', () => {
+    renderGods('1103');
+    const hint = screen.getByRole('button', { name: '伏せ字（タップで表示）' });
+    expect(hint.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(hint);
+    expect(hint.getAttribute('aria-pressed')).toBe('true');
+    expect(hint.textContent).toContain('泉のどちら側');
+    fireEvent.click(hint);
+    expect(hint.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('accepts a wrong ridge number and allows trying the right one', () => {
+    renderGods('300');
+    fireEvent.change(screen.getByLabelText('移動する番号'), { target: { value: '302' } });
+    fireEvent.click(screen.getByRole('button', { name: '移動する' }));
+    expect(screen.getByText(/石板は静かなままだ/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /もう一度石板を調べる/ }));
+    fireEvent.change(screen.getByLabelText('移動する番号'), { target: { value: '301' } });
+    fireEvent.click(screen.getByRole('button', { name: '移動する' }));
+    expect(screen.getByText(/日輪は太陽の神フェリス/)).toBeTruthy();
+  });
+
+  it('shows two eight-sided dice and the fortune choices', () => {
+    renderGods('753');
+    expect(screen.getByText(/二つの目の合計/)).toBeTruthy();
+    expect(document.querySelectorAll('.dice .die')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: /合計が12〜16/ }));
+    expect(screen.getByText(/遠い星、だな/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /デュオンの部屋へ戻る/ }));
+    expect(screen.getByRole('button', { name: /杯占いを頼む/ })).toBeTruthy();
+  });
+
+  it('lets the player defeat the guardian and claim its item from the battle sheet', () => {
+    renderGods('305');
+    fireEvent.click(screen.getByRole('button', { name: '攻撃する' }));
+    expect(screen.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: '戦利品：旅人の薬草' }));
+    expect(screen.getByRole('button', { name: '旅人の薬草（取得済み）' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /妖を撃退して山道へ戻る/ }));
+    expect(screen.getByText(/石像の並ぶ山道/)).toBeTruthy();
+  });
+});
 
 describe('scene scrolling', () => {
   it('refuses a missing scene without replacing the current autosave', async () => {
