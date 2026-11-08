@@ -19,14 +19,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { NODE_WIDTH } from './layout.js';
 import { toGraph, type GraphNode } from './model.js';
 
-type SceneNodeData = Record<string, unknown> & GraphNode & { selected: boolean; problems: number };
+type SceneNodeData = Record<string, unknown> &
+  GraphNode & { selected: boolean; playing: boolean; problems: number };
 
 const END_LABEL = { happy: 'HAPPY', bad: 'BAD', good: 'GOOD' } as const;
 
 function SceneNode({ data }: NodeProps<Node<SceneNodeData>>) {
   return (
     <div
-      className={`flow-node${data.end ? ` end-${data.end}` : ''}${data.selected ? ' is-selected' : ''}`}
+      className={`flow-node${data.end ? ` end-${data.end}` : ''}${data.selected ? ' is-selected' : ''}${data.playing ? ' is-playing' : ''}`}
+      aria-current={data.playing ? 'step' : undefined}
       style={{ width: NODE_WIDTH, ...(data.color ? { borderLeftColor: data.color } : {}) }}
     >
       <Handle type="target" position={Position.Left} />
@@ -50,6 +52,7 @@ const nodeTypes = { scene: SceneNode };
 export interface FlowViewProps {
   scenario: Scenario;
   selected: string | undefined;
+  playingScene?: string | undefined;
   focusRequest?: { id: string } | undefined;
   /** シーン ID ごとの問題の数 */
   problems: ReadonlyMap<string, number>;
@@ -61,6 +64,7 @@ export interface FlowViewProps {
 export function FlowView({
   scenario,
   selected,
+  playingScene,
   focusRequest,
   problems,
   onSelect,
@@ -69,12 +73,17 @@ export function FlowView({
 }: FlowViewProps) {
   const [flow, setFlow] = useState<ReactFlowInstance<Node<SceneNodeData>, Edge> | null>(null);
   useEffect(() => {
-    if (focusRequest)
-      void flow?.fitView({
-        nodes: [{ id: focusRequest.id }],
-        maxZoom: 1,
-        padding: 0.5,
-      });
+    if (!flow || !focusRequest) return;
+    const frame = requestAnimationFrame(() => {
+      const node = flow.getInternalNode(focusRequest.id);
+      if (!node) return;
+      void flow.setCenter(
+        node.internals.positionAbsolute.x + (node.measured.width ?? NODE_WIDTH) / 2,
+        node.internals.positionAbsolute.y + (node.measured.height ?? 48) / 2,
+        { zoom: flow.getZoom(), duration: 250 },
+      );
+    });
+    return () => cancelAnimationFrame(frame);
   }, [flow, focusRequest]);
   const [lightweight] = useState(() => {
     const ua = navigator.userAgent;
@@ -90,7 +99,12 @@ export function FlowView({
       id: n.id,
       type: 'scene',
       position: n.position ?? { x: (i % 6) * 220, y: Math.floor(i / 6) * 100 },
-      data: { ...n, selected: n.id === selected, problems: problems.get(n.id) ?? 0 },
+      data: {
+        ...n,
+        selected: n.id === selected,
+        playing: n.id === playingScene,
+        problems: problems.get(n.id) ?? 0,
+      },
     }));
   const [nodes, setNodes] = useState(toNodes);
   // 大きなシナリオでも最初は読める大きさで始める（最初のシーンに近いものだけを画面に収める）
@@ -101,7 +115,7 @@ export function FlowView({
   });
   // シナリオが変わったら作り直す（ドラッグ中の位置はこのコンポーネントの中で持つ）
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setNodes(toNodes()), [graph, selected, problems]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => setNodes(toNodes()), [graph, selected, playingScene, problems]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const edges: Edge[] = useMemo(
     () =>

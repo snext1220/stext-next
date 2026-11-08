@@ -1,4 +1,6 @@
+// @vitest-environment jsdom
 import { ReactFlow, MarkerType, type ReactFlowProps } from '@xyflow/react';
+import { act, render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FlowView } from './FlowView.js';
@@ -60,6 +62,7 @@ describe('FlowView', () => {
         <FlowView
           scenario={scenario}
           selected="0"
+          playingScene="10"
           problems={new Map()}
           onSelect={vi.fn()}
           onMove={vi.fn()}
@@ -69,6 +72,8 @@ describe('FlowView', () => {
 
       const props = vi.mocked(ReactFlow).mock.calls.at(-1)![0];
       expect(props.nodes).toHaveLength(3);
+      expect(props.nodes?.find((node) => node.id === '10')?.data.playing).toBe(true);
+      expect(props.nodes?.find((node) => node.id === '0')?.data.playing).toBe(false);
       expect(props.edges).toHaveLength(7);
       for (const [index, edge] of props.edges!.entries()) {
         const original = graph.edges[index]!;
@@ -85,4 +90,58 @@ describe('FlowView', () => {
       expect(props.onlyRenderVisibleElements).toBe(lightweight);
     },
   );
+
+  it('centers the requested scene after initialization and scene changes', () => {
+    let frameCallback: FrameRequestCallback | undefined;
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      (callback: FrameRequestCallback) => ((frameCallback = callback), 1),
+    );
+    const flow = {
+      getInternalNode: vi.fn((id: string) => ({
+        internals: { positionAbsolute: { x: id === '10' ? 100 : 400, y: 500 } },
+        measured: { width: 200, height: 60 },
+      })),
+      getZoom: vi.fn(() => 0.75),
+      setCenter: vi.fn(),
+      fitView: vi.fn(),
+    };
+    const scenario = emptyScenario();
+    scenario.scenes = [
+      { id: '10', text: '', choices: [] },
+      { id: '20', text: '', choices: [] },
+    ];
+
+    const { rerender } = render(
+      <FlowView
+        scenario={scenario}
+        selected="10"
+        focusRequest={{ id: '10' }}
+        problems={new Map()}
+        onSelect={vi.fn()}
+        onMove={vi.fn()}
+        onConnect={vi.fn()}
+      />,
+    );
+
+    const props = vi.mocked(ReactFlow).mock.calls.at(-1)![0];
+    act(() => props.onInit?.(flow as never));
+    act(() => frameCallback?.(0));
+    expect(flow.setCenter).toHaveBeenLastCalledWith(200, 530, { zoom: 0.75, duration: 250 });
+
+    rerender(
+      <FlowView
+        scenario={scenario}
+        selected="20"
+        focusRequest={{ id: '20' }}
+        problems={new Map()}
+        onSelect={vi.fn()}
+        onMove={vi.fn()}
+        onConnect={vi.fn()}
+      />,
+    );
+    act(() => frameCallback?.(0));
+
+    expect(flow.setCenter).toHaveBeenLastCalledWith(500, 530, { zoom: 0.75, duration: 250 });
+  });
 });

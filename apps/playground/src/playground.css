@@ -159,6 +159,11 @@ body {
   outline: 2px solid var(--gold-bright);
   outline-offset: 2px;
 }
+.flow-node.is-playing {
+  box-shadow:
+    0 0 0 3px var(--good),
+    0 2px 6px rgba(20, 12, 2, 0.25);
+}
 .flow-node.end-happy {
   border-left-color: var(--good);
 }
@@ -553,35 +558,71 @@ body {
 .pg-play-setup {
   border: 1px solid var(--desk-line);
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 0 10px 10px;
+  background: var(--desk-2);
 }
 .pg-play-setup summary {
   cursor: pointer;
   font-size: var(--step--1);
+  font-weight: 700;
+  padding: 10px 0;
 }
-.pg-play-setup fieldset {
+.pg-play-setup[open] summary {
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--desk-line);
+}
+.pg-play-setup-head {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px 12px;
-  margin: 8px 0;
+}
+.pg-play-setup-head .pg-hint {
+  margin: 0;
+}
+.pg-play-setup-head button {
+  flex: none;
+}
+.pg-play-setup fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9em, 1fr));
+  gap: 8px 12px;
+  margin: 10px 0 0;
   border: 0;
   border-top: 1px solid var(--desk-line);
-  padding: 8px 0 0;
+  padding: 10px 0 0;
 }
 .pg-play-setup legend {
   padding: 0 6px 0 0;
   color: var(--on-desk-soft);
   font-size: var(--step--1);
+  font-weight: 700;
 }
-.pg-play-setup label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.pg-play-setup .pg-check {
+  min-width: 0;
   font-size: var(--step--1);
 }
-.pg-play-setup input[type='number'],
-.pg-play-setup input[type='text'] {
-  width: 100px;
+.pg-play-setup .pg-check input {
+  flex: none;
+}
+.pg-play-setup-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  color: var(--on-desk-soft);
+  font-size: var(--step--1);
+}
+.pg-play-setup-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--desk-line);
+  border-radius: 6px;
+  background: var(--desk);
+  color: var(--on-desk);
+  font: inherit;
 }
 .pg-play-status summary {
   cursor: pointer;

@@ -2,8 +2,9 @@
 import { emptyGlobalState, GLOBAL_SAVE_KEY } from '@stext/core';
 import type { Scenario } from '@stext/schema';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TestPlay } from './TestPlay.js';
+import { emptyPreviewStartOverrides, TestPlay } from './TestPlay.js';
 
 const scenario: Scenario = {
   format: 'stext/2',
@@ -46,8 +47,28 @@ const stateScenario: Scenario = {
   ],
 };
 
-beforeEach(() => localStorage.clear());
-afterEach(cleanup);
+function playProps(scenario: Scenario) {
+  return {
+    scenario,
+    startScene: undefined,
+    onSceneChange: vi.fn(),
+    startOverrides: emptyPreviewStartOverrides(scenario),
+    onStartOverridesChange: vi.fn(),
+    onClearStartOverrides: vi.fn(),
+    resourceUrls: {},
+    scenarioResultTotals: new Map<string, number>(),
+    scenarioIndexError: null,
+  };
+}
+
+beforeEach(() => {
+  localStorage.clear();
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe('TestPlay', () => {
   it('uses saved player achievements without persisting preview progress', async () => {
@@ -58,15 +79,7 @@ describe('TestPlay', () => {
     const saved = JSON.stringify(savedGlobal);
     localStorage.setItem(GLOBAL_SAVE_KEY, saved);
 
-    render(
-      <TestPlay
-        scenario={scenario}
-        startScene={undefined}
-        resourceUrls={{}}
-        scenarioResultTotals={new Map([['past', 4]])}
-        scenarioIndexError={null}
-      />,
-    );
+    render(<TestPlay {...playProps(scenario)} scenarioResultTotals={new Map([['past', 4]])} />);
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
 
     await waitFor(() => expect(screen.getByText('2:50')).toBeTruthy());
@@ -74,15 +87,21 @@ describe('TestPlay', () => {
   });
 
   it('uses the selected items, flags, parameters, and stars when starting a preview', () => {
-    render(
-      <TestPlay
-        scenario={stateScenario}
-        startScene={undefined}
-        resourceUrls={{}}
-        scenarioResultTotals={new Map()}
-        scenarioIndexError={null}
-      />,
-    );
+    function StatefulTestPlay() {
+      const [startOverrides, setStartOverrides] = useState(() =>
+        emptyPreviewStartOverrides(stateScenario),
+      );
+      const [callbacks] = useState(() => playProps(stateScenario));
+      return (
+        <TestPlay
+          {...callbacks}
+          startOverrides={startOverrides}
+          onStartOverridesChange={setStartOverrides}
+          onClearStartOverrides={() => setStartOverrides(emptyPreviewStartOverrides(stateScenario))}
+        />
+      );
+    }
+    render(<StatefulTestPlay />);
     fireEvent.click(screen.getByLabelText('試遊アイテム 鍵'));
     fireEvent.click(screen.getByLabelText('試遊フラグ f01'));
     fireEvent.change(screen.getByLabelText('試遊パラメーター p01'), {
@@ -92,6 +111,50 @@ describe('TestPlay', () => {
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
 
     expect(screen.getByRole('button', { name: /条件を満たした分岐/ })).toBeTruthy();
+  });
+
+  it('keeps start overrides across preview unmounts and clears them on request', () => {
+    function StatefulPreview() {
+      const [startOverrides, setStartOverrides] = useState(() =>
+        emptyPreviewStartOverrides(stateScenario),
+      );
+      const [visible, setVisible] = useState(true);
+      const [callbacks] = useState(() => playProps(stateScenario));
+      return (
+        <>
+          <button type="button" onClick={() => setVisible((current) => !current)}>
+            試遊タブ切り替え
+          </button>
+          {visible && (
+            <TestPlay
+              {...callbacks}
+              startOverrides={startOverrides}
+              onStartOverridesChange={setStartOverrides}
+              onClearStartOverrides={() =>
+                setStartOverrides(emptyPreviewStartOverrides(stateScenario))
+              }
+            />
+          )}
+        </>
+      );
+    }
+
+    render(<StatefulPreview />);
+    fireEvent.click(screen.getByLabelText('試遊アイテム 鍵'));
+    fireEvent.change(screen.getByLabelText('試遊パラメーター p01'), {
+      target: { value: '7' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+
+    expect((screen.getByLabelText('試遊アイテム 鍵') as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText('試遊パラメーター p01') as HTMLInputElement).value).toBe('7');
+
+    fireEvent.click(screen.getByText('試遊の開始状態を指定'));
+    fireEvent.click(screen.getByRole('button', { name: '状態をクリア' }));
+
+    expect((screen.getByLabelText('試遊アイテム 鍵') as HTMLInputElement).checked).toBe(false);
+    expect((screen.getByLabelText('試遊パラメーター p01') as HTMLInputElement).value).toBe('0');
   });
 
   it('shows scene summaries and custom character images in the preview', () => {
@@ -107,11 +170,8 @@ describe('TestPlay', () => {
     };
     const { container } = render(
       <TestPlay
-        scenario={summaryScenario}
-        startScene={undefined}
+        {...playProps(summaryScenario)}
         resourceUrls={{ 'chara/male_adult_fighter.png': 'blob:custom-portrait' }}
-        scenarioResultTotals={new Map()}
-        scenarioIndexError={null}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
@@ -136,15 +196,7 @@ describe('TestPlay', () => {
       ],
     };
     const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
-    render(
-      <TestPlay
-        scenario={randomScenario}
-        startScene={undefined}
-        resourceUrls={{}}
-        scenarioResultTotals={new Map()}
-        scenarioIndexError={null}
-      />,
-    );
+    render(<TestPlay {...playProps(randomScenario)} />);
 
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
     fireEvent.click(screen.getByRole('button', { name: /運試し/ }));
@@ -154,5 +206,48 @@ describe('TestPlay', () => {
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
     fireEvent.click(screen.getByRole('button', { name: /運試し/ }));
     expect(screen.getByText('分岐2')).toBeTruthy();
+  });
+
+  it('reports the current scene while playing', async () => {
+    const onSceneChange = vi.fn();
+    const playableScenario: Scenario = {
+      ...stateScenario,
+      scenes: [
+        { id: '0', text: '開始', choices: [{ label: '次へ', to: ['1'] }] },
+        { id: '1', text: '到着', choices: [] },
+      ],
+    };
+    render(<TestPlay {...playProps(playableScenario)} onSceneChange={onSceneChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    await waitFor(() => expect(onSceneChange).toHaveBeenLastCalledWith('0'));
+
+    fireEvent.click(screen.getByRole('button', { name: /次へ/ }));
+    await waitFor(() => expect(onSceneChange).toHaveBeenLastCalledWith('1'));
+  });
+
+  it('scrolls to the top after moving to the next scene', () => {
+    const scrollTo = vi.mocked(window.scrollTo);
+    const playableScenario: Scenario = {
+      ...stateScenario,
+      scenes: [
+        { id: '0', text: '開始', choices: [{ label: '次へ', to: ['1'] }] },
+        { id: '1', text: '到着', choices: [] },
+      ],
+    };
+    const { container } = render(
+      <div className="pg-side-body">
+        <TestPlay {...playProps(playableScenario)} />
+      </div>,
+    );
+    const panel = container.querySelector<HTMLElement>('.pg-side-body')!;
+    panel.scrollTop = 120;
+
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    scrollTo.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /次へ/ }));
+
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
+    expect(panel.scrollTop).toBe(0);
   });
 });

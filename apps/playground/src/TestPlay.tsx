@@ -9,20 +9,20 @@ import {
 } from '@stext/core';
 import type { Scenario } from '@stext/schema';
 import { ChoiceList, HeroPanel, SceneText, createCookieRandomCache } from '@stext/ui';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { bgmUrl, charaImageUrl, imageUrl, seUrl } from './config.js';
 import { localAudioPath } from './resources.js';
 
 const STAR_NAMES = ['月', '火星', '水星', '木星', '金星', '土星', '太陽'];
 
-interface StartOverrides {
+export interface PreviewStartOverrides {
   items: string[];
   flags: string[];
   params: Record<string, string>;
   stars: string[];
 }
 
-function emptyStartOverrides(scenario: Scenario): StartOverrides {
+export function emptyPreviewStartOverrides(scenario: Scenario): PreviewStartOverrides {
   return {
     items: [],
     flags: [],
@@ -42,25 +42,25 @@ function emptyStartOverrides(scenario: Scenario): StartOverrides {
 export function TestPlay({
   scenario,
   startScene,
+  onSceneChange,
+  startOverrides,
+  onStartOverridesChange,
+  onClearStartOverrides,
   resourceUrls,
   scenarioResultTotals,
   scenarioIndexError,
 }: {
   scenario: Scenario;
   startScene: string | undefined;
+  onSceneChange: (scene: string | undefined) => void;
+  startOverrides: PreviewStartOverrides;
+  onStartOverridesChange: (overrides: PreviewStartOverrides) => void;
+  onClearStartOverrides: () => void;
   resourceUrls: Readonly<Record<string, string>>;
   scenarioResultTotals: ReadonlyMap<string, number> | null;
   scenarioIndexError: string | null;
 }) {
   const [playerGlobal, setPlayerGlobal] = useState<GlobalState>(() => emptyGlobalState());
-  const scenarioKey = scenario.meta.id ?? scenario.meta.title;
-  const [draft, setDraft] = useState(() => ({
-    scenarioKey,
-    overrides: emptyStartOverrides(scenario),
-  }));
-  const overrides =
-    draft.scenarioKey === scenarioKey ? draft.overrides : emptyStartOverrides(scenario);
-  const setOverrides = (next: StartOverrides) => setDraft({ scenarioKey, overrides: next });
   const engine = useMemo(
     () =>
       createEngine(scenario, {
@@ -77,7 +77,23 @@ export function TestPlay({
   const [run, setRun] = useState<{ state: GameState; global: GlobalState; log: string[] } | null>(
     null,
   );
+  const playRef = useRef<HTMLDivElement>(null);
+  const pendingSceneScroll = useRef(false);
   const [error, setError] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    if (!pendingSceneScroll.current) return;
+    pendingSceneScroll.current = false;
+    const scrollPanel = playRef.current?.closest<HTMLElement>('.pg-side-body');
+    if (scrollPanel) scrollPanel.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [run]);
+
+  useEffect(() => {
+    const scene = run?.state.scene;
+    onSceneChange(scene === undefined ? undefined : String(scene));
+  }, [onSceneChange, run?.state.scene]);
+  useEffect(() => () => onSceneChange(undefined), [onSceneChange]);
 
   const describe = useCallback(
     (events: GameEvent[]) =>
@@ -101,10 +117,10 @@ export function TestPlay({
       const character = engine.newCharacter(global);
       const itemIds = new Set(scenario.items.map((item) => item.id));
       const flagIds = new Set(scenario.flags.map((flag) => flag.id));
-      character.items = overrides.items.filter((id) => itemIds.has(id));
-      character.flags = overrides.flags.filter((id) => flagIds.has(id));
+      character.items = startOverrides.items.filter((id) => itemIds.has(id));
+      character.flags = startOverrides.flags.filter((id) => flagIds.has(id));
       for (const param of scenario.params) {
-        const value = overrides.params[param.id]?.trim() ?? '';
+        const value = startOverrides.params[param.id]?.trim() ?? '';
         if (!value) continue;
         if (
           typeof param.initial === 'number' ||
@@ -120,7 +136,7 @@ export function TestPlay({
         }
       }
       character.stars = character.stars.map((initial, index) => {
-        const value = overrides.stars[index]?.trim() ?? '';
+        const value = startOverrides.stars[index]?.trim() ?? '';
         if (!value) return initial;
         const number = Number(value);
         if (!Number.isFinite(number) || number < 0)
@@ -171,13 +187,14 @@ export function TestPlay({
   const choose = (index: number, input?: string) => {
     if (!run) return;
     const r = engine.choose(run.state, run.global, index, input);
-    if (r.kind === 'moved')
+    if (r.kind === 'moved') {
+      pendingSceneScroll.current = true;
       setRun({
         state: r.state,
         global: r.global,
         log: [...describe(r.events), ...run.log].slice(0, 30),
       });
-    else if (r.kind === 'back')
+    } else if (r.kind === 'back')
       setRun({ ...run, log: ['「戻る」：試遊では直前に戻れません', ...run.log] });
     else
       setRun({
@@ -195,7 +212,7 @@ export function TestPlay({
   };
 
   return (
-    <div className="pg-play">
+    <div ref={playRef} className="pg-play">
       <div className="pg-toolbar">
         <button type="button" onClick={() => start()}>
           最初から試遊
@@ -208,24 +225,29 @@ export function TestPlay({
       </div>
       <details className="pg-play-setup">
         <summary>試遊の開始状態を指定</summary>
-        <p className="pg-hint">
-          ここで指定した状態でシーン0から開始し、選択中のシーンがあれば続けて移動します。
-        </p>
+        <div className="pg-play-setup-head">
+          <p className="pg-hint">
+            ここで指定した状態でシーン0から開始し、選択中のシーンがあれば続けて移動します。
+          </p>
+          <button type="button" onClick={onClearStartOverrides}>
+            状態をクリア
+          </button>
+        </div>
         {scenario.items.length > 0 && (
           <fieldset>
             <legend>アイテム</legend>
             {scenario.items.map((item) => (
-              <label key={item.id}>
+              <label key={item.id} className="pg-check">
                 <input
                   type="checkbox"
                   aria-label={`試遊アイテム ${item.name}`}
-                  checked={overrides.items.includes(item.id)}
+                  checked={startOverrides.items.includes(item.id)}
                   onChange={(event) =>
-                    setOverrides({
-                      ...overrides,
+                    onStartOverridesChange({
+                      ...startOverrides,
                       items: event.target.checked
-                        ? [...overrides.items, item.id]
-                        : overrides.items.filter((id) => id !== item.id),
+                        ? [...startOverrides.items, item.id]
+                        : startOverrides.items.filter((id) => id !== item.id),
                     })
                   }
                 />
@@ -238,17 +260,17 @@ export function TestPlay({
           <fieldset>
             <legend>フラグ</legend>
             {scenario.flags.map((flag) => (
-              <label key={flag.id}>
+              <label key={flag.id} className="pg-check">
                 <input
                   type="checkbox"
                   aria-label={`試遊フラグ ${flag.id}`}
-                  checked={overrides.flags.includes(flag.id)}
+                  checked={startOverrides.flags.includes(flag.id)}
                   onChange={(event) =>
-                    setOverrides({
-                      ...overrides,
+                    onStartOverridesChange({
+                      ...startOverrides,
                       flags: event.target.checked
-                        ? [...overrides.flags, flag.id]
-                        : overrides.flags.filter((id) => id !== flag.id),
+                        ? [...startOverrides.flags, flag.id]
+                        : startOverrides.flags.filter((id) => id !== flag.id),
                     })
                   }
                 />
@@ -261,7 +283,7 @@ export function TestPlay({
           <fieldset>
             <legend>パラメーター</legend>
             {scenario.params.map((param) => (
-              <label key={param.id}>
+              <label key={param.id} className="pg-play-setup-field">
                 {param.text || param.id}（{param.id}）
                 <input
                   type={
@@ -273,11 +295,11 @@ export function TestPlay({
                   }
                   step="any"
                   aria-label={`試遊パラメーター ${param.id}`}
-                  value={overrides.params[param.id] ?? ''}
+                  value={startOverrides.params[param.id] ?? ''}
                   onChange={(event) =>
-                    setOverrides({
-                      ...overrides,
-                      params: { ...overrides.params, [param.id]: event.target.value },
+                    onStartOverridesChange({
+                      ...startOverrides,
+                      params: { ...startOverrides.params, [param.id]: event.target.value },
                     })
                   }
                 />
@@ -288,18 +310,18 @@ export function TestPlay({
         <fieldset>
           <legend>星</legend>
           {STAR_NAMES.map((name, index) => (
-            <label key={name}>
+            <label key={name} className="pg-play-setup-field">
               {name}
               <input
                 type="number"
                 min="0"
                 step="any"
                 aria-label={`試遊の星 ${name}`}
-                value={overrides.stars[index] ?? ''}
+                value={startOverrides.stars[index] ?? ''}
                 onChange={(event) =>
-                  setOverrides({
-                    ...overrides,
-                    stars: overrides.stars.map((value, i) =>
+                  onStartOverridesChange({
+                    ...startOverrides,
+                    stars: startOverrides.stars.map((value, i) =>
                       i === index ? event.target.value : value,
                     ),
                   })
