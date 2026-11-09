@@ -1,3 +1,4 @@
+import { ImagePreview } from '@stext/ui';
 import { siteImageUrl } from '../config.js';
 import { DocPage, DocSheet, ExtLink } from './Doc.js';
 
@@ -66,7 +67,7 @@ export function Recruit() {
       <DocSheet seed={67}>
         {RECRUITS.map((r) => (
           <article key={r.title} className={'recruit' + (r.closed ? ' closed' : '')}>
-            <img src={siteImageUrl(r.banner)} alt="" width={660} height={80} loading="lazy" />
+            <ImagePreview src={siteImageUrl(r.banner)} alt={r.title} width={660} height={80} />
             <h3>
               {r.title}
               {r.closed && <span className="pill">募集終了</span>}

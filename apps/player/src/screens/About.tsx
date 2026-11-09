@@ -1,3 +1,4 @@
+import { ImagePreview } from '@stext/ui';
 import { siteImageUrl } from '../config.js';
 import { MANUALS, REPOSITORY } from '../links.js';
 import { href } from '../router.js';
@@ -91,8 +92,9 @@ export function About({ section }: { section?: string }) {
           ゲームのタイトルの「ソーサリアン」とは、ペンタウァの町に集う冒険大好きマン（ウーマン）のことだったのです。
         </p>
         <h3>ソーサリアンってどんな人？</h3>
-        <img
+        <ImagePreview
           className="doc-float"
+          triggerClassName="doc-float"
           src={siteImageUrl('gallery/dragon.png')}
           alt="ドラゴンモード開始！（ときのじさんのイラスト）"
           loading="lazy"

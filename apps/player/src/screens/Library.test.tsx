@@ -99,6 +99,7 @@ describe('Library', () => {
     expect(screen.queryByText('開発用テスト')).toBeNull();
     expect(books[0]!.querySelector('.scenario-v2-mark')!.textContent).toBe('［純正］');
     expect(books[1]!.querySelector('.scenario-v2-mark')).toBeNull();
+    expect(books[0]!.querySelector('.image-preview-trigger')).toBeNull();
     expect(books[0]!.querySelector('img')!.getAttribute('src')).toMatch(
       /scepter\/capture\/intro\.png$/,
     );

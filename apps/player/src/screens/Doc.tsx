@@ -1,4 +1,4 @@
-import { Parchment } from '@stext/ui';
+import { ImagePreview, Parchment } from '@stext/ui';
 import type { ReactNode } from 'react';
 import { useSectionScroll } from '../router.js';
 
@@ -88,7 +88,7 @@ export function ExtLink({ href: url, children }: { href: string; children: React
   );
 }
 
-/** 画像を並べる。押すと元の大きさの画像を新しいタブで開く */
+/** 画像を並べる。押すと拡大表示する */
 export function Figures({
   items,
   className = 'figure-grid',
@@ -100,9 +100,7 @@ export function Figures({
     <ul className={className}>
       {items.map((f) => (
         <li key={f.src}>
-          <a href={f.src} target="_blank" rel="noopener noreferrer">
-            <img src={f.src} alt={f.caption} loading="lazy" />
-          </a>
+          <ImagePreview src={f.src} alt={f.caption} />
           <span>{f.caption}</span>
         </li>
       ))}

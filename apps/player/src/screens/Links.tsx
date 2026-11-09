@@ -1,3 +1,4 @@
+import { ImagePreview } from '@stext/ui';
 import { siteImageUrl } from '../config.js';
 import { DocPage, DocSheet, ExtLink } from './Doc.js';
 
@@ -168,8 +169,9 @@ export function Links() {
     >
       <DocSheet seed={47}>
         <h3>リリース当日の様子</h3>
-        <img
+        <ImagePreview
           className="doc-float"
+          triggerClassName="doc-float"
           src={siteImageUrl('link/stext.png')}
           alt="30周年記念作品"
           loading="lazy"
@@ -196,8 +198,9 @@ export function Links() {
           ))}
         </ul>
         <h3>スタッフ／ゲスト作者さんのブログより</h3>
-        <img
+        <ImagePreview
           className="doc-float"
+          triggerClassName="doc-float"
           src={siteImageUrl('link/staff.png')}
           alt="「鉄腕の吸血姫」より"
           loading="lazy"

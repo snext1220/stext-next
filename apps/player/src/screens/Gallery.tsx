@@ -50,7 +50,7 @@ export function Gallery() {
       page="gallery"
       eyebrow="Gallery"
       title="画廊"
-      lede="記念ロゴやスタート画面、シナリオの紹介イラストなど、SText を彩ってきた絵を集めました。画像を押すと、元の大きさで開きます。"
+      lede="記念ロゴやスタート画面、シナリオの紹介イラストなど、SText を彩ってきた絵を集めました。画像を押すと、拡大表示します。"
     >
       <DocSheet seed={43}>
         {GALLERY.map((g) => (

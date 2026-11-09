@@ -6,9 +6,10 @@ import { DocPage, DocSection, type DocChapter } from './Doc.js';
 const CHAPTERS = {
   create: { id: 'create', title: 'シナリオを作る' },
   submit: { id: 'submit', title: '投稿の手順' },
-  folder: { id: 'folder', title: 'zip の中身' },
+  // folder: { id: 'folder', title: 'zip の中身' },
 } satisfies Record<string, DocChapter>;
 
+/*
 const FOLDER = `stext/ ……………………… シナリオのフォルダー
 ├─ scenario.json ……… シナリオ本体（Playground で保存したファイル）
 ├─ capture/ …………… 挿絵
@@ -17,8 +18,9 @@ const FOLDER = `stext/ ……………………… シナリオのフォルダ�
 ├─ bgm/ ………………… 独自の BGM（xxxxx.mp3、1MB 目安）
 │   └─ se/ ………………… 独自の効果音（xxxxx.mp3、30KB 目安）
 └─ chara/ ……………… 独自のキャラクター画像（100×100px。使うときだけ）`;
+*/
 
-/** 投稿：シナリオの作り方と投稿の手順、zip の中身（旧サイトの作品投稿） */
+/** 投稿：シナリオの作り方と投稿の手順（旧サイトの作品投稿） */
 export function Post({ section }: { section?: string }) {
   return (
     <DocPage
@@ -98,6 +100,7 @@ export function Post({ section }: { section?: string }) {
         </p>
       </DocSection>
 
+      {/*
       <DocSection page="post" chapter={CHAPTERS.folder} eyebrow="Folder" seed={61}>
         <p>.zip は、次のフォルダー構成で作ってください。使わないフォルダーは要りません。</p>
         <pre className="doc-tree" aria-label="zip のフォルダー構成">
@@ -118,6 +121,7 @@ export function Post({ section }: { section?: string }) {
           </li>
         </ul>
       </DocSection>
+      */}
     </DocPage>
   );
 }

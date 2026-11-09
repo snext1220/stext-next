@@ -8,6 +8,7 @@ import parse, {
 import { marked } from 'marked';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Effect } from './Effect.js';
+import { ImagePreview } from './ImagePreview.js';
 
 export interface SceneTextProps {
   /** エンジンが展開した Markdown（SceneView.markdown など） */
@@ -62,7 +63,7 @@ export function SceneText({
         if (!(node instanceof Element)) return undefined;
         if (node.name === 'img' && resolveImage) {
           const src = resolveImage(node.attribs['src'] ?? '');
-          return <img src={src} alt={node.attribs['alt'] ?? ''} loading="lazy" />;
+          return <ImagePreview src={src} alt={node.attribs['alt'] ?? ''} />;
         }
         if (node.name === 'a' && /^https?:/.test(node.attribs['href'] ?? '')) {
           return (

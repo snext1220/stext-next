@@ -89,7 +89,7 @@ describe('guide and toolbox pages', () => {
     expect(
       screen.getByRole('link', { name: 'GitHub から投稿する（要ログイン）' }).getAttribute('href'),
     ).toBe('https://github.com/snext1220/stext/discussions/299');
-    expect(screen.getByLabelText('zip のフォルダー構成').textContent).toContain('scenario.json');
+    expect(screen.queryByLabelText('zip のフォルダー構成')).toBeNull();
     expect(screen.getByRole('link', { name: '素材と資料を見る' }).getAttribute('href')).toBe(
       '#/materials',
     );

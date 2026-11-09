@@ -42,6 +42,7 @@ describe('SceneText', () => {
     expect(container.querySelector('img')!.getAttribute('src')).toBe(
       '/scenarios/scepter/capture/scepter.png',
     );
+    expect(container.querySelector('.image-preview-trigger')).not.toBeNull();
     const a = container.querySelector('a')!;
     expect(a.getAttribute('target')).toBe('_blank');
     expect(a.getAttribute('rel')).toBe('noopener noreferrer');

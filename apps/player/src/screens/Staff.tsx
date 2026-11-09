@@ -1,3 +1,4 @@
+import { ImagePreview } from '@stext/ui';
 import { siteImageUrl } from '../config.js';
 import { DocPage, DocSheet, ExtLink } from './Doc.js';
 
@@ -118,8 +119,9 @@ export function Staff() {
           ※
           一部のイラスト・楽曲は、フリー素材などを利用しています。ライセンスは各シナリオに記載していますが、この場を借りて、制作者の皆さまに感謝申し上げます。
         </p>
-        <img
+        <ImagePreview
           className="doc-banner"
+          triggerClassName="doc-banner"
           src={siteImageUrl('stext30.png')}
           alt="ソーサリアン30周年おめでとう！"
           width={200}
