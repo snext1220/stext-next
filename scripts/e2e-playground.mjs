@@ -231,7 +231,28 @@ check(
 await tab('定義');
 await page.locator('.pg-subtabs button', { hasText: '基本' }).click();
 await field('シナリオ ID').fill('e2e-archive');
+await tab('シーン');
+await field('本文').fill('![一括登録の画像](e2e-scene.png)');
 await tab('素材');
+await page.locator('.pg-resource-add input[type="file"]').setInputFiles(
+  ['e2e-scene.png', 'e2e-unused.png'].map((name) => ({
+    name,
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  })),
+);
+await page.getByText('登録 2 件・スキップ 0 件・失敗 0 件', { exact: true }).waitFor();
+const referencedImage = page
+  .locator('.pg-resource')
+  .filter({ has: page.getByText('capture/e2e-scene.png', { exact: true }) });
+check(
+  '素材を一括登録し、完全一致した参照に紐づける',
+  (await referencedImage.innerText()).includes('登録済み · e2e-scene.png') &&
+    (await page.getByText('capture/e2e-unused.png', { exact: true }).count()) === 1,
+);
 await page.locator('.pg-resource-add select').selectOption('chara/');
 await page.locator('.pg-resource-add input[type="file"]').setInputFiles({
   name: 'e2e.png',
@@ -252,6 +273,8 @@ check(
   Boolean(
     archiveFiles['e2e-archive/scenario.json'] &&
     archiveFiles['e2e-archive/chara/e2e.png'] &&
+    archiveFiles['e2e-archive/capture/e2e-scene.png'] &&
+    archiveFiles['e2e-archive/capture/e2e-unused.png'] &&
     JSON.parse(strFromU8(archiveFiles['e2e-archive/scenario.json'])).meta.id === 'e2e-archive',
   ),
   archiveDownload.suggestedFilename(),
@@ -261,7 +284,9 @@ await page.waitForSelector('.flow-node');
 await tab('素材');
 check(
   '登録素材を再読み込み後も使える',
-  (await page.getByText('chara/e2e.png', { exact: true }).count()) === 1,
+  (await page.getByText('chara/e2e.png', { exact: true }).count()) === 1 &&
+    (await referencedImage.innerText()).includes('登録済み · e2e-scene.png') &&
+    (await page.getByText('capture/e2e-unused.png', { exact: true }).count()) === 1,
 );
 
 // 提出画面（別タブのPOSTはモックし、外部サービスへ実送信しない）

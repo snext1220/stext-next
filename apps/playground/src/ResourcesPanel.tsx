@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { collectResourceReferences, MAX_RESOURCE_SIZE, type LocalResource } from './resources.js';
 
 const IMAGE_ACCEPT = '.png,.jpg,.jpeg,.gif,.webp';
@@ -38,8 +38,11 @@ export function ResourcesPanel({
   urls: Readonly<Record<string, string>>;
 }) {
   const [newFolder, setNewFolder] = useState<keyof typeof RESOURCE_FOLDERS>('capture/');
-  const [operationError, setOperationError] = useState<string | null>(null);
+  const [operationErrors, setOperationErrors] = useState<string[]>([]);
   const [busyPath, setBusyPath] = useState<string | null>(null);
+  const operationLock = useRef(false);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [result, setResult] = useState<string | null>(null);
   const references = useMemo(() => collectResourceReferences(scenario), [scenario]);
   const byPath = useMemo(
     () => new Map(resources.map((resource) => [resource.path, resource])),
@@ -49,29 +52,56 @@ export function ResourcesPanel({
     (resource) => !references.some((reference) => reference.path === resource.path),
   );
 
-  const register = async (path: string, file: File | undefined) => {
-    if (!file) return;
-    if (byPath.has(path) && !window.confirm(`${path} に登録した素材を差し替えますか？`)) return;
-    setBusyPath(path);
-    setOperationError(null);
+  const register = async (entries: { path: string; file: File }[]) => {
+    if (!entries.length || operationLock.current) return;
+    operationLock.current = true;
+    setOperationErrors([]);
+    setResult(null);
+    const registeredPaths = new Set(byPath.keys());
+    const errors: string[] = [];
+    let registered = 0;
+    let skipped = 0;
     try {
-      await onRegister(path, file);
-    } catch (reason) {
-      setOperationError(reason instanceof Error ? reason.message : String(reason));
+      for (const [index, { path, file }] of entries.entries()) {
+        setBusyPath(path);
+        setProgress({ current: index + 1, total: entries.length });
+        if (
+          registeredPaths.has(path) &&
+          !window.confirm(`${path} に登録した素材を差し替えますか？`)
+        ) {
+          skipped++;
+          continue;
+        }
+        try {
+          await onRegister(path, file);
+          registeredPaths.add(path);
+          registered++;
+        } catch (reason) {
+          errors.push(`${path}: ${reason instanceof Error ? reason.message : String(reason)}`);
+        }
+      }
+      setOperationErrors(errors);
+      setResult(`登録 ${registered} 件・スキップ ${skipped} 件・失敗 ${errors.length} 件`);
     } finally {
+      operationLock.current = false;
       setBusyPath(null);
+      setProgress(null);
     }
   };
 
   const remove = async (path: string) => {
+    if (operationLock.current) return;
     if (!window.confirm(`${path} をこのブラウザーから削除しますか？`)) return;
+    operationLock.current = true;
     setBusyPath(path);
-    setOperationError(null);
+    setOperationErrors([]);
+    setResult(null);
     try {
       await onDelete(path);
     } catch (reason) {
-      setOperationError(reason instanceof Error ? reason.message : String(reason));
+      setOperationErrors([reason instanceof Error ? reason.message : String(reason)]);
     } finally {
+      operationLock.current = false;
       setBusyPath(null);
     }
   };
@@ -92,12 +122,21 @@ export function ResourcesPanel({
         元のローカルファイルは変更されず、サーバーへも送信されません。
       </p>
       {!ready && <p role="status">登録済み素材を読み込んでいます…</p>}
-      {(error || operationError) && (
-        <p className="pg-error" role="alert">
-          {operationError ?? error}
+      {(error || operationErrors.length > 0) && (
+        <div className="pg-error" role="alert">
+          <ul>
+            {(operationErrors.length > 0 ? operationErrors : [error]).map((message, index) => (
+              <li key={index}>{message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {busyPath && (
+        <p role="status">
+          素材を保存しています{progress && `（${progress.current}/${progress.total}）`}: {busyPath}
         </p>
       )}
-      {busyPath && <p role="status">素材を保存しています: {busyPath}</p>}
+      {result && <p role="status">{result}</p>}
       <section className="pg-section">
         <h3>シナリオから参照されている素材</h3>
         {references.length === 0 && <p className="pg-hint">素材の参照はありません。</p>}
@@ -126,9 +165,10 @@ export function ResourcesPanel({
                     type="file"
                     accept={reference.kind === 'image' ? IMAGE_ACCEPT : AUDIO_ACCEPT}
                     hidden
-                    disabled={!ready || busyPath === reference.path}
+                    disabled={!ready || busyPath !== null}
                     onChange={(event) => {
-                      void register(reference.path, event.currentTarget.files?.[0]);
+                      const file = event.currentTarget.files?.[0];
+                      if (file) void register([{ path: reference.path, file }]);
                       event.currentTarget.value = '';
                     }}
                   />
@@ -136,7 +176,7 @@ export function ResourcesPanel({
                 {resource && (
                   <button
                     type="button"
-                    disabled={busyPath === reference.path}
+                    disabled={!ready || busyPath !== null}
                     onClick={() => void remove(reference.path)}
                   >
                     削除
@@ -151,7 +191,9 @@ export function ResourcesPanel({
         <h3>素材を追加</h3>
         <p className="pg-hint">
           参照されていない素材も登録できます。登録先を選ぶと、選んだ種類に対応するファイルだけを選択できます。
-          ファイル名は元の名前を使います（1ファイル {bytes(MAX_RESOURCE_SIZE)} 以下）。
+          同じ種類の素材は複数まとめて選択できます。ファイル名は元の名前を使います（1ファイル{' '}
+          {bytes(MAX_RESOURCE_SIZE)} 以下）。
+          登録先とファイル名が参照先に完全一致する場合は、その参照素材に紐づきます。
         </p>
         <div className="pg-inline pg-resource-add">
           <label className="pg-field">
@@ -162,7 +204,7 @@ export function ResourcesPanel({
                 if (isResourceFolder(event.currentTarget.value))
                   setNewFolder(event.currentTarget.value);
               }}
-              disabled={!ready}
+              disabled={!ready || busyPath !== null}
             >
               {Object.entries(RESOURCE_FOLDERS).map(([folder, { label }]) => (
                 <option key={folder} value={folder}>
@@ -175,12 +217,13 @@ export function ResourcesPanel({
             ファイルを登録…
             <input
               type="file"
+              multiple
               accept={RESOURCE_FOLDERS[newFolder].accept}
               hidden
-              disabled={!ready}
+              disabled={!ready || busyPath !== null}
               onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file) void register(`${newFolder}${file.name}`, file);
+                const files = Array.from(event.currentTarget.files ?? []);
+                void register(files.map((file) => ({ path: `${newFolder}${file.name}`, file })));
                 event.currentTarget.value = '';
               }}
             />
@@ -202,7 +245,7 @@ export function ResourcesPanel({
               {preview(resource)}
               <button
                 type="button"
-                disabled={busyPath === resource.path}
+                disabled={!ready || busyPath !== null}
                 onClick={() => void remove(resource.path)}
               >
                 削除
