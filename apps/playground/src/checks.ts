@@ -1,4 +1,9 @@
-import { checkScenario, validateScenario, type CheckIssue, type Scenario } from '@stext/schema';
+import {
+  checkScenario,
+  validateScenario,
+  type CheckIssue,
+  type DraftScenario as Scenario,
+} from '@stext/schema';
 import { checkCombatScenario } from './combatChecks.js';
 
 export interface Problem extends CheckIssue {

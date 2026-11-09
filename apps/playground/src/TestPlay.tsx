@@ -7,7 +7,7 @@ import {
   type GameState,
   type GlobalState,
 } from '@stext/core';
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario, Scenario } from '@stext/schema';
 import { ChoiceList, HeroPanel, SceneText, createCookieRandomCache } from '@stext/ui';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { bgmUrl, charaImageUrl, imageUrl, seUrl } from './config.js';
@@ -22,7 +22,7 @@ export interface PreviewStartOverrides {
   stars: string[];
 }
 
-export function emptyPreviewStartOverrides(scenario: Scenario): PreviewStartOverrides {
+export function emptyPreviewStartOverrides(scenario: DraftScenario): PreviewStartOverrides {
   return {
     items: [],
     flags: [],

@@ -1,5 +1,6 @@
 import { strFromU8, unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
+import { validateScenario, validateScenarioDraft, type DraftScenario } from '@stext/schema';
 import { emptyScenario } from './model.js';
 import type { LocalResource } from './resources.js';
 import { createScenarioArchive, findMissingResources, validateArchiveId } from './archive.js';
@@ -18,6 +19,30 @@ function resource(projectId: string, path: string, body: string): LocalResource 
 }
 
 describe('scenario archive', () => {
+  it('backs up unfinished values and resources in a readable draft', async () => {
+    const scenario: DraftScenario = {
+      ...emptyScenario(),
+      meta: { id: 'draft', title: '未完成' },
+      scenes: [
+        {
+          id: '0',
+          text: '',
+          choices: [{ label: '', to: [''], cast: ['HEA'] }],
+          effects: { hp: '1..' },
+        },
+      ],
+    };
+    const blob = await createScenarioArchive('project-1', scenario, [
+      resource('project-1', 'capture/keep.png', 'keep'),
+    ]);
+    const files = unzipSync(new Uint8Array(await blob.arrayBuffer()));
+    const restored: unknown = JSON.parse(strFromU8(files['draft/scenario.json']!));
+    expect(restored).toEqual(scenario);
+    expect(validateScenario(restored).ok).toBe(false);
+    expect(validateScenarioDraft(restored)).toEqual({ ok: true, scenario });
+    expect(strFromU8(files['draft/capture/keep.png']!)).toBe('keep');
+  });
+
   it('includes the scenario and every resource for that project, including unreferenced files', async () => {
     const scenario = emptyScenario();
     scenario.meta.id = 'forest';

@@ -1,4 +1,4 @@
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 
 export type ResourceKind = 'image' | 'bgm' | 'se' | 'file';
 

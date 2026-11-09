@@ -1,4 +1,4 @@
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 import { useId, useState } from 'react';
 import { Field, SelectField, TextArea, TextField, fromList, toList } from './fields.js';
 import { HelpButton } from './help/HelpPanel.js';
@@ -414,21 +414,21 @@ function MetaEditor({
           label="選べる種族"
           help="meta.constraint.race"
           value={fromList(c.race)}
-          onChange={(v) => setConstraint({ race: toList(v) as never })}
+          onChange={(v) => setConstraint({ race: toList(v) })}
           placeholder="FIGHTER, WIZARD, DWARF, ELF"
         />
         <TextField
           label="選べる年齢"
           help="meta.constraint.age"
           value={fromList(c.age)}
-          onChange={(v) => setConstraint({ age: toList(v) as never })}
+          onChange={(v) => setConstraint({ age: toList(v) })}
           placeholder="YOUNG, ADULT, OLD"
         />
         <TextField
           label="性別"
           help="meta.constraint.sex"
           value={c.sex}
-          onChange={(v) => setConstraint({ sex: (v || undefined) as never })}
+          onChange={(v) => setConstraint({ sex: v || undefined })}
           placeholder="MALE / FEMALE"
         />
         <TextField

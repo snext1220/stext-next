@@ -1,5 +1,5 @@
 import { Zip, ZipPassThrough } from 'fflate';
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 import {
   collectResourceReferences,
   isSafeLocalResourcePath,

@@ -86,4 +86,30 @@ describe('ProjectDialog', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('shows unreadable records without hiding editable projects', () => {
+    const error = '編集用のデータ構造を読み込めません。保存データは削除していません: scenes';
+    const onOpen = vi.fn();
+    render(
+      <ProjectDialog
+        projects={[
+          ...projects,
+          {
+            id: 'broken',
+            title: '読み込めない作品',
+            scenarioId: undefined,
+            updatedAt: '',
+            loadError: error,
+          },
+        ]}
+        currentId="current"
+        onOpen={onOpen}
+        onDelete={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('alert').textContent).toBe(error);
+    fireEvent.click(screen.getByText('別の作品').closest('button')!);
+    expect(onOpen).toHaveBeenCalledWith('another');
+  });
 });

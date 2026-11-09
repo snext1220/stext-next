@@ -134,6 +134,7 @@
   - `store.ts`：
     - 元に戻す／やり直す（100件まで。同じキーの変更は1秒以内ならまとめる）
     - IndexedDBへの自動保存と作品管理。旧マイストレージの名前付き保存機能は廃止
+    - 未完成の作品は `validateScenarioDraft` で構造・型を確認して復元し、問題は［検査］で修正する。旧編集で省略された文字列は空欄に戻す。作品UUID・登録素材は維持し、構造が読み込めない作品も自動削除せず一覧にエラーを表示する。正式な形式の検証とJSON Schemaは維持し、形式エラーがある間は試遊を止める
   - `FlowView.tsx`、`SceneEditor.tsx`、`Definitions.tsx`、`checks.ts`、`Problems.tsx`、`TestPlay.tsx`、`App.tsx`、`fields.tsx`、`playground.css`
   - `help/`：ダイナミックヘルプ。`reference.md`（旧 `reference.xml` を移した内容と移行メモ）、`help.ts`（読み込み・検索）、`HelpPanel.tsx`（表示。`main.tsx` の `HelpProvider` が状態を持つ）
   - `archive.ts`：作品スナップショットと登録素材からZIPを作る。ID・パスを検査し、未登録の参照素材を見つける

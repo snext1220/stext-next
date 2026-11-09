@@ -14,7 +14,7 @@ import {
   type NodeProps,
   type ReactFlowInstance,
 } from '@xyflow/react';
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 import { useEffect, useMemo, useState } from 'react';
 import { NODE_WIDTH } from './layout.js';
 import { toGraph, type GraphNode } from './model.js';

@@ -158,6 +158,15 @@ describe('editing model', () => {
     expect(validateScenario(s).ok).toBe(true);
   });
 
+  it('keeps required strings when an input is cleared', () => {
+    let s = updateScene(sample(), '0', { text: '' });
+    expect(s.scenes[0]!.text).toBe('');
+    s = updateChoice(s, '0', 0, { label: '', to: ['10'] });
+    expect(s.scenes[0]!.choices[0]).toEqual({ label: '', to: ['10'] });
+    s = updateChoice(s, '0', 0, { kind: 'answer', answer: '', to: '', else: '' });
+    expect(s.scenes[0]!.choices[0]).toEqual({ kind: 'answer', answer: '', to: '', else: '' });
+  });
+
   it('derives the flow graph', () => {
     const { nodes, edges } = toGraph(sample());
     expect(nodes.map((n) => n.id)).toEqual(['0', '10', '20', '99', '99998']);

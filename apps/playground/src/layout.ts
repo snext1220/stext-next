@@ -2,7 +2,7 @@
  * フロー図の自動レイアウト（左から右へ、選択肢の向きに並べる）。
  */
 import dagre from '@dagrejs/dagre';
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 import { toGraph } from './model.js';
 
 export const NODE_WIDTH = 180;

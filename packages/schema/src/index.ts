@@ -6,6 +6,7 @@
  */
 export * from './condition.js';
 export * from './scenario.js';
+export * from './draft.js';
 export * from './check.js';
 
 import { SCENARIO_FORMAT, type ScenarioFormat } from './scenario.js';

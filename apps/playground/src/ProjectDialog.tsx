@@ -87,6 +87,7 @@ export function ProjectDialog({
                       {new Date(project.updatedAt).toLocaleString('ja-JP')}
                     </span>
                     {project.id === currentId && <small>編集中</small>}
+                    {project.loadError && <small role="alert">{project.loadError}</small>}
                   </button>
                   <button
                     type="button"

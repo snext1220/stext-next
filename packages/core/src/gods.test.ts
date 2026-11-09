@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { checkScenario, validateScenario } from '@stext/schema';
 import { describe, expect, it } from 'vitest';
 import { applyDrop, computeDamage, dropFor, receiveAttack, rollDice } from './battle.js';
@@ -33,6 +33,37 @@ function follow(engine: Engine, step: Step, labels: string[]): Step {
 }
 
 describe('新・天の神々たち', () => {
+  it('displays scene illustrations with available assets and respects the final battle branches', () => {
+    const illustrations: Record<string, string> = {
+      '10': 'village.png',
+      '170': 'priestess.png',
+      '210': 'mountain-attack.png',
+      '252': 'mountain-journey.png',
+      '290': 'gate-god.png',
+      '510': 'celestial-garden.png',
+      '664': 'flame-seed.png',
+      '722': 'red-fruit.png',
+      '1131': 'magic-spring.png',
+      '940': 'anna-yuiter.png',
+      '1024': 'final-battle.png',
+      '1052': 'village-epilogue.png',
+    };
+    for (const [id, file] of Object.entries(illustrations)) {
+      const { engine, step } = setup(id, id === '1024' ? ['f61', 'f71'] : []);
+      const markdown = engine.view(step.state, step.global).markdown;
+      expect(markdown, id).toContain(`](${file})`);
+      expect(markdown, id).not.toMatch(/!\[\?+\]/);
+      expect(existsSync(new URL(`../../../scenarios/gods/capture/${file}`, import.meta.url))).toBe(
+        true,
+      );
+    }
+
+    for (const flags of [[], ['f61'], ['f71']]) {
+      const { engine, step } = setup('1024', flags);
+      expect(engine.view(step.state, step.global).markdown).not.toContain('final-battle.png');
+    }
+  });
+
   it('has consistent scenario references and an achievement for every bad ending', () => {
     expect(checkScenario(scenario)).toEqual([]);
     expect(

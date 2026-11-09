@@ -1,5 +1,9 @@
 import { convertPlaygroundJson, convertScenarioXml } from '@stext/convert';
-import { validateScenario, type Scenario } from '@stext/schema';
+import {
+  validateScenario,
+  validateScenarioDraft,
+  type DraftScenario as Scenario,
+} from '@stext/schema';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createScenarioArchive, findMissingResources, validateArchiveId } from './archive.js';
 import { findProblems, problemsByScene } from './checks.js';
@@ -74,6 +78,10 @@ export function App() {
   const openHelp = useHelp();
 
   const problems = useMemo(() => findProblems(scenario), [scenario]);
+  const playable = useMemo(
+    () => (tab === 'play' ? validateScenario(scenario) : null),
+    [scenario, tab],
+  );
   const byScene = useMemo(() => problemsByScene(problems), [problems]);
   const scene = selected ? findScene(scenario, selected) : undefined;
   const sceneGroups = useMemo(() => sceneSelectionGroups(scenario), [scenario]);
@@ -193,7 +201,7 @@ export function App() {
           convertPlaygroundJson(data, {}).scenario,
           `${file.name}（旧 Playground）を変換して開きました`,
         );
-      const v = validateScenario(data);
+      const v = validateScenarioDraft(data);
       if (!v.ok)
         throw new Error(
           `stext/2 のシナリオとして読めません：${v.issues[0]?.path} ${v.issues[0]?.message}`,
@@ -206,7 +214,7 @@ export function App() {
 
   const openUrl = async (url: string, note: string) => {
     try {
-      const v = validateScenario(await (await fetch(url)).json());
+      const v = validateScenarioDraft(await (await fetch(url)).json());
       if (!v.ok) throw new Error('シナリオの形式が正しくありません');
       await open(v.scenario, note);
     } catch (e) {
@@ -556,9 +564,14 @@ export function App() {
                 }}
               />
             )}
-            {tab === 'play' && (
+            {tab === 'play' && playable && !playable.ok && (
+              <p className="pg-error" role="alert">
+                データ形式に問題があるため試遊できません。［検査］タブで問題箇所を確認し、修正してください。
+              </p>
+            )}
+            {tab === 'play' && playable?.ok && (
               <TestPlay
-                scenario={scenario}
+                scenario={playable.scenario}
                 startScene={selected}
                 onSceneChange={onPreviewSceneChange}
                 startOverrides={previewStartOverrides}

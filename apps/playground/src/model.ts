@@ -1,12 +1,18 @@
 /**
  * シナリオの編集操作。どれも元のシナリオを書き換えず、新しいシナリオを返す。
  */
-import { SCENARIO_FORMAT, type Choice, type Scenario, type Scene } from '@stext/schema';
+import {
+  SCENARIO_FORMAT,
+  type DraftChoice as Choice,
+  type DraftScenario as Scenario,
+  type DraftScene as Scene,
+  type Scenario as CompleteScenario,
+} from '@stext/schema';
 
 export const SCHEMA_URL = 'https://snext1220.github.io/stext-next/schema/scenario.v2.json';
 
 /** 新しい空のシナリオ（シーン 0 だけ） */
-export function emptyScenario(title = '新しいシナリオ'): Scenario {
+export function emptyScenario(title = '新しいシナリオ'): CompleteScenario {
   return {
     $schema: SCHEMA_URL,
     format: SCENARIO_FORMAT,
@@ -145,7 +151,9 @@ export function renameScene(s: Scenario, from: string, to: string): Scenario {
 }
 
 export function updateScene(s: Scenario, id: string, patch: Partial<Scene>): Scenario {
-  return mapScenes(s, (scene) => (scene.id === id ? clean({ ...scene, ...patch }) : scene));
+  return mapScenes(s, (scene) =>
+    scene.id === id ? clean({ ...scene, ...patch }, ['id', 'text']) : scene,
+  );
 }
 
 export function addChoice(s: Scenario, from: string, to: string, label = '次へ'): Scenario {
@@ -162,7 +170,12 @@ export function updateChoice(
 ): Scenario {
   return mapScenes(s, (scene) =>
     scene.id === sceneId
-      ? { ...scene, choices: scene.choices.map((c, i) => (i === index ? clean(choice) : c)) }
+      ? {
+          ...scene,
+          choices: scene.choices.map((c, i) =>
+            i === index ? clean(choice, ['label', 'answer', 'to', 'else']) : c,
+          ),
+        }
       : scene,
   );
 }
@@ -277,9 +290,13 @@ function firstLine(text: string) {
   );
 }
 
-/** undefined と空文字の項目を取り除く（スキーマの optional に合わせる） */
-function clean<T extends object>(o: T): T {
-  return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== '')) as T;
+/** 任意項目の空欄は取り除くが、必須の文字列は空欄も保持する。 */
+function clean<T extends object>(o: T, requiredStrings: readonly string[] = []): T {
+  return Object.fromEntries(
+    Object.entries(o).filter(
+      ([key, value]) => value !== undefined && (value !== '' || requiredStrings.includes(key)),
+    ),
+  ) as T;
 }
 
 function omit<T extends object, K extends keyof T>(o: T, key: K): Omit<T, K> {

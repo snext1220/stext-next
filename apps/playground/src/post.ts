@@ -1,4 +1,4 @@
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 
 export const SUBMISSION_ENDPOINT = 'https://form.os7.biz/form/submit/';
 export const DISCUSSION_URL = 'https://github.com/snext1220/stext/discussions/299';

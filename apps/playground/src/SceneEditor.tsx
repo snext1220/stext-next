@@ -2,10 +2,10 @@ import {
   CONDITION_FUNCTIONS,
   MAGIC_NAMES,
   parseCondition,
-  type Choice,
+  type DraftChoice as Choice,
   type Effects,
-  type Scenario,
-  type Scene,
+  type DraftScenario as Scenario,
+  type DraftScene as Scene,
 } from '@stext/schema';
 import { useState } from 'react';
 import { Field, SelectField, TextArea, TextField, fromList, toList, toValue } from './fields.js';
@@ -552,7 +552,7 @@ function ChoiceEditor({
             help="choice.cast"
             value={fromList(choice.cast)}
             onChange={(v) =>
-              onChange({ ...choice, cast: (toList(v).length ? toList(v) : undefined) as never })
+              onChange({ ...choice, cast: toList(v).length ? toList(v) : undefined })
             }
             placeholder="HEAL"
             wide

@@ -1,6 +1,6 @@
 import { strFromU8, strToU8 } from 'fflate';
 import { initialForm, type PostForm } from './post.js';
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 
 const CHUNK_SIZE = 3500;
 const MAX_CHUNKS = 8;

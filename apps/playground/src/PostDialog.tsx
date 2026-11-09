@@ -1,4 +1,4 @@
-import type { Scenario } from '@stext/schema';
+import type { DraftScenario as Scenario } from '@stext/schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createScenarioArchive, findMissingResources, validateArchiveId } from './archive.js';
 import { Field } from './fields.js';

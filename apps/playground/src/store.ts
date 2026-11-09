@@ -1,7 +1,7 @@
 /**
  * 編集中のシナリオの状態：元に戻す／やり直す、ブラウザへの自動保存。
  */
-import { validateScenario, type Scenario } from '@stext/schema';
+import { validateScenarioDraft, type DraftScenario as Scenario } from '@stext/schema';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { emptyScenario } from './model.js';
 import { resourceMimeType, validateResourceFile, type LocalResource } from './resources.js';
@@ -20,7 +20,7 @@ const MERGE_MS = 1000;
 
 interface StoredScenario {
   id: string;
-  scenario: Scenario;
+  scenario: unknown;
   updatedAt: string;
 }
 
@@ -29,6 +29,7 @@ export interface ProjectSummary {
   title: string;
   scenarioId: string | undefined;
   updatedAt: string;
+  loadError?: string;
 }
 
 interface RestoredProject {
@@ -162,26 +163,36 @@ async function listStoredProjects(): Promise<ProjectSummary[]> {
     const transaction = database.transaction(SCENARIOS_STORE, 'readonly');
     const completed = transactionComplete(transaction);
     const [records] = await Promise.all([
-      requestResult(transaction.objectStore(SCENARIOS_STORE).getAll()),
+      requestResult<StoredScenario[]>(transaction.objectStore(SCENARIOS_STORE).getAll()),
       completed,
     ]);
-    return (records as StoredScenario[])
+    return records
       .filter((record) => record.id !== LEGACY_CURRENT_ID)
       .map((record) => {
-        const result = validateScenario(record.scenario);
-        if (!result.ok)
-          throw new Error('保存された作品のデータが壊れているため、作品一覧を読み込めません');
+        const result = validateScenarioDraft(record.scenario);
         return {
           id: record.id,
-          title: result.scenario.meta.title || '無題',
-          scenarioId: result.scenario.meta.id,
-          updatedAt: record.updatedAt,
+          title: result.ok ? result.scenario.meta.title || '無題' : '読み込めない作品',
+          scenarioId: result.ok ? result.scenario.meta.id : undefined,
+          updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : '',
+          ...(!result.ok ? { loadError: draftReadError(result.issues) } : {}),
         };
       })
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } finally {
     database.close();
   }
+}
+
+function draftReadError(issues: { path: string; message: string }[]): string {
+  const issue = issues[0];
+  return `編集用のデータ構造を読み込めません。保存データは削除していません: ${issue?.path} ${issue?.message}`;
+}
+
+function readDraft(data: unknown): Scenario {
+  const result = validateScenarioDraft(data);
+  if (!result.ok) throw new Error(draftReadError(result.issues));
+  return result.scenario;
 }
 
 function createProjectId(): string {
@@ -196,39 +207,31 @@ function setCurrentProjectId(id: string): void {
   }
 }
 
-async function restoreProject(): Promise<RestoredProject> {
+async function restoreProject(projects: ProjectSummary[]): Promise<RestoredProject> {
   const currentId = read(CURRENT_PROJECT_KEY);
   if (currentId) {
     const stored = await getStoredScenario(currentId);
     if (stored) {
-      const result = validateScenario(stored.scenario);
-      if (!result.ok)
-        throw new Error('IndexedDBに保存されたシナリオが壊れているため、読み込めません');
-      return { id: currentId, scenario: result.scenario };
+      return { id: currentId, scenario: readDraft(stored.scenario) };
     }
   }
 
-  const projects = await listStoredProjects();
   if (projects.length) {
-    const latest = projects[0]!;
+    const latest = projects.find((project) => !project.loadError) ?? projects[0]!;
     const stored = await getStoredScenario(latest.id);
     if (!stored) throw new Error('最新の作品を読み込めません');
-    const result = validateScenario(stored.scenario);
-    if (!result.ok)
-      throw new Error('IndexedDBに保存されたシナリオが壊れているため、読み込めません');
+    const scenario = readDraft(stored.scenario);
     setCurrentProjectId(latest.id);
-    return { id: latest.id, scenario: result.scenario };
+    return { id: latest.id, scenario };
   }
 
   const legacy = await getStoredScenario(LEGACY_CURRENT_ID);
   if (legacy) {
-    const result = validateScenario(legacy.scenario);
-    if (!result.ok)
-      throw new Error('IndexedDBに保存されたシナリオが壊れているため、読み込めません');
+    const scenario = readDraft(legacy.scenario);
     const id = createProjectId();
-    await saveScenario(id, result.scenario);
+    await saveScenario(id, scenario);
     setCurrentProjectId(id);
-    return { id, scenario: result.scenario };
+    return { id, scenario };
   }
 
   const scenario = loadCurrent();
@@ -241,9 +244,7 @@ async function restoreProject(): Promise<RestoredProject> {
 async function loadProject(id: string): Promise<Scenario> {
   const stored = await getStoredScenario(id);
   if (!stored) throw new Error('選択した作品が見つかりません。作品一覧を更新してください');
-  const result = validateScenario(stored.scenario);
-  if (!result.ok) throw new Error('選択した作品の保存データが壊れているため、読み込めません');
-  return result.scenario;
+  return readDraft(stored.scenario);
 }
 
 async function listProjectResources(projectId: string): Promise<LocalResource[]> {
@@ -278,9 +279,7 @@ async function loadExportSnapshot(
       completed,
     ]);
     if (!stored) throw new Error('ZIP作成対象のシナリオをIndexedDBから読み込めません');
-    const result = validateScenario(stored.scenario);
-    if (!result.ok) throw new Error('ZIP作成対象のシナリオデータが壊れています');
-    return { scenario: result.scenario, resources };
+    return { scenario: readDraft(stored.scenario), resources };
   } finally {
     database.close();
   }
@@ -354,13 +353,32 @@ async function updateProjectResourceScenarioId(
   }
 }
 
-let initialProjectLoad: Promise<readonly [RestoredProject, ProjectSummary[]]> | undefined;
+interface InitialProject {
+  restored?: RestoredProject;
+  projects: ProjectSummary[];
+  error?: string;
+}
 
-function loadInitialProject(): Promise<readonly [RestoredProject, ProjectSummary[]]> {
-  initialProjectLoad ??= restoreProject().then(async (restored) => [
-    restored,
-    await listStoredProjects(),
-  ]);
+let initialProjectLoad: Promise<InitialProject> | undefined;
+
+function loadInitialProject(): Promise<InitialProject> {
+  initialProjectLoad ??= (async () => {
+    const projects = await listStoredProjects();
+    try {
+      const restored = await restoreProject(projects);
+      return {
+        restored,
+        projects: projects.some((project) => project.id === restored.id)
+          ? projects
+          : await listStoredProjects(),
+      };
+    } catch (error) {
+      return {
+        projects,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  })();
   return initialProjectLoad;
 }
 
@@ -376,7 +394,7 @@ export function loadCurrent(): Scenario {
   const raw = read(CURRENT_KEY);
   if (raw) {
     try {
-      const v = validateScenario(JSON.parse(raw));
+      const v = validateScenarioDraft(JSON.parse(raw));
       if (v.ok) return v.scenario;
     } catch {
       // 壊れていれば新しく始める
@@ -439,14 +457,14 @@ export function useScenarioStore(): Store {
   useEffect(() => {
     let active = true;
     void loadInitialProject().then(
-      ([restored, loadedProjects]) => {
+      ({ restored, projects: loadedProjects, error }) => {
         if (!active) return;
         skipNextSave.current = true;
-        setProjectId(restored.id);
-        setScenario(restored.scenario);
+        setProjectId(restored?.id ?? createProjectId());
+        setScenario(restored?.scenario ?? loadCurrent());
         setProjects(loadedProjects);
-        setSaveStatus('saved');
-        setSaveError(null);
+        setSaveStatus(error ? 'error' : 'saved');
+        setSaveError(error ?? null);
         setReady(true);
       },
       (error: unknown) => {

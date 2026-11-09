@@ -1,4 +1,4 @@
-import type { Scene } from '@stext/schema';
+import type { DraftScene as Scene } from '@stext/schema';
 
 export type SceneSearchField = 'サマリー' | '本文' | '選択肢';
 
