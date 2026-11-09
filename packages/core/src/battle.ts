@@ -77,6 +77,7 @@ export function computeDamage(
   chara: Character,
   multiplier = 1,
 ): number {
+  func = func.replace(/[０-９]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0));
   const re = /([+-]?)(\d*)(RM|LM|R|L|M|STR|INT|DEX|KRM|FREE1|FREE2|FREE3)?]?/gi;
   const stats = effectiveStats(chara);
   let damage = 0;

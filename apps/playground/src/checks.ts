@@ -1,4 +1,5 @@
 import { checkScenario, validateScenario, type CheckIssue, type Scenario } from '@stext/schema';
+import { checkCombatScenario } from './combatChecks.js';
 
 export interface Problem extends CheckIssue {
   /** 問題のあるシーン（シーンの中の問題なら） */
@@ -9,7 +10,7 @@ export interface Problem extends CheckIssue {
 export function findProblems(s: Scenario): Problem[] {
   const v = validateScenario(s);
   const issues: CheckIssue[] = v.ok
-    ? checkScenario(v.scenario)
+    ? [...checkScenario(v.scenario), ...checkCombatScenario(v.scenario)]
     : v.issues.map((i) => ({ severity: 'error' as const, ...i }));
   return issues.map((i) => {
     const m = /^scenes\[(\d+)\]/.exec(i.path);

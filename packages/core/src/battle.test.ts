@@ -53,6 +53,7 @@ describe('computeDamage', () => {
     expect(computeDamage('L+R+FREE1', [1, 1], c)).toBe(12);
     expect(computeDamage('7L+7R+STR+INT+DEX+KRM-100', [6, 6], c)).toBe(2);
     expect(computeDamage('L+R-STR', [3, 6], c, 0.5)).toBe(2);
+    expect(computeDamage('２L+R-KRM', [3, 6], c)).toBe(8);
   });
 
   it('applies the state penalties', () => {
