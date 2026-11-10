@@ -68,6 +68,8 @@ export function App() {
     if (route.name !== 'play') audio.stop();
   }, [route.name, audio]);
 
+  useEffect(() => () => audio.stop(), [audio]);
+
   const toggleSound = () => {
     const g = { ...global, bgm: !global.bgm };
     setGlobal(g);

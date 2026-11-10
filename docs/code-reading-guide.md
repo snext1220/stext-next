@@ -4,6 +4,7 @@ stext-next のコードを初めて読む人が、**どこから、どの順番�
 
 - 決定事項と経緯は [project-notes.md](project-notes.md)、[migration-plan.md](migration-plan.md)
 - 開発の手順（コマンド、テスト、生成物）は [development.md](development.md)
+- React コンポーネントの概要・Props・依存関係は [component-reference.md](component-reference.md)
 - 長期的な保守改善候補は [refactoring-opportunities.md](refactoring-opportunities.md)
 - シナリオ JSON の書き方は [scenario-format.md](scenario-format.md)
 - エンジンの API の一覧は [engine.md](engine.md)
