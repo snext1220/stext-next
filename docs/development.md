@@ -210,8 +210,13 @@ Playground のヘルプ（各欄の「?」や項目名のダブルクリック�
 | --- | --- |
 | `/stext-next/` | プレイヤー（`apps/player/dist`。`scenarios/` と `assets/` を含む） |
 | `/stext-next/playground/` | Playground（`apps/playground/dist`。シナリオと素材はプレイヤーのものを使う） |
+| `/stext-next/manual/` | マニュアル一覧 |
+| `/stext-next/manual/player.html` | プレイヤーのマニュアル（`docs/manual-player.md` から生成） |
+| `/stext-next/manual/playground.html` | Playgroundのマニュアル（`docs/manual-playground.md` から生成） |
 | `/stext-next/prototype/design/index.html` | デザインプロトタイプ（これまでと同じ URL） |
 | `/stext-next/schema/scenario.v2.json` | シナリオの JSON Schema（各シナリオの `$schema` が指す URL） |
+
+マニュアルの画像は `docs/image/`、スタイルは `docs/manual.css` を使います。本文は `marked` で HTML に変換し、プレイヤーと同じビルド済みスタイルを読み込んで羊皮紙の画面に近い見た目で公開します。
 
 手元で同じものを作るには `npm run build:site` を実行します。
 

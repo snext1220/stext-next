@@ -16,6 +16,9 @@
 - **公開 URL（GitHub Pages）**
   - プレイヤー：https://snext1220.github.io/stext-next/
   - Playground：https://snext1220.github.io/stext-next/playground/
+  - マニュアル一覧：https://snext1220.github.io/stext-next/manual/
+  - プレイヤーのマニュアル：https://snext1220.github.io/stext-next/manual/player.html
+  - Playgroundのマニュアル：https://snext1220.github.io/stext-next/manual/playground.html
   - デザインプロトタイプ：https://snext1220.github.io/stext-next/prototype/design/index.html
   - JSON Schema：https://snext1220.github.io/stext-next/schema/scenario.v2.json
 

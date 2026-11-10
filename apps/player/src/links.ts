@@ -1,14 +1,14 @@
 /** 案内ページの読み物と CONTACT で使う外部のリンク */
 
-/** ブログ「新時代のソーサリアンを提案する」のマニュアル（旧サイトの d.hatena から移転したもの） */
+/** GitHub Pages で公開するマニュアル */
 export const MANUALS = {
-  player: 'https://github.com/snext1220/stext-next/blob/main/docs/manual-player.md',
-  playground: 'https://github.com/snext1220/stext-next/blob/main/docs/manual-playground.md',
+  player: `${import.meta.env.BASE_URL}manual/player.html`,
+  playground: `${import.meta.env.BASE_URL}manual/playground.html`,
   developer: 'https://sorcerian.hateblo.jp/entry/20171221',
   techniques: 'https://sorcerian.hateblo.jp/entry/20180429',
   playgroundFlow: 'https://sorcerian.hateblo.jp/entry/2019/05/03/211951',
-  /** マニュアルの一覧（公開日のアーカイブ） */
-  index: 'https://sorcerian.hateblo.jp/entries/2017/12/20',
+  /** マニュアルの一覧 */
+  index: `${import.meta.env.BASE_URL}manual/`,
 };
 
 /** シナリオの投稿先（GitHub Discussions のスレッドに返信する） */

@@ -94,7 +94,7 @@ describe('guide and toolbox pages', () => {
       '#/materials',
     );
     expect(screen.getByRole('link', { name: '開発ツールの入門を見る' }).getAttribute('href')).toBe(
-      'https://github.com/snext1220/stext-next/blob/main/docs/manual-playground.md',
+      `${import.meta.env.BASE_URL}manual/playground.html`,
     );
     expect(screen.getByRole('link', { name: '募集中の企画を見る' }).getAttribute('href')).toBe(
       '#/recruit',

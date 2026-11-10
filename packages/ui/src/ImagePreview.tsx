@@ -11,7 +11,7 @@ export interface ImagePreviewProps {
   onError?: ReactEventHandler<HTMLImageElement>;
 }
 
-/** 画像をクリックすると、原寸で拡大表示する */
+/** 画像をクリックすると、ブラウザー幅を上限に原寸で拡大表示する */
 export function ImagePreview({
   src,
   alt,
