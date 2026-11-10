@@ -2,6 +2,8 @@
 
 2026-10-31 時点の、これまでの作業で決まったことと進み具合のまとめです。経緯の詳しい記録は [migration-plan.md](migration-plan.md)、開発の手順は [development.md](development.md) を見てください。
 
+追加の改定計画：[BGM設定の改定計画](bgm-revision-plan.md)（2026-11-10、未実装。従来モードのエンディングは現状維持）。
+
 ---
 
 ## 1. プロジェクトの概要
