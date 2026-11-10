@@ -63,6 +63,23 @@ async function readRecord(id: string): Promise<unknown> {
   }
 }
 
+async function readResources(projectId: string): Promise<unknown[]> {
+  const db = await database();
+  try {
+    return await new Promise((resolve, reject) => {
+      const request = db
+        .transaction('resources')
+        .objectStore('resources')
+        .index('projectId')
+        .getAll(projectId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 function draft(): DraftScenario {
   return {
     ...emptyScenario('未完成の作品'),
@@ -201,5 +218,28 @@ describe('draft project recovery', () => {
     expect(result.current.scenario).toEqual(draft());
     expect(result.current.saveError).toBeNull();
     expect(await readRecord('broken-project')).toMatchObject({ scenario: broken });
+  });
+
+  it('deletes a project with its resources and starts a fresh project', async () => {
+    await seed('active-project', draft(), true);
+    await seed('other-project', emptyScenario('別の作品'));
+    localStorage.setItem(CURRENT_PROJECT_KEY, 'active-project');
+    const { result } = renderHook(() => useScenarioStore());
+    await waitFor(() => expect(result.current.resourcesReady).toBe(true));
+
+    await act(async () => {
+      await expect(result.current.deleteProject('active-project')).resolves.toBe(true);
+    });
+
+    expect(result.current.projectId).not.toBe('active-project');
+    expect(result.current.scenario).toEqual(emptyScenario());
+    expect(result.current.resources).toEqual([]);
+    expect(result.current.projects.map((project) => project.id)).toContain('other-project');
+    expect(result.current.projects.map((project) => project.id)).not.toContain('active-project');
+    expect(await readRecord('active-project')).toBeUndefined();
+    expect(await readResources('active-project')).toEqual([]);
+    await waitFor(async () => {
+      expect(await readResources(result.current.projectId)).toEqual([]);
+    });
   });
 });

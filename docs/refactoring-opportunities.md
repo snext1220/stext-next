@@ -16,26 +16,28 @@
 
 ## 1. Playground の保存・編集状態管理
 
-**対象:** [`apps/playground/src/store.ts`](../apps/playground/src/store.ts#L42)（約 890 行）
+**対象:** [`apps/playground/src/store.ts`](../apps/playground/src/store.ts) と保存・履歴モジュール
+
+**実施状況（2026-11-10）:** IndexedDB の読み書き・復元・素材管理を [`store-persistence.ts`](../apps/playground/src/store-persistence.ts) に、Undo/Redo と変更のマージ規則を [`store-history.ts`](../apps/playground/src/store-history.ts) に分離しました。`useScenarioStore` の公開 API、IndexedDB のバージョンとデータ形式は維持しています。`store.ts` は約 890 行から約 470 行になりました。
 
 ### 根拠と懸念
 
-- IndexedDB の初期化・トランザクション・シナリオ保存と、プロジェクト復元・移行を同じファイルで扱っています（[`openDatabase` と復元処理](../apps/playground/src/store.ts#L42)、[`restoreProject`](../apps/playground/src/store.ts#L210)）。
-- 素材の CRUD・エクスポート用スナップショットと、React hook による編集状態管理も同じモジュールにあります（[`loadExportSnapshot`](../apps/playground/src/store.ts#L265)、[`useScenarioStore`](../apps/playground/src/store.ts#L434)）。
-- hook 内で自動保存、プロジェクト切替・削除・作成、素材操作、ZIP 用スナップショット、Undo/Redo を管理しています。保存キュー、素材キュー、バージョン番号、タイマーなども共有されるため、非同期処理の順番やエラー処理を変える際に複数の操作を横断して確認する必要があります（[`retrySave` からプロジェクト操作](../apps/playground/src/store.ts#L573)、[`createExportSnapshot` と履歴操作](../apps/playground/src/store.ts#L783)）。
+- IndexedDB の初期化・トランザクション、シナリオの復元・移行、素材 CRUD とエクスポート用スナップショットは保存モジュールが担当します（[`openDatabase` と復元処理](../apps/playground/src/store-persistence.ts#L38)、[`loadExportSnapshot`](../apps/playground/src/store-persistence.ts#L261)）。
+- `store.ts` の hook には自動保存、プロジェクト切替・削除・作成、素材操作、ZIP 用スナップショットの調整が残っています。保存キュー、素材キュー、バージョン番号、タイマーは複数の操作から使われるため、非同期処理の順番やエラー処理を変える際には横断確認が必要です（[`useScenarioStore`](../apps/playground/src/store.ts#L61)、[`retrySave` とスナップショット作成](../apps/playground/src/store.ts#L199)）。
+- Undo/Redo の履歴上限と入力マージは独立しましたが、状態更新自体は `useScenarioStore` と連携します（[`useScenarioHistory`](../apps/playground/src/store-history.ts#L18)）。
 
 ### 推奨する進め方
 
-1. IndexedDB の読み書きとトランザクションを、React に依存しない保存層へ移します。プロジェクト削除時にシナリオと素材を同じトランザクションで削除する性質は維持します。
-2. Undo/Redo と変更のマージ規則を、保存処理から独立した小さな履歴管理に切り出します。
-3. hook は画面状態と各操作の調整に絞り、保存・素材の API を呼び出す構造にします。
+1. **完了:** IndexedDB の読み書きとトランザクションを React 非依存の保存モジュールへ移しました。プロジェクト削除時はシナリオと素材を同じトランザクションで削除します。
+2. **完了:** Undo/Redo と変更のマージ規則を履歴 hook に分離しました。
+3. **継続候補:** hook に残る自動保存・再試行・プロジェクト操作の調整は、現時点では保存キューとの結び付きが強いため維持します。今後変更が重なる場合に、挙動を保つテストを先に追加したうえで小さく分離します。
 
 ### 変更時に守ること
 
 - 自動保存、保存再試行、プロジェクト切替・削除・作成中の順序と失敗時の表示。
 - ZIP 作成中にデータが変わらないこと、素材操作との同期。
 - IndexedDB の既存データ、旧 `current` データからの復元、履歴のマージと上限。
-- [`store.test.tsx`](../apps/playground/src/store.test.tsx) の既存テストに、切替・保存失敗・素材削除などの境界条件を追加してから分割する。
+- [`store.test.tsx`](../apps/playground/src/store.test.tsx) は下書きの復元・移行に加え、プロジェクトと素材の削除を確認します。[`store-history.test.tsx`](../apps/playground/src/store-history.test.tsx) は Undo/Redo、置換、変更マージを確認します。保存失敗・再試行や素材操作の競合は、今後 hook をさらに分ける際に境界テストを追加します。
 
 ## 2. プレイヤーのプレイ画面
 
