@@ -30,7 +30,12 @@ import type { LocalResource } from './resources.js';
 import { SceneEditor } from './SceneEditor.js';
 import { Splitter, useSideWidth } from './Splitter.js';
 import { useScenarioStore } from './store.js';
-import { emptyPreviewStartOverrides, TestPlay, type PreviewStartOverrides } from './TestPlay.js';
+import {
+  emptyPreviewStartOverrides,
+  TestPlay,
+  type PreviewRun,
+  type PreviewStartOverrides,
+} from './TestPlay.js';
 import { clearLegacyPostData } from './post.js';
 import { ExportDialog, WorkDialog, type WorkMenuTemplate } from './WorkspaceMenus.js';
 
@@ -45,6 +50,10 @@ export function App() {
     projectId: string | undefined;
     overrides: PreviewStartOverrides;
   }>(() => ({ projectId: store.projectId, overrides: emptyPreviewStartOverrides(scenario) }));
+  const [previewSession, setPreviewSession] = useState<{
+    projectId: string | undefined;
+    run: PreviewRun;
+  } | null>(null);
   const [tab, setTab] = useState<Tab>('scene');
   const [message, setMessage] = useState<string | null>(null);
   // 開き直したときはフロー図を作り直して全体が見えるようにする
@@ -105,9 +114,6 @@ export function App() {
   );
   const onPreviewSceneChange = useCallback((id: string | undefined) => {
     setPreviewScene(id);
-    if (id === undefined) return;
-    setSelected(id);
-    setFocusRequest({ id });
   }, []);
 
   useEffect(() => {
@@ -175,6 +181,7 @@ export function App() {
     const laid = autoLayout(s);
     try {
       await store.createProject(laid);
+      setPreviewSession(null);
       setPreviewSetup({ projectId: undefined, overrides: emptyPreviewStartOverrides(laid) });
       setFlowKey((k) => k + 1);
       setSelected(laid.scenes[0]?.id);
@@ -571,7 +578,19 @@ export function App() {
             )}
             {tab === 'play' && playable?.ok && (
               <TestPlay
+                key={store.projectId}
                 scenario={playable.scenario}
+                initialRun={
+                  previewSession && previewSession.projectId === store.projectId
+                    ? previewSession.run
+                    : null
+                }
+                onRunChange={(run) => {
+                  setPreviewSession({ projectId: store.projectId, run });
+                  const id = String(run.state.scene);
+                  setSelected(id);
+                  setFocusRequest({ id });
+                }}
                 startScene={selected}
                 onSceneChange={onPreviewSceneChange}
                 startOverrides={previewStartOverrides}
@@ -640,6 +659,7 @@ export function App() {
           onDelete={async (id) => {
             const wasCurrent = await store.deleteProject(id);
             if (wasCurrent) {
+              setPreviewSession(null);
               setPreviewSetup({
                 projectId: undefined,
                 overrides: emptyPreviewStartOverrides(emptyScenario()),
@@ -658,6 +678,7 @@ export function App() {
           onOpen={(id) => {
             void store.openProject(id).then(
               (loaded) => {
+                setPreviewSession(null);
                 setPreviewSetup({ projectId: id, overrides: emptyPreviewStartOverrides(loaded) });
                 setSelected(loaded.scenes[0]?.id);
                 setFocusRequest(undefined);

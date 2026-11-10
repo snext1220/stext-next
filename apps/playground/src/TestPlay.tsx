@@ -20,6 +20,17 @@ export interface PreviewStartOverrides {
   flags: string[];
   params: Record<string, string>;
   stars: string[];
+  bgm: string;
+}
+
+interface PreviewSnapshot {
+  state: GameState;
+  global: GlobalState;
+  log: string[];
+}
+
+export interface PreviewRun extends PreviewSnapshot {
+  previous?: PreviewSnapshot;
 }
 
 export function emptyPreviewStartOverrides(scenario: DraftScenario): PreviewStartOverrides {
@@ -33,11 +44,12 @@ export function emptyPreviewStartOverrides(scenario: DraftScenario): PreviewStar
       ]),
     ),
     stars: Array(7).fill(''),
+    bgm: '',
   };
 }
 
 /**
- * 試遊：編集中のシナリオをその場で遊ぶ。保存はせず、この画面の中だけで進む。
+ * 試遊：進行状態は親画面に保持し、作品やプレイヤーのセーブデータには保存しない。
  */
 export function TestPlay({
   scenario,
@@ -49,6 +61,8 @@ export function TestPlay({
   resourceUrls,
   scenarioResultTotals,
   scenarioIndexError,
+  initialRun,
+  onRunChange,
 }: {
   scenario: Scenario;
   startScene: string | undefined;
@@ -59,8 +73,12 @@ export function TestPlay({
   resourceUrls: Readonly<Record<string, string>>;
   scenarioResultTotals: ReadonlyMap<string, number> | null;
   scenarioIndexError: string | null;
+  initialRun: PreviewRun | null;
+  onRunChange: (run: PreviewRun) => void;
 }) {
-  const [playerGlobal, setPlayerGlobal] = useState<GlobalState>(() => emptyGlobalState());
+  const [playerGlobal, setPlayerGlobal] = useState<GlobalState>(
+    () => initialRun?.global ?? emptyGlobalState(),
+  );
   const engine = useMemo(
     () =>
       createEngine(scenario, {
@@ -74,12 +92,40 @@ export function TestPlay({
       }),
     [scenario, scenarioResultTotals, playerGlobal],
   );
-  const [run, setRun] = useState<{ state: GameState; global: GlobalState; log: string[] } | null>(
-    null,
-  );
+  const [run, setLocalRun] = useState<PreviewRun | null>(initialRun);
+  const setRun = (next: PreviewRun) => {
+    setLocalRun(next);
+    setPlayerGlobal(next.global);
+    onRunChange(next);
+  };
+  const lastSyncedState = useRef(initialRun?.state);
   const playRef = useRef<HTMLDivElement>(null);
   const pendingSceneScroll = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const bgmCandidates = useMemo(() => {
+    const candidates = new Map<string, string>();
+    const add = (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed || trimmed === '@none') return;
+      const key = localAudioPath('bgm', trimmed) ?? trimmed;
+      if (!candidates.has(key)) candidates.set(key, trimmed);
+    };
+    for (const name of Object.values(scenario.meta.bgm ?? {})) {
+      if (name) add(name);
+    }
+    for (const scene of scenario.scenes) {
+      if (scene.bgm) add(scene.bgm);
+    }
+    for (const path of Object.keys(resourceUrls)) {
+      if (/^bgm\/(?!se\/).+\.(mp3|ogg|wav|m4a|aac)$/i.test(path)) {
+        add(path.slice(4).replace(/\.mp3$/i, ''));
+      }
+    }
+    const names = [...candidates.values()];
+    if (startOverrides.bgm && startOverrides.bgm !== '@none' && !names.includes(startOverrides.bgm))
+      names.push(startOverrides.bgm);
+    return names;
+  }, [scenario, resourceUrls, startOverrides.bgm]);
 
   useLayoutEffect(() => {
     if (!pendingSceneScroll.current) return;
@@ -113,8 +159,8 @@ export function TestPlay({
     try {
       const rawGlobal = localStorage.getItem(GLOBAL_SAVE_KEY);
       const global = rawGlobal ? readLegacyGlobal(rawGlobal) : emptyGlobalState();
-      setPlayerGlobal(global);
       const character = engine.newCharacter(global);
+      character.bgm = startOverrides.bgm.trim();
       const itemIds = new Set(scenario.items.map((item) => item.id));
       const flagIds = new Set(scenario.flags.map((flag) => flag.id));
       character.items = startOverrides.items.filter((id) => itemIds.has(id));
@@ -144,8 +190,17 @@ export function TestPlay({
         return number;
       });
       let step = engine.begin(character, global);
-      if (from && from !== '0') step = engine.enterScene(step.state, step.global, from);
-      setRun({ state: step.state, global: step.global, log: describe(step.events) });
+      let previous: PreviewSnapshot | undefined;
+      if (from && from !== '0') {
+        previous = { state: step.state, global: step.global, log: describe(step.events) };
+        step = engine.enterScene(step.state, step.global, from);
+      }
+      setRun({
+        state: step.state,
+        global: step.global,
+        log: describe(step.events),
+        ...(previous ? { previous } : {}),
+      });
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -162,11 +217,29 @@ export function TestPlay({
     }
   }, [engine, run]);
   const view = shown.view;
+  useEffect(() => {
+    // 再表示やログ更新では、手入力・クリアした開始設定を上書きしない。
+    if (!run || lastSyncedState.current === run.state) return;
+    lastSyncedState.current = run.state;
+    onStartOverridesChange({
+      items: [...run.state.items],
+      flags: [...run.state.flags],
+      params: Object.fromEntries(
+        scenario.params.map((param) => [
+          param.id,
+          String(run.state.params[param.id] ?? param.initial ?? ''),
+        ]),
+      ),
+      stars: run.state.stars.map(String),
+      bgm: view?.bgm ?? run.state.bgm,
+    });
+  }, [run, view?.bgm, scenario.params, onStartOverridesChange]);
   const music = view ? view.bgm || scenario.meta.bgm?.main || 'main' : undefined;
   const musicPath = music ? localAudioPath('bgm', music) : undefined;
   const musicUrl =
-    music && musicPath
-      ? (resourceUrls[musicPath] ?? bgmUrl(scenario.meta.id ?? 'playground', music))
+    music && music !== '@none'
+      ? ((musicPath ? resourceUrls[musicPath] : undefined) ??
+        bgmUrl(scenario.meta.id ?? 'playground', music))
       : undefined;
   const soundName = view?.se;
   const soundPath = soundName ? localAudioPath('se', soundName) : undefined;
@@ -193,9 +266,16 @@ export function TestPlay({
         state: r.state,
         global: r.global,
         log: [...describe(r.events), ...run.log].slice(0, 30),
+        previous: { state: run.state, global: run.global, log: run.log },
       });
     } else if (r.kind === 'back')
-      setRun({ ...run, log: ['「戻る」：試遊では直前に戻れません', ...run.log] });
+      setRun({
+        ...run,
+        log: [
+          '「戻る」の選択肢は試遊では使えません。移動のやり直しは［直前のシーンからやり直す］を使ってください',
+          ...run.log,
+        ],
+      });
     else
       setRun({
         ...run,
@@ -211,15 +291,53 @@ export function TestPlay({
       });
   };
 
+  const moveToSelected = () => {
+    if (!run || !startScene) return;
+    try {
+      const step = engine.enterScene(run.state, run.global, startScene);
+      pendingSceneScroll.current = true;
+      setRun({
+        state: step.state,
+        global: step.global,
+        log: [...describe(step.events), ...run.log].slice(0, 30),
+        previous: { state: run.state, global: run.global, log: run.log },
+      });
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const retryPrevious = () => {
+    if (!run?.previous) return;
+    if (!scenario.scenes.some((scene) => scene.id === String(run.previous?.state.scene))) {
+      setError(`直前のシーン「${run.previous.state.scene}」がないため戻れません`);
+      return;
+    }
+    pendingSceneScroll.current = true;
+    setRun(run.previous);
+    setError(null);
+  };
+
   return (
     <div ref={playRef} className="pg-play">
       <div className="pg-toolbar">
         <button type="button" onClick={() => start()}>
           最初から試遊
         </button>
+        {run?.previous && (
+          <button type="button" onClick={retryPrevious}>
+            直前のシーンからやり直す
+          </button>
+        )}
         {startScene && startScene !== '0' && (
           <button type="button" onClick={() => start(startScene)}>
             §{startScene} から試遊
+          </button>
+        )}
+        {run && !run.state.isEnded && startScene && startScene !== String(run.state.scene) && (
+          <button type="button" onClick={moveToSelected}>
+            現在の状態で§{startScene}へ移動
           </button>
         )}
       </div>
@@ -228,11 +346,32 @@ export function TestPlay({
         <div className="pg-play-setup-head">
           <p className="pg-hint">
             ここで指定した状態でシーン0から開始し、選択中のシーンがあれば続けて移動します。
+            シーンに入ると効果が適用され、BGMの指定があれば切り替わります。
+            開始設定は試遊の進行・やり直しに合わせて自動更新します。
+            手入力やクリアした値は、次の開始に使用します。
           </p>
           <button type="button" onClick={onClearStartOverrides}>
             状態をクリア
           </button>
         </div>
+        <label className="pg-play-setup-field">
+          開始時のBGM
+          <select
+            aria-label="試遊の開始BGM"
+            value={startOverrides.bgm}
+            onChange={(event) =>
+              onStartOverridesChange({ ...startOverrides, bgm: event.target.value })
+            }
+          >
+            <option value="">メインBGM</option>
+            <option value="@none">無音</option>
+            {bgmCandidates.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
         {scenario.items.length > 0 && (
           <fieldset>
             <legend>アイテム</legend>
@@ -349,6 +488,12 @@ export function TestPlay({
       {!run && !error && (
         <p className="pg-hint">
           新しいキャラクターで、編集中のシナリオを遊べます。プレイヤーに保存済みの実績を参照しますが、試遊の結果は保存しません。
+        </p>
+      )}
+      {run && (
+        <p className="pg-hint">
+          試遊の進行状態はタブを切り替えても保持されます。作品の切替や再読み込みで消えます。
+          ［最初から試遊］と［§…から試遊］は、開始設定を使って新しく始めます。
         </p>
       )}
       {run && view && (
