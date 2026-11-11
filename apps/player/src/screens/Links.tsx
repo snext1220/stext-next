@@ -236,22 +236,56 @@ export function Links() {
         </ul>
         <h3>起源（オリジン）、そして更なる展開（ステージ）へ</h3>
         <p>
-          2013年のエイプリルフール企画「
+          2013年のエイプリルフール企画として公開された「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/">SORCERIAN Next</ExtLink>
-          」のページと、さらに遡って、Next の起源となった iOS
-          版ソーサリアンのシナリオコンテストの作品をまとめたブログ「
-          <ExtLink href="https://sorcerian.hateblo.jp/">新時代のソーサリアンを提案する</ExtLink>
-          」です。SText の起源とも言える（？）過去の作品も、併せてご覧ください。
+          」。その発想の源をたどると、iOS版ソーサリアンのシナリオコンテストに行き着きます。当時の作品を紹介するブログ「
+          <ExtLink href="https://d.hatena.ne.jp/sorcerian/">新時代のソーサリアンを提案する</ExtLink>
+          」とあわせて、ソーサリアンの新しい可能性を模索した軌跡をご覧ください。
         </p>
+        <div className="doc-banner-links">
+          <a
+            className="doc-banner-link"
+            href="https://www.web-deli.com/sorcerian/next/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://www.web-deli.com/sorcerian/next/images2/snext_banner_1.png"
+              alt="SORCERIAN Next"
+              width={180}
+              height={180}
+              loading="lazy"
+            />
+          </a>
+          <a
+            className="doc-banner-link"
+            href="https://d.hatena.ne.jp/sorcerian/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://cdn-ak.f.st-hatena.com/images/fotolife/s/sorcerian/20121027/20121027191354.png"
+              alt="新時代のソーサリアンを提案する"
+              width={269}
+              height={56}
+              loading="lazy"
+            />
+          </a>
+        </div>
         <p>
-          Next チームでは、SText のあとも「
+          2017年12月に始まったソーサリアン
+          Text（SText）は、シナリオを遊ぶだけでなく、誰もが作品を投稿できる場として育ちました。その後、Next
+          チームは「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/allabout.aspx">
             All About 計画
           </ExtLink>
-          」の名のもとで、ソーサリアン関連の創作を続けています。2020～21年の MV
-          ツクール版ソーサリアン「
+          」のもとで創作を続け、2020～21年には MV ツクール版「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/2020">SORCERIAN Next 2020</ExtLink>
-          」を手始めに、さまざまな創作（とそのプラットフォーム）を試行錯誤していきます！
+          を発表しました。Next
+          2020は独立したゲーム作品で、プレイヤーを刷新したNTextとは別の展開です。
+        </p>
+        <p>
+          NTextは、STextのシナリオとセーブデータを引き継ぎながら、プレイヤーを次世代向けに作り直したものです。NextからText、そしてNTextへ――それぞれの試みを通じて、ソーサリアンの物語を楽しみ、創る場をつないでいます。
         </p>
         <a
           className="doc-banner-link"
@@ -267,6 +301,13 @@ export function Links() {
             loading="lazy"
           />
         </a>
+        <ImagePreview
+          triggerClassName="doc-banner"
+          src={siteImageUrl('banner/ntext-660x80.png')}
+          alt="ソーサリアン NText。遊ぶ。創る。無限の冒険譚へ。"
+          width={660}
+          height={80}
+        />
       </DocSheet>
     </DocPage>
   );

@@ -2533,6 +2533,18 @@ label.drop {
   font-size: var(--step--1);
   color: var(--ink-soft);
 }
+.image-preview-trigger.doc-hero {
+  display: block;
+  width: 100%;
+  margin: 0 0 1.25em;
+}
+.image-preview-trigger.doc-hero > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(30, 20, 5, 0.25);
+}
 .image-preview-trigger.doc-float {
   float: right;
   width: min(40%, 240px);
@@ -2559,6 +2571,17 @@ label.drop {
 .doc-banner-link img {
   display: block;
   border-radius: 4px;
+}
+.doc-banner-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin: 12px 0;
+}
+.doc-banner-links .doc-banner-link img {
+  max-width: 100%;
+  height: auto;
 }
 .doc-steps li {
   padding-left: 4px;

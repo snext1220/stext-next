@@ -17,6 +17,14 @@ export function About({ section }: { section?: string }) {
       lede="ソーサリアン Text と、原作「ソーサリアン」のことを紹介します。"
     >
       <DocSheet seed={31}>
+        <ImagePreview
+          triggerClassName="doc-hero"
+          src={siteImageUrl('ntext-promo.webp')}
+          alt="冒険者たちが本から広がる世界へ旅立つ、ソーサリアン NText のイメージイラスト"
+          width={1536}
+          height={1024}
+          loading="eager"
+        />
         <p>
           「ソーサリアン
           Text」（略称：SText）は、ソーサリアンの世界を古典的なゲームブックの形で再現しようという試みです。原作の30周年を記念して、2017年12月20日に生まれました。
@@ -52,6 +60,13 @@ export function About({ section }: { section?: string }) {
           ファイル）もそのまま使えます。開発は <ExtLink href={REPOSITORY}>GitHub</ExtLink>{' '}
           で進めています。
         </p>
+        <ImagePreview
+          triggerClassName="doc-banner"
+          src={siteImageUrl('banner/ntext-history-660x80.png')}
+          alt="NextからText、そしてNTextへ…冒険譚を受け継ぎ、新しい世代へ。"
+          width={660}
+          height={80}
+        />
         <div className="end-actions">
           <a className="btn" href={MANUALS.player} target="_blank" rel="noopener noreferrer">
             遊び方を知りたい（プレイヤー向けマニュアル）

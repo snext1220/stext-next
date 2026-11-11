@@ -11,4 +11,5 @@
 | [playground-battle-preview.md](./playground-battle-preview.md) | Playground 試遊の戦闘機能仕様（レビュー待ち） |
 | [playground-markdown-editor.md](./playground-markdown-editor.md) | Playground 本文エディターの Markdown 入力補助仕様（実装済み） |
 | [playground-flow-group-filter.md](./playground-flow-group-filter.md) | Playground フロー図のグループ絞り込み仕様案（未承認・未実装、実装保留） |
+| [site-banner-placement.md](./site-banner-placement.md) | サイト紹介イラスト・バナーの配置仕様（実装済み） |
 | [refactoring-opportunities.md](./refactoring-opportunities.md) | 長期的なリファクタリング候補 |

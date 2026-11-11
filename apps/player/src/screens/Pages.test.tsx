@@ -61,6 +61,18 @@ describe('guide and toolbox pages', () => {
     expect(screen.queryByRole('navigation', { name: '目次' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'ソーサリアン Text から NText へ' })).toBeTruthy();
     expect(screen.getByText(/ソーサリアン NText/)).toBeTruthy();
+    expect(
+      screen
+        .getByRole('img', {
+          name: '冒険者たちが本から広がる世界へ旅立つ、ソーサリアン NText のイメージイラスト',
+        })
+        .getAttribute('src'),
+    ).toBe('/assets/site/ntext-promo.webp');
+    expect(
+      screen
+        .getByRole('img', { name: 'NextからText、そしてNTextへ…冒険譚を受け継ぎ、新しい世代へ。' })
+        .getAttribute('src'),
+    ).toBe('/assets/site/banner/ntext-history-660x80.png');
     expect(document.getElementById('about-sorcerian')).not.toBeNull();
   });
 
@@ -79,9 +91,33 @@ describe('guide and toolbox pages', () => {
   });
 
   it('lists the related links', () => {
-    render(<Links />);
+    const { container } = render(<Links />);
     expect(screen.getByRole('heading', { name: 'リリース当日の様子' })).toBeTruthy();
     expect(screen.getAllByRole('link', { name: 'SORCERIAN Next 2020' })).toHaveLength(2);
+    expect(screen.getByRole('img', { name: 'SORCERIAN Next' }).getAttribute('src')).toBe(
+      'https://www.web-deli.com/sorcerian/next/images2/snext_banner_1.png',
+    );
+    expect(
+      screen.getByRole('img', { name: 'SORCERIAN Next' }).parentElement?.getAttribute('href'),
+    ).toBe('https://www.web-deli.com/sorcerian/next/');
+    expect(
+      screen.getByRole('img', { name: '新時代のソーサリアンを提案する' }).getAttribute('src'),
+    ).toBe(
+      'https://cdn-ak.f.st-hatena.com/images/fotolife/s/sorcerian/20121027/20121027191354.png',
+    );
+    expect(
+      screen
+        .getByRole('img', { name: '新時代のソーサリアンを提案する' })
+        .parentElement?.getAttribute('href'),
+    ).toBe('https://d.hatena.ne.jp/sorcerian/');
+    expect(screen.getByText(/2020は独立したゲーム作品/)).toBeTruthy();
+    expect(screen.getByText(/NTextは、STextのシナリオとセーブデータ/)).toBeTruthy();
+    expect(container.querySelector('.doc-banner-links')?.children).toHaveLength(2);
+    expect(
+      screen
+        .getByRole('img', { name: 'ソーサリアン NText。遊ぶ。創る。無限の冒険譚へ。' })
+        .getAttribute('src'),
+    ).toBe('/assets/site/banner/ntext-660x80.png');
   });
 
   it('explains how to post and points to the creator materials', () => {
