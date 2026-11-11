@@ -1,5 +1,13 @@
 /// <reference types="vite/client" />
 
+interface Window {
+  showOpenFilePicker?: (options: {
+    multiple: boolean;
+    types: { description: string; accept: Record<string, string[]> }[];
+    excludeAcceptAllOption: boolean;
+  }) => Promise<import('./localFileSync.js').LocalFileHandle[]>;
+}
+
 interface ImportMetaEnv {
   /** 画像・BGM・効果音の配信元（既定は公開サイトの ../assets/） */
   readonly VITE_ASSET_BASE?: string;

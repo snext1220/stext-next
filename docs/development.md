@@ -24,6 +24,16 @@ npm run dev        # プレイヤーアプリの開発サーバー（http://loca
 | `VITE_SCENARIO_BASE` | シナリオの配信元（既定はビルド結果の `scenarios/`。`<id>/scenario.json` と、挿絵・BGM もここから読む） |
 | `VITE_PLAYGROUND_URL` | 投稿の画面の「Playground を開く」のリンク先（既定はプレイヤーの隣の `playground/`。開発サーバーで試すときは `http://localhost:5174/` を指定） |
 
+### 管理者向けのローカルファイル反映
+
+Playgroundの［エクスポート…］内にある［ローカルファイル連携］から、手元の `scenarios/<id>/scenario.json` を選び、［ローカルへ反映］で編集内容を書き戻せます。File System Access APIを使うため、対応するChrome／EdgeなどとHTTPSまたはlocalhostが必要です。GitHub Pagesからも利用でき、ローカルサーバーやGitHub認証情報は不要です。
+
+対応環境では［作品…］→［ファイルを選択…］も同APIを使い、ID付きのstext/2 JSONを読み込んだ新しい作品へ、そのファイルを自動で連携します。比較基準はレイアウト・補完前の読み込み文字列です。作品作成で返された作品IDへ紐付け、失敗時には連携しません。読み込み時の書き込み・書き込み権限要求はありません。ID未設定・旧形式・非対応環境は読み込みのみとし、旧形式への書き戻しはしません。
+
+保存先は既存のstext/2 JSONに限定し、IDの一致確認と書き込み直前の内容比較で、取り違え・外部変更による上書きを防ぎます。選択だけでは書き込まず、ブラウザー内自動保存からも独立しています。連携情報はブラウザー内作品IDごとにメモリーで保持し、再読み込み後は選び直します。素材、Git操作、公開データの更新は対象外です。旧シナリオは再変換による上書きにも注意してください。
+
+実装は `apps/playground/src/localFileSync.ts`（ファイル操作・作品別連携）、`WorkspaceMenus.tsx`（表示）、`App.tsx`（編集・切替の制御）です。OSのファイル選択・権限操作は自動テストでAPIをモックし、外部変更・ID不一致・失敗時の通知・多重操作を検証します。詳しくは[個別仕様](spec/playground-local-file-sync.md)と[マニュアル](manual-playground.md#手元のリポジトリへjsonを反映する管理者向け)を参照してください。
+
 ### 作品提出フォーム
 
 送信先と発行HTMLの項目名・hidden値は [post.ts](../apps/playground/src/post.ts) にまとめています。オレンジフォーム（フォームID `261098`）へUTF-8の通常のフォームPOSTを行い、別タブで確認・最終送信します。`fetch` やCORSによる応答読み取りは使いません。提供元の `of_lib.js` が行うPOSTをブラウザー標準のフォーム送信で置き換えるため、jQuery・メール誤入力補助・Cookie保存用scriptは読み込みません。発行HTMLのhoneypot `of_dummy_note` と「Powered by」の表示は残します。

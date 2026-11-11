@@ -41,7 +41,7 @@ export interface Store {
   retrySave: () => void;
   openProject: (id: string) => Promise<Scenario>;
   deleteProject: (id: string) => Promise<boolean>;
-  createProject: (scenario: Scenario) => Promise<void>;
+  createProject: (scenario: Scenario) => Promise<string | undefined>;
   resources: LocalResource[];
   resourcesReady: boolean;
   resourceError: string | null;
@@ -333,6 +333,7 @@ export function useScenarioStore(): Store {
         setProjects(loadedProjects);
         setSaveStatus('saved');
         setSaveError(null);
+        return id;
       } catch (error) {
         if (version === saveVersion.current) {
           setSaveStatus('error');

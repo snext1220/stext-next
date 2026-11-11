@@ -1034,6 +1034,14 @@ body {
   border-color: var(--gold);
   font-weight: 700;
 }
+.pg-local-file-target {
+  overflow-wrap: anywhere;
+}
+.pg-local-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 @media (max-width: 900px) {
   body {
     overflow: auto;

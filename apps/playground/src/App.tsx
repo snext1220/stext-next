@@ -4,7 +4,7 @@ import {
   validateScenarioDraft,
   type DraftScenario as Scenario,
 } from '@stext/schema';
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createScenarioArchive, findMissingResources, validateArchiveId } from './archive.js';
 import { findProblems, problemsByScene } from './checks.js';
 import { SCENARIO_BASE, TEMPLATE_BASE } from './config.js';
@@ -12,6 +12,12 @@ import { Definitions } from './Definitions.js';
 import { FlowView } from './FlowView.js';
 import { HELP_INDEX, useHelp } from './help/HelpPanel.js';
 import { autoLayout } from './layout.js';
+import {
+  pickLocalFile,
+  scenarioJson,
+  useLocalFileSync,
+  type LocalFileHandle,
+} from './localFileSync.js';
 import {
   addChoice,
   addScene,
@@ -44,6 +50,9 @@ type Tab = 'scene' | 'defs' | 'resources' | 'problems' | 'play';
 export function App() {
   const store = useScenarioStore();
   const { scenario } = store;
+  const localFile = useLocalFileSync(store.projectId, scenario);
+  const [readingFile, setReadingFile] = useState(false);
+  const fileReading = useRef(false);
   const [selected, setSelected] = useState<string | undefined>(() => scenario.scenes[0]?.id);
   const [previewScene, setPreviewScene] = useState<string>();
   const [previewSetup, setPreviewSetup] = useState<{
@@ -85,6 +94,7 @@ export function App() {
   } | null>(null);
   const [postPreparing, setPostPreparing] = useState(false);
   const preparingSnapshot = zipProgress?.phase === 'preparing' || postPreparing;
+  const workspaceLocked = preparingSnapshot || localFile.busy || readingFile;
   const openHelp = useHelp();
 
   const problems = useMemo(() => findProblems(scenario), [scenario]);
@@ -154,7 +164,7 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
-      if (preparingSnapshot) return;
+      if (workspaceLocked) return;
       if ((e.target as HTMLElement | null)?.closest('input, textarea, select')) return;
       e.preventDefault();
       if (e.shiftKey) store.redo();
@@ -162,7 +172,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [store, preparingSnapshot]);
+  }, [store, workspaceLocked]);
 
   if (!store.ready || store.transitioning)
     return (
@@ -181,7 +191,8 @@ export function App() {
   const open = async (s: Scenario, note: string) => {
     const laid = autoLayout(s);
     try {
-      await store.createProject(laid);
+      const id = await store.createProject(laid);
+      if (!id) throw new Error('作品の作成が中断されました');
       setPreviewSession(null);
       setPreviewSetup({ projectId: undefined, overrides: emptyPreviewStartOverrides(laid) });
       setFlowKey((k) => k + 1);
@@ -189,12 +200,16 @@ export function App() {
       setFocusRequest(undefined);
       setTab('scene');
       flash(note);
+      return id;
     } catch (e) {
       flash(`作品を切り替えられませんでした: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
-  const openFile = async (file: File | undefined) => {
+  const openFile = async (
+    file: Pick<File, 'name' | 'text'> | undefined,
+    handle?: LocalFileHandle,
+  ) => {
     if (!file) return;
     try {
       const text = await file.text();
@@ -214,9 +229,42 @@ export function App() {
         throw new Error(
           `stext/2 のシナリオとして読めません：${v.issues[0]?.path} ${v.issues[0]?.message}`,
         );
-      await open(v.scenario, `${file.name} を開きました`);
+      const scenarioId = v.scenario.meta.id;
+      const canLink = handle && scenarioId?.trim();
+      const note = canLink
+        ? `${file.name} を開き、保存先にも連携しました。まだファイルには書き込んでいません。`
+        : handle
+          ? `${file.name} を開きました。ID未設定のため未連携です。作品と保存先に同じIDを設定後、［保存先ファイルを選択…］で連携してください。`
+          : `${file.name} を開きました`;
+      const id = await open(v.scenario, note);
+      if (id && handle && scenarioId?.trim())
+        localFile.attach(id, { handle, scenarioId, baseline: text });
     } catch (e) {
       flash(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const readFile = async (fallbackFile?: File) => {
+    if (fileReading.current) return;
+    fileReading.current = true;
+    setReadingFile(true);
+    try {
+      if (fallbackFile) {
+        await openFile(fallbackFile);
+      } else {
+        const handle = await pickLocalFile(true);
+        if (!handle) return;
+        const file = await handle.getFile();
+        await openFile({ name: handle.name, text: () => file.text() }, handle);
+      }
+      setShowWorkMenu(false);
+    } catch (error) {
+      flash(
+        `ファイルを読み込めませんでした: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      fileReading.current = false;
+      setReadingFile(false);
     }
   };
 
@@ -241,7 +289,7 @@ export function App() {
 
   const download = () => {
     downloadBlob(
-      new Blob([JSON.stringify(scenario, null, 2) + '\n'], { type: 'application/json' }),
+      new Blob([scenarioJson(scenario)], { type: 'application/json' }),
       `${scenario.meta.id || 'scenario'}.json`,
     );
   };
@@ -328,7 +376,7 @@ export function App() {
           className="pg-title"
           aria-label="シナリオのタイトル"
           value={scenario.meta.title}
-          disabled={preparingSnapshot}
+          disabled={workspaceLocked}
           onChange={(e) =>
             store.update(
               { ...scenario, meta: { ...scenario.meta, title: e.target.value } },
@@ -336,7 +384,7 @@ export function App() {
             )
           }
         />
-        <div className="pg-menu" inert={preparingSnapshot}>
+        <div className="pg-menu" inert={workspaceLocked}>
           <button type="button" onClick={() => setShowWorkMenu(true)}>
             作品…
           </button>
@@ -409,7 +457,7 @@ export function App() {
       </div>
       <main
         className="pg-main"
-        inert={preparingSnapshot}
+        inert={workspaceLocked}
         style={
           sideWidth === undefined
             ? undefined
@@ -609,6 +657,9 @@ export function App() {
       </main>
       {showWorkMenu && (
         <WorkDialog
+          busy={readingFile}
+          autoLink={localFile.supported}
+          onPickFile={() => void readFile()}
           templates={templates}
           published={published}
           onNew={() => {
@@ -624,8 +675,7 @@ export function App() {
             void openUrl(`${SCENARIO_BASE}${id}/scenario.json`, '公開シナリオを開きました');
           }}
           onOpenFile={(file) => {
-            setShowWorkMenu(false);
-            void openFile(file);
+            void readFile(file);
           }}
           onOpenSavedProjects={() => setShowProjects(true)}
           onClose={() => setShowWorkMenu(false)}
@@ -637,6 +687,7 @@ export function App() {
           onExportJson={download}
           onClose={() => setShowExportMenu(false)}
           zipDisabled={zipProgress !== null}
+          localFile={localFile}
         />
       )}
       {posting && postingSnapshot && (
@@ -661,6 +712,7 @@ export function App() {
           onClose={() => setShowProjects(false)}
           onDelete={async (id) => {
             const wasCurrent = await store.deleteProject(id);
+            localFile.forget(id);
             if (wasCurrent) {
               setPreviewSession(null);
               setPreviewSetup({

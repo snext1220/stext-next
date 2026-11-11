@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { LocalFileSync } from './localFileSync.js';
 
 export interface WorkMenuTemplate {
   id: string;
@@ -20,6 +21,9 @@ export function WorkDialog({
   onOpenFile,
   onOpenSavedProjects,
   onClose,
+  busy = false,
+  autoLink = false,
+  onPickFile,
 }: {
   templates: readonly WorkMenuTemplate[];
   published: readonly WorkMenuScenario[];
@@ -29,6 +33,9 @@ export function WorkDialog({
   onOpenFile: (file: File) => void;
   onOpenSavedProjects: () => void;
   onClose: () => void;
+  busy?: boolean;
+  autoLink?: boolean;
+  onPickFile: () => void;
 }) {
   const dialog = useRef<HTMLElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -38,14 +45,14 @@ export function WorkDialog({
   useEffect(() => {
     dialog.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape' && !busy) onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  }, [onClose, busy]);
 
   return (
-    <div className="pg-dialog-backdrop" onClick={onClose}>
+    <div className="pg-dialog-backdrop" onClick={() => !busy && onClose()}>
       <section
         ref={dialog}
         className="pg-dialog pg-work-dialog"
@@ -58,11 +65,12 @@ export function WorkDialog({
         <header className="pg-dialog-head">
           <h2 id="pg-work-title">作品</h2>
           <span className="pg-spacer" />
-          <button type="button" onClick={onClose}>
+          <button type="button" disabled={busy} onClick={onClose}>
             閉じる
           </button>
         </header>
-        <div className="pg-dialog-body pg-work-options">
+        {busy && <p role="status">ファイルを読み込んでいます…</p>}
+        <div className="pg-dialog-body pg-work-options" inert={busy}>
           <section>
             <h3>新しく作る</h3>
             <button type="button" onClick={onNew}>
@@ -109,7 +117,17 @@ export function WorkDialog({
           <section>
             <h3>ファイルから読み込む</h3>
             <p className="pg-hint">stext/2 JSON、旧 scenario.xml、旧 Playground JSONを開けます。</p>
-            <button type="button" onClick={() => fileInput.current?.click()}>
+            {autoLink && (
+              <p className="pg-hint">
+                IDを設定したstext/2 JSONは保存先としても連携します。
+                書き込みは［エクスポート…］の［ローカルへ反映］で行います。
+                旧形式は読み込みのみです。
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => (autoLink ? onPickFile() : fileInput.current?.click())}
+            >
               ファイルを選択…
             </button>
             <input
@@ -122,7 +140,6 @@ export function WorkDialog({
                 const file = event.currentTarget.files?.[0];
                 if (!file) return;
                 onOpenFile(file);
-                onClose();
                 event.currentTarget.value = '';
               }}
             />
@@ -154,25 +171,27 @@ export function ExportDialog({
   onExportJson,
   onClose,
   zipDisabled = false,
+  localFile,
 }: {
   onExportZip: () => void;
   onExportJson: () => void;
   onClose: () => void;
   zipDisabled?: boolean;
+  localFile: LocalFileSync;
 }) {
   const dialog = useRef<HTMLElement>(null);
 
   useEffect(() => {
     dialog.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape' && !localFile.busy) onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  }, [onClose, localFile.busy]);
 
   return (
-    <div className="pg-dialog-backdrop" onClick={onClose}>
+    <div className="pg-dialog-backdrop" onClick={() => !localFile.busy && onClose()}>
       <section
         ref={dialog}
         className="pg-dialog pg-export-dialog"
@@ -185,7 +204,7 @@ export function ExportDialog({
         <header className="pg-dialog-head">
           <h2 id="pg-export-title">エクスポート</h2>
           <span className="pg-spacer" />
-          <button type="button" onClick={onClose}>
+          <button type="button" disabled={localFile.busy} onClick={onClose}>
             閉じる
           </button>
         </header>
@@ -193,7 +212,7 @@ export function ExportDialog({
           <button
             type="button"
             className="pg-export-primary"
-            disabled={zipDisabled}
+            disabled={zipDisabled || localFile.busy}
             onClick={() => {
               onClose();
               onExportZip();
@@ -206,6 +225,7 @@ export function ExportDialog({
           </p>
           <button
             type="button"
+            disabled={localFile.busy}
             onClick={() => {
               onClose();
               onExportJson();
@@ -214,6 +234,82 @@ export function ExportDialog({
             シナリオだけをJSONでダウンロード
           </button>
           <p className="pg-hint">素材ファイルは含みません。JSONを確認・編集する場合に使います。</p>
+          <section aria-labelledby="pg-local-file-title" aria-busy={localFile.busy}>
+            <h3 id="pg-local-file-title">ローカルファイル連携</h3>
+            <p className="pg-hint">
+              手元のリポジトリへシナリオJSONだけを反映できます。素材は含みません。
+              ファイルの選択だけでは書き込みません。
+            </p>
+            {localFile.supported ? (
+              <>
+                {localFile.link ? (
+                  <>
+                    <p className="pg-local-file-target">
+                      保存先：{localFile.link.handle.name}（ID: {localFile.link.scenarioId}）
+                    </p>
+                    {localFile.link.reflectedAt && (
+                      <p>
+                        最終反映：
+                        <time dateTime={localFile.link.reflectedAt}>
+                          {new Date(localFile.link.reflectedAt).toLocaleString('ja-JP')}
+                        </time>
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={localFile.busy || zipDisabled}
+                      onClick={() => void localFile.reflect()}
+                    >
+                      ローカルへ反映
+                    </button>
+                    <div className="pg-local-file-actions">
+                      <button
+                        type="button"
+                        disabled={localFile.busy || zipDisabled}
+                        onClick={() => void localFile.choose()}
+                      >
+                        保存先を変更…
+                      </button>
+                      <button
+                        type="button"
+                        disabled={localFile.busy}
+                        onClick={() => localFile.forgetCurrent()}
+                      >
+                        連携を解除
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={localFile.busy || zipDisabled}
+                    onClick={() => void localFile.choose()}
+                  >
+                    保存先ファイルを選択…
+                  </button>
+                )}
+                <p className="pg-hint">
+                  連携はこのタブの作品ごとに保持します。ページ再読み込み後は保存先を選び直してください。
+                  反映中は同じファイルを他のアプリで保存しないでください。
+                </p>
+                <p className="pg-hint">
+                  旧形式から変換した作品は、再変換で変更を失う可能性があります。 反映後はVS
+                  Codeなどで差分を確認してください。公開サイトは自動更新されません。
+                </p>
+              </>
+            ) : (
+              <p className="pg-hint">
+                この環境では利用できません。HTTPSまたはlocalhostで対応するChrome／Edgeを使うか、
+                上のJSONダウンロードをご利用ください。
+              </p>
+            )}
+            {localFile.busy && (
+              <p role="status">連携処理中… 操作開始時点の編集内容を使用します。</p>
+            )}
+            {localFile.feedback && (
+              <p role={localFile.feedback.error ? 'alert' : 'status'}>{localFile.feedback.text}</p>
+            )}
+          </section>
         </div>
       </section>
     </div>

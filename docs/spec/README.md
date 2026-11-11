@@ -7,6 +7,7 @@
 | [migration-gap-analysis.md](./migration-gap-analysis.md) | 旧版からの移行機能差分と未確認事項 |
 | [bgm-revision-plan.md](./bgm-revision-plan.md) | BGM設定の改定仕様 |
 | [playground-data-management.md](./playground-data-management.md) | Playground のローカルリソース管理・ZIP出力仕様 |
+| [playground-local-file-sync.md](./playground-local-file-sync.md) | Playground のローカルシナリオJSONへの反映仕様（実装済み） |
 | [playground-submission-plan.md](./playground-submission-plan.md) | Playground の作品提出方法の変更計画 |
 | [playground-battle-preview.md](./playground-battle-preview.md) | Playground 試遊の戦闘機能仕様（レビュー待ち） |
 | [playground-markdown-editor.md](./playground-markdown-editor.md) | Playground 本文エディターの Markdown 入力補助仕様（実装済み） |

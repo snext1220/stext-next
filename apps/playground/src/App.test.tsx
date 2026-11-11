@@ -163,3 +163,305 @@ it('resumes preview after editing without repeating effects, and discards it on 
     await readResources.mock.results.at(-1)!.value;
   });
 });
+
+it('reflects through Export without mixing projects and locks the workspace until writing completes', async () => {
+  const first = emptyScenario('連携元の作品');
+  first.meta.id = 'gods';
+  const second = emptyScenario('同じIDの別作品');
+  second.meta.id = 'gods';
+  await seedProjects([first, second]);
+  let contents = JSON.stringify(first);
+  let pending = '';
+  let finish!: () => void;
+  const closing = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const writable = {
+    write: vi.fn(async (text: string) => {
+      pending = text;
+    }),
+    close: vi.fn(async () => {
+      await closing;
+      contents = pending;
+    }),
+    abort: vi.fn(async () => {}),
+  };
+  const handle = {
+    name: 'scenario.json',
+    getFile: async () => ({ text: async () => contents }),
+    requestPermission: vi.fn(async () => 'granted'),
+    createWritable: vi.fn(async () => writable),
+  };
+  vi.stubGlobal('isSecureContext', true);
+  const picker = vi.fn().mockResolvedValue([handle]);
+  vi.stubGlobal('showOpenFilePicker', picker);
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  const persistence = await import('./store-persistence.js');
+  const syncResources = vi.spyOn(persistence, 'updateProjectResourceScenarioId');
+  const readResources = vi.spyOn(persistence, 'listProjectResources');
+  const { App } = await import('./App.js');
+  const { container } = render(<App />);
+  await screen.findByDisplayValue('連携元の作品');
+  fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+  fireEvent.click(screen.getByRole('button', { name: '保存先ファイルを選択…' }));
+  await screen.findByText('保存先：scenario.json（ID: gods）');
+  expect(writable.write).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+  fireEvent.change(screen.getByLabelText('本文'), { target: { value: '反映する本文' } });
+  fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+  fireEvent.click(screen.getByRole('button', { name: 'ローカルへ反映' }));
+  await waitFor(() => expect(writable.close).toHaveBeenCalledOnce());
+  expect(screen.getByLabelText<HTMLInputElement>('シナリオのタイトル').disabled).toBe(true);
+  expect(container.querySelector('.pg-main')?.hasAttribute('inert')).toBe(true);
+  fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+  fireEvent.keyDown(window, { key: 'Escape' });
+  fireEvent.click(container.querySelector('.pg-dialog-backdrop')!);
+  expect(screen.getByRole('dialog')).toBeTruthy();
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: '閉じる' }).disabled).toBe(true);
+  expect(screen.queryByText('ローカルファイルへ反映しました。')).toBeNull();
+  await act(async () => {
+    finish();
+  });
+  await screen.findByText('ローカルファイルへ反映しました。');
+  expect(JSON.parse(contents).scenes[0].text).toBe('反映する本文');
+  expect(container.querySelector('time')).toBeTruthy();
+  expect(container.querySelector('.pg-main')?.hasAttribute('inert')).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+  expect(screen.getByLabelText<HTMLTextAreaElement>('本文').value).toBe('反映する本文');
+
+  for (const title of ['同じIDの別作品', '連携元の作品']) {
+    fireEvent.click(screen.getByRole('button', { name: '作品…' }));
+    fireEvent.click(screen.getByRole('button', { name: '作品一覧を開く' }));
+    fireEvent.click(await screen.findByRole('button', { name: new RegExp(`^${title}`) }));
+    await screen.findByDisplayValue(title);
+    fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+    expect(!!screen.queryByRole('button', { name: 'ローカルへ反映' })).toBe(
+      title === '連携元の作品',
+    );
+    fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+  fireEvent.click(screen.getByRole('button', { name: '連携を解除' }));
+  expect(screen.getByRole('button', { name: '保存先ファイルを選択…' })).toBeTruthy();
+  expect(picker).toHaveBeenCalledOnce();
+  expect(writable.write).toHaveBeenCalledOnce();
+  await waitFor(() => expect(syncResources.mock.lastCall?.[0]).toBe('draft-project'));
+  await act(async () => {
+    await syncResources.mock.results.at(-1)!.value;
+    await readResources.mock.results.at(-1)!.value;
+  });
+}, 15000);
+
+it('opens and automatically links a file once, preserves its exact baseline and reflects edits', async () => {
+  const original = emptyScenario('既存作品');
+  original.meta.id = 'gods';
+  await seedProjects([original]);
+  const loaded = { ...original, meta: { ...original.meta, title: '読み込んだ作品' } };
+  let contents = JSON.stringify(loaded) + '\r\n';
+  const write = vi.fn(async (text: string) => {
+    contents = text;
+  });
+  const handle = {
+    name: 'scenario.json',
+    getFile: vi.fn(async () => ({ text: async () => contents })),
+    requestPermission: vi.fn(async () => 'granted'),
+    createWritable: vi.fn(async () => ({ write, close: async () => {}, abort: async () => {} })),
+  };
+  let select!: (handles: (typeof handle)[]) => void;
+  const picker = vi.fn<(options: unknown) => Promise<(typeof handle)[]>>(
+    () =>
+      new Promise<(typeof handle)[]>((resolve) => {
+        select = resolve;
+      }),
+  );
+  vi.stubGlobal('isSecureContext', true);
+  vi.stubGlobal('showOpenFilePicker', picker);
+  const confirm = vi.spyOn(window, 'confirm');
+  const persistence = await import('./store-persistence.js');
+  const syncResources = vi.spyOn(persistence, 'updateProjectResourceScenarioId');
+  const readResources = vi.spyOn(persistence, 'listProjectResources');
+  const { App } = await import('./App.js');
+  const { container } = render(<App />);
+  await screen.findByDisplayValue('既存作品');
+  fireEvent.click(screen.getByRole('button', { name: '作品…' }));
+  fireEvent.click(screen.getByRole('button', { name: 'ファイルを選択…' }));
+  fireEvent.click(screen.getByRole('button', { name: 'ファイルを選択…' }));
+  expect(picker).toHaveBeenCalledOnce();
+  expect(picker.mock.calls[0]?.[0]).toMatchObject({
+    types: [{ accept: { 'application/json': ['.json'], 'application/xml': ['.xml'] } }],
+  });
+  expect(container.querySelector('.pg-main')?.hasAttribute('inert')).toBe(true);
+  fireEvent.keyDown(window, { key: 'Escape' });
+  expect(screen.getByRole('dialog')).toBeTruthy();
+  await act(async () => {
+    select([handle]);
+  });
+  await screen.findByDisplayValue('読み込んだ作品');
+  await screen.findByText(/保存先にも連携しました/);
+  expect(confirm).not.toHaveBeenCalled();
+  expect(handle.requestPermission).not.toHaveBeenCalled();
+  expect(handle.createWritable).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText('本文'), { target: { value: '一度の選択で反映' } });
+  fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+  await screen.findByText('保存先：scenario.json（ID: gods）');
+  fireEvent.click(screen.getByRole('button', { name: 'ローカルへ反映' }));
+  await screen.findByText('ローカルファイルへ反映しました。');
+  expect(JSON.parse(contents).scenes[0].text).toBe('一度の選択で反映');
+  contents += '\n';
+  fireEvent.click(screen.getByRole('button', { name: 'ローカルへ反映' }));
+  await screen.findByRole('alert');
+  expect(screen.getByRole('alert').textContent).toContain('外部で変更');
+  expect(write).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+  fireEvent.click(screen.getByRole('button', { name: '作品…' }));
+  fireEvent.click(screen.getByRole('button', { name: '作品一覧を開く' }));
+  fireEvent.click(await screen.findByRole('button', { name: /^既存作品/ }));
+  await screen.findByDisplayValue('既存作品');
+  fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+  expect(screen.queryByRole('button', { name: 'ローカルへ反映' })).toBeNull();
+  await waitFor(() => expect(syncResources.mock.lastCall?.[0]).toBe('draft-project'));
+  await act(async () => {
+    await syncResources.mock.results.at(-1)!.value;
+    await readResources.mock.results.at(-1)!.value;
+  });
+}, 15000);
+
+it.each([
+  ['ID未設定', 'scenario.json', JSON.stringify(emptyScenario('ID未設定')), /ID未設定のため未連携/],
+  [
+    '旧XML',
+    'scenario.xml',
+    '<scenario title="旧XML" author="作者"><scene id="0">本文</scene></scenario>',
+    /変換して開きました/,
+  ],
+  [
+    '旧JSON',
+    'old.json',
+    JSON.stringify({ title: '旧JSON', scenes: [{ id: '0', text: '本文' }], edges: [] }),
+    /変換して開きました/,
+  ],
+])(
+  'imports %s without linking the source file',
+  async (_label, name, text, notice) => {
+    await seedProjects([emptyScenario('元の作品')]);
+    const handle = {
+      name,
+      getFile: async () => ({ text: async () => text }),
+      requestPermission: vi.fn(),
+      createWritable: vi.fn(),
+    };
+    vi.stubGlobal('isSecureContext', true);
+    vi.stubGlobal('showOpenFilePicker', vi.fn().mockResolvedValue([handle]));
+    const persistence = await import('./store-persistence.js');
+    const syncResources = vi.spyOn(persistence, 'updateProjectResourceScenarioId');
+    const readResources = vi.spyOn(persistence, 'listProjectResources');
+    const { App } = await import('./App.js');
+    render(<App />);
+    await screen.findByDisplayValue('元の作品');
+    fireEvent.click(screen.getByRole('button', { name: '作品…' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ファイルを選択…' }));
+    await screen.findByText(notice);
+    fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+    expect(screen.getByRole('button', { name: '保存先ファイルを選択…' })).toBeTruthy();
+    expect(handle.requestPermission).not.toHaveBeenCalled();
+    expect(handle.createWritable).not.toHaveBeenCalled();
+    await waitFor(() => expect(syncResources.mock.calls.length).toBeGreaterThan(1));
+    await act(async () => {
+      await syncResources.mock.results.at(-1)!.value;
+      await readResources.mock.results.at(-1)!.value;
+    });
+  },
+  15000,
+);
+
+it.each(['cancel', 'read-error', 'invalid', 'create-error'] as const)(
+  'does not attach a file to the existing work on %s',
+  async (failure) => {
+    await seedProjects([emptyScenario('変更しない作品')]);
+    const source = emptyScenario('取り込み作品');
+    source.meta.id = 'gods';
+    const handle = {
+      name: 'scenario.json',
+      getFile: vi.fn().mockResolvedValue({
+        text: async () => (failure === 'invalid' ? 'not JSON' : JSON.stringify(source)),
+      }),
+      requestPermission: vi.fn(),
+      createWritable: vi.fn(),
+    };
+    if (failure === 'read-error') handle.getFile.mockRejectedValue(new Error('読み込み失敗'));
+    const picker = vi.fn().mockResolvedValue([handle]);
+    if (failure === 'cancel') picker.mockRejectedValue(new DOMException('取消', 'AbortError'));
+    vi.stubGlobal('isSecureContext', true);
+    vi.stubGlobal('showOpenFilePicker', picker);
+    const persistence = await import('./store-persistence.js');
+    const syncResources = vi.spyOn(persistence, 'updateProjectResourceScenarioId');
+    const readResources = vi.spyOn(persistence, 'listProjectResources');
+    const { App } = await import('./App.js');
+    render(<App />);
+    await screen.findByDisplayValue('変更しない作品');
+    if (failure === 'create-error') {
+      const save = persistence.saveScenario;
+      vi.spyOn(persistence, 'saveScenario')
+        .mockImplementationOnce(save)
+        .mockRejectedValueOnce(new Error('作品作成失敗'));
+    }
+    fireEvent.click(screen.getByRole('button', { name: '作品…' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'ファイルを選択…' }));
+    });
+    await waitFor(() => expect(screen.queryByText('ファイルを読み込んでいます…')).toBeNull());
+    if (failure !== 'cancel') {
+      await screen.findByText(
+        failure === 'create-error'
+          ? /作品を切り替えられませんでした/
+          : failure === 'read-error'
+            ? /読み込み失敗/
+            : /JSON/,
+        { selector: '.pg-message' },
+      );
+    }
+    if (screen.queryByRole('dialog'))
+      fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+    expect(screen.getByDisplayValue('変更しない作品')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+    expect(screen.queryByRole('button', { name: 'ローカルへ反映' })).toBeNull();
+    expect(handle.createWritable).not.toHaveBeenCalled();
+    await waitFor(() => expect(syncResources).toHaveBeenCalled());
+    await act(async () => {
+      await syncResources.mock.results.at(-1)!.value;
+      await readResources.mock.results.at(-1)!.value;
+    });
+  },
+  15000,
+);
+
+it('keeps file-input imports available without File System Access and does not auto-link them', async () => {
+  await seedProjects([emptyScenario('非対応環境')]);
+  const imported = emptyScenario('通常のファイル読み込み');
+  imported.meta.id = 'gods';
+  const file = new File([], 'scenario.json', { type: 'application/json' });
+  Object.defineProperty(file, 'text', { value: async () => JSON.stringify(imported) });
+  vi.stubGlobal('isSecureContext', false);
+  const picker = vi.fn();
+  vi.stubGlobal('showOpenFilePicker', picker);
+  const persistence = await import('./store-persistence.js');
+  const syncResources = vi.spyOn(persistence, 'updateProjectResourceScenarioId');
+  const readResources = vi.spyOn(persistence, 'listProjectResources');
+  const { App } = await import('./App.js');
+  const { container } = render(<App />);
+  await screen.findByDisplayValue('非対応環境');
+  fireEvent.click(screen.getByRole('button', { name: '作品…' }));
+  fireEvent.change(container.querySelector('input[type="file"]')!, {
+    target: { files: [file] },
+  });
+  await screen.findByDisplayValue('通常のファイル読み込み');
+  fireEvent.click(screen.getByRole('button', { name: 'エクスポート…' }));
+  expect(screen.getByText(/この環境では利用できません/)).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'ローカルへ反映' })).toBeNull();
+  expect(picker).not.toHaveBeenCalled();
+  await waitFor(() => expect(syncResources.mock.calls.length).toBeGreaterThan(1));
+  await act(async () => {
+    await syncResources.mock.results.at(-1)!.value;
+    await readResources.mock.results.at(-1)!.value;
+  });
+}, 15000);
