@@ -1,4 +1,5 @@
 import type { DraftScenario as Scenario } from '@stext/schema';
+import { getBgmMode, resolveSceneBgm } from '@stext/core';
 
 export type ResourceKind = 'image' | 'bgm' | 'se' | 'file';
 
@@ -101,8 +102,23 @@ export function collectResourceReferences(scenario: Scenario): ResourceReference
     add(scene.bgm ? mediaPath('bgm', scene.bgm) : undefined, 'bgm');
     add(scene.se ? mediaPath('se', scene.se) : undefined, 'se');
   }
+  for (const group of scenario.groups) {
+    add(group.bgm ? mediaPath('bgm', group.bgm) : undefined, 'bgm');
+  }
   for (const name of Object.values(scenario.meta.bgm ?? {})) {
     add(name ? mediaPath('bgm', name) : undefined, 'bgm');
+  }
+  const groupMode = getBgmMode(scenario) === 'group';
+  for (const scene of scenario.scenes) {
+    if (groupMode) {
+      const { track } = resolveSceneBgm(scenario, scene, '');
+      add(mediaPath('bgm', track), 'bgm');
+    } else if (scene.end && scene.bgm === undefined) {
+      const { track } = resolveSceneBgm(scenario, scene, '');
+      add(mediaPath('bgm', track || scenario.meta.bgm?.main || 'main'), 'bgm');
+    } else if (!scene.end && (scene.bgm === undefined || scene.bgm === '')) {
+      add(mediaPath('bgm', scenario.meta.bgm?.main || 'main'), 'bgm');
+    }
   }
   return [...paths].map(([path, kind]) => ({ path, kind }));
 }

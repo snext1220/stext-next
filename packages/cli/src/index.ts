@@ -19,6 +19,8 @@ import {
   STATE_NAMES,
   createEngine,
   emptyGlobalState,
+  getBgmMode,
+  resolveSceneBgm,
   seededRandom,
   type GameEvent,
   type GameState,
@@ -167,15 +169,25 @@ interface IndexEntry {
   bgm?: string[];
 }
 
-/** シナリオが使う共通 BGM（meta.bgm とシーンの bgm のうち @ で始まるもの。無音の @none は除く） */
+/** シナリオで実際に選ばれる共通 BGM（無音の @none と未使用設定は除く） */
 function commonBgm(scenario: Scenario): string[] {
-  const names = [
-    ...Object.values(scenario.meta.bgm ?? {}),
-    ...scenario.scenes.map((s) => s.bgm),
-  ].filter((b): b is string => typeof b === 'string' && b.startsWith('@'));
-  return [...new Set(names.map((b) => b.slice(1).toLowerCase()))]
-    .filter((b) => b !== '' && b !== 'none')
-    .sort();
+  const names = new Set<string>();
+  const add = (track: string) => {
+    if (track.startsWith('@') && track !== '@none') names.add(track.slice(1).toLowerCase());
+  };
+  const groupMode = getBgmMode(scenario) === 'group';
+  for (const scene of scenario.scenes) {
+    if (groupMode) {
+      add(resolveSceneBgm(scenario, scene, '').track);
+    } else if (scene.bgm !== undefined && scene.bgm !== '') {
+      add(scene.bgm);
+    } else if (scene.end && scene.bgm === undefined) {
+      add(resolveSceneBgm(scenario, scene, '').track);
+    } else {
+      add(scenario.meta.bgm?.main || 'main');
+    }
+  }
+  return [...names].sort();
 }
 
 async function convertAll(args: string[], io: Io): Promise<number> {

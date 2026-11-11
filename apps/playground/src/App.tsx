@@ -55,6 +55,7 @@ export function App() {
     run: PreviewRun;
   } | null>(null);
   const [tab, setTab] = useState<Tab>('scene');
+  const [previewAudioEnabled, setPreviewAudioEnabled] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   // 開き直したときはフロー図を作り直して全体が見えるようにする
   const [flowKey, setFlowKey] = useState(0);
@@ -579,6 +580,8 @@ export function App() {
             {tab === 'play' && playable?.ok && (
               <TestPlay
                 key={store.projectId}
+                audioEnabled={previewAudioEnabled}
+                onAudioEnabledChange={setPreviewAudioEnabled}
                 scenario={playable.scenario}
                 initialRun={
                   previewSession && previewSession.projectId === store.projectId

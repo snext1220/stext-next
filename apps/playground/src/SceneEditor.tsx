@@ -8,12 +8,41 @@ import {
   type DraftScene as Scene,
 } from '@stext/schema';
 import { useState } from 'react';
-import { Field, SelectField, TextArea, TextField, fromList, toList, toValue } from './fields.js';
+import {
+  Field,
+  SelectField,
+  TextArea,
+  TextField,
+  fromList,
+  toList,
+  toValue,
+  type TextAreaToolbarItem,
+} from './fields.js';
 import { HelpButton } from './help/HelpPanel.js';
 import { moveChoice, removeChoice, updateChoice, updateScene, renameScene } from './model.js';
 
-/** 本文に差し込むマクロ（旧 Playground の「カーソル位置にタグを追加」に当たる） */
+/** 本文に挿入・適用する Markdown とマクロ */
 const TEXT_TOOLBAR = [
+  {
+    label: '見出し',
+    title: '行頭に見出し記号を追加：# ',
+    before: '# ',
+    action: 'prefix-lines',
+  },
+  { label: '斜体', title: '選択範囲を斜体にする：*…*', before: '*', after: '*' },
+  {
+    label: '箇条書き',
+    title: '選択した各行の先頭に - を追加',
+    before: '- ',
+    action: 'prefix-lines',
+  },
+  {
+    label: '引用',
+    title: '選択した各行の先頭に > を追加',
+    before: '> ',
+    action: 'prefix-lines',
+  },
+  { label: 'リンク', title: '選択文字列にリンクを設定： [文字列](URL)', action: 'link' },
   {
     label: '条件',
     title: '条件を満たすときだけ表示：${if 条件}…${/if}',
@@ -65,7 +94,7 @@ const TEXT_TOOLBAR = [
     after: '](image.png)',
   },
   { label: '太字', title: '太字：**…**', before: '**', after: '**' },
-] as const;
+] as const satisfies readonly TextAreaToolbarItem[];
 
 const END_OPTIONS = [
   ['', '（なし）'],
@@ -358,6 +387,15 @@ export function SceneEditor({
             onChange={(v) => set({ bgm: v === '' ? undefined : v }, 'bgm')}
             placeholder="@field05"
           />
+          <label className="pg-check">
+            <input
+              type="checkbox"
+              aria-label="シーンBGMを通常曲に戻す"
+              checked={scene.bgm === ''}
+              onChange={(event) => set({ bgm: event.target.checked ? '' : undefined }, 'bgm')}
+            />
+            通常曲に戻す
+          </label>
           <TextField
             label="効果音"
             help="scene.se"

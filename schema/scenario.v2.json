@@ -284,6 +284,9 @@
             "type": "string",
             "minLength": 1
           },
+          "bgm": {
+            "type": "string"
+          },
           "rule": {
             "type": "string",
             "minLength": 1

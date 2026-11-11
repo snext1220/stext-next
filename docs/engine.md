@@ -70,6 +70,12 @@ if (r.kind === 'moved') ({ state, global, events } = r);
 
 エンディング（`view.end`）に着いた状態は `isEnded: true` になります。続けて遊ぶには `start` で新しく始めます。
 
+## BGM
+
+`engine.bgmMode` は `legacy` または `group` です。グループのBGMが一つでも設定されていると、作品全体が `group` になります。`SceneView.bgm` は再生する曲、`SceneView.bgmSource` はその決定元（`scene`、`group`、`main`、`ending`、`implicit`、`legacy`）です。
+
+グループモードでは通常シーンのBGMをシーン → グループ → 通常曲 → `main` の順に、エンディングをシーン → 終了曲 → グループ → 終了種別に応じた既定曲名の順に決めます。空文字のシーンBGMは通常曲に戻し、`@none` は無音です。従来モードのセーブ済みBGM継続と終了曲の決め方は維持します。
+
 ## 表示（SceneView）
 
 | 項目 | 内容 |
@@ -79,7 +85,8 @@ if (r.kind === 'moved') ({ state, global, events } = r);
 | `choices` | `{ index, kind: 'go' \| 'jump' \| 'answer', label, before?, footer }` |
 | `enemies` | 登場する敵の定義 |
 | `end` | `happy` / `bad` / `good` |
-| `bgm` | 再生する曲（`@field01` など。空ならメインテーマ。エンディングでは `meta.bgm` の曲） |
+| `bgm` | 再生する曲（`@field01` など。`@none` は無音） |
+| `bgmSource` | BGMの決定元 |
 | `se` / `dice` / `rule` / `tweet` | 効果音、ダイスの指定、Battle Sheet に出すルールのシーン、共有用の文 |
 
 `markdown` と選択肢の `label` には、次の HTML が入ることがあります。UI はこれを描画します。
@@ -129,4 +136,3 @@ const rank = playerRank(global, scenarios); // scenarios は index.json の公�
 ```
 
 計算は旧エンジンの PlayerRank と同じです（ボーナスアイテム×10 ＋ クリアしたシナリオのレベル点（レベル1〜5で100〜200）＋ 実績×2）。
-

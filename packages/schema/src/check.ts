@@ -63,6 +63,36 @@ export function checkScenario(scenario: Scenario): CheckIssue[] {
 
   if (scenario.meta.footerScene) sceneRef('meta.footerScene', scenario.meta.footerScene);
 
+  const groupRanges: { index: number; start: number; end: number }[] = [];
+  scenario.groups.forEach((group, index) => {
+    const path = `groups[${index}]`;
+    const start = Number(group.start);
+    const end = Number(group.end);
+    if (!/^-?\d+$/.test(group.start) || !Number.isSafeInteger(start))
+      error(`${path}.start`, 'シーン番号を整数で指定してください');
+    if (!/^-?\d+$/.test(group.end) || !Number.isSafeInteger(end))
+      error(`${path}.end`, 'シーン番号を整数で指定してください');
+    if (
+      /^-?\d+$/.test(group.start) &&
+      /^-?\d+$/.test(group.end) &&
+      Number.isSafeInteger(start) &&
+      Number.isSafeInteger(end)
+    ) {
+      if (start > end) error(path, '最初のシーンは最後のシーン以下にしてください');
+      else groupRanges.push({ index, start, end });
+    }
+  });
+  for (let i = 0; i < groupRanges.length; i++) {
+    const a = groupRanges[i]!;
+    for (const b of groupRanges.slice(i + 1)) {
+      if (a.start <= b.end && b.start <= a.end)
+        error(
+          `groups[${b.index}]`,
+          `シーン範囲がグループ ${a.index + 1} と重複しています`,
+        );
+    }
+  }
+
   // 本文の部品やルール表示として読み込まれるシーン（選択肢がなくてもよい）
   // 99999 は Battle Sheet の既定のルール
   const included = new Set<string>([BACK_SCENE_ID, '99999']);

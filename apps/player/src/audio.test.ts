@@ -99,6 +99,18 @@ describe('BGM autoplay recovery', () => {
     expect(bgm.pause).toHaveBeenCalled();
   });
 
+  it('stops only the BGM without requiring a replacement track', () => {
+    director.playBgm('/main.mp3');
+    const bgm = tracks[0]!;
+
+    director.stopBgm();
+
+    expect(bgm.pause).toHaveBeenCalled();
+    expect(tracks).toHaveLength(1);
+    director.playBgm('/main.mp3');
+    expect(tracks).toHaveLength(2);
+  });
+
   it('does not start muted music on interaction, but plays when enabled', () => {
     director.setEnabled(false);
     director.playBgm('/main.mp3');

@@ -42,6 +42,14 @@ describe('validateScenario', () => {
       expect(r.issues.map((i) => i.path)).toEqual(['scenes[1].choices[0]', 'scenes[2].choices[0]']);
     }
   });
+
+  it('accepts optional group BGM while preserving existing group fields', () => {
+    const [, data] = scenarios.find(([id]) => id === 'scepter')!;
+    const updated = structuredClone(data);
+    updated.groups = [{ title: '森', start: '100', end: '199', bgm: '@field01' }];
+
+    expect(validateScenario(updated).ok).toBe(true);
+  });
 });
 
 describe('checkScenario', () => {
@@ -49,5 +57,37 @@ describe('checkScenario', () => {
     const [, data] = scenarios.find(([id]) => id === 'scepter')!;
     const r = validateScenario(data);
     expect(r.ok && checkScenario(r.scenario)).toEqual([]);
+  });
+
+  it('rejects overlapping group ranges including shared endpoints', () => {
+    const [, data] = scenarios.find(([id]) => id === 'scepter')!;
+    const parsed = validateScenario(data);
+    if (!parsed.ok) throw new Error('Expected the converted scenario to be valid');
+    const scenario = structuredClone(parsed.scenario);
+    scenario.groups = [
+      { title: '一つ目', start: '100', end: '200' },
+      { title: '二つ目', start: '200', end: '300', bgm: '@none' },
+    ];
+
+    expect(checkScenario(scenario)).toContainEqual({
+      severity: 'error',
+      path: 'groups[1]',
+      message: 'シーン範囲がグループ 1 と重複しています',
+    });
+  });
+
+  it('reports unfinished and invalid group ranges', () => {
+    const [, data] = scenarios.find(([id]) => id === 'scepter')!;
+    const parsed = validateScenario(data);
+    if (!parsed.ok) throw new Error('Expected the converted scenario to be valid');
+    const scenario = structuredClone(parsed.scenario);
+    scenario.groups = [{ title: '不正', start: '', end: 'abc' }];
+
+    expect(checkScenario(scenario)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'groups[0].start' }),
+        expect.objectContaining({ path: 'groups[0].end' }),
+      ]),
+    );
   });
 });

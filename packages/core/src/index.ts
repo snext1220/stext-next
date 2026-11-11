@@ -24,6 +24,14 @@ export {
   type Step,
 } from './engine.js';
 export {
+  getBgmMode,
+  resolveSceneBgm,
+  type BgmMode,
+  type BgmScenarioSettings,
+  type BgmSelection,
+  type BgmSource,
+} from './bgm.js';
+export {
   GLOBAL_SAVE_KEY,
   availableJobs,
   emptyGlobalState,

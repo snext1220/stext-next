@@ -1,25 +1,15 @@
 import {
-  applyDrop,
-  attackEnemy,
   bonusItem,
   createEngine,
-  dropFor,
-  enemyHp,
-  receiveAttack,
-  rollDice,
-  selectFunc,
-  STATE_NAMES,
-  type AttackResult,
   type GameEvent,
   type GameState,
   type GlobalState,
   type MagicName,
 } from '@stext/core';
-import type { Enemy, Scenario } from '@stext/schema';
+import type { Scenario } from '@stext/schema';
 import {
+  BattlePanel,
   ChoiceList,
-  Die,
-  EnemyCard,
   HeroPanel,
   ItemsPanel,
   MagicPanel,
@@ -29,7 +19,7 @@ import {
   StatusEditor,
   Toasts,
   createCookieRandomCache,
-  statusLabel,
+  type BattleFeedback,
   type HistoryEntry,
   type Toast,
 } from '@stext/ui';
@@ -40,24 +30,6 @@ import { loadIndex } from '../data.js';
 import { SaveDialog } from '../SaveDialog.js';
 import { href } from '../router.js';
 import { saveGame, saveGlobal, writePersistent, type Settings } from '../storage.js';
-
-interface EnemyBattle {
-  enemy: Enemy;
-  func: string;
-  displayOnly: boolean;
-  hp: number | undefined;
-  drop: { drop: string; name: string } | undefined;
-  dropTaken: boolean;
-  /** 撃破チェック */
-  defeated: boolean;
-}
-
-interface Battle {
-  dice: number[];
-  rolling: boolean;
-  multiplier: number;
-  enemies: EnemyBattle[];
-}
 
 const PANEL_TABS = [
   {
@@ -197,6 +169,10 @@ export function Play({
 
   // ───── BGM・効果音 ─────
   useEffect(() => {
+    if (view.bgm === '@none') {
+      audio.stopBgm();
+      return;
+    }
     const name = view.bgm || scenario.meta.bgm?.main || 'main';
     audio.playBgm(bgmUrl(id, name));
   }, [audio, id, view.bgm, scenario]);
@@ -204,113 +180,11 @@ export function Play({
     if (view.se) audio.playSe(seUrl(id, view.se));
   }, [audio, id, view.id, view.se, history.length]);
 
-  // ───── 戦闘（シーンに入るたびに用意する） ─────
-  const [battle, setBattle] = useState<Battle>(() => newBattle());
-  function newBattle(): Battle {
-    return {
-      dice: rollDice(Math.random, view.dice).values,
-      rolling: false,
-      multiplier: 1,
-      enemies: view.enemies.map((enemy) => {
-        const f = enemy.func
-          ? selectFunc(Math.random, enemy.func)
-          : { func: '', displayOnly: false };
-        return {
-          enemy,
-          func: f.func,
-          displayOnly: f.displayOnly,
-          hp: enemyHp(enemy, (p) => engine.paramValue(state, p)),
-          drop: dropFor(Math.random, enemy),
-          dropTaken: false,
-          defeated: false,
-        };
-      }),
-    };
-  }
   const sceneKey = `${view.id}:${state.ellapsed_scene}:${loadVersion}`;
-  const lastScene = useRef(sceneKey);
-  useEffect(() => {
-    if (lastScene.current !== sceneKey) {
-      lastScene.current = sceneKey;
-      setBattle(newBattle());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneKey]);
-
-  const battleAction = (fn: (ctx: ReturnType<typeof engine.effectContext>) => void) => {
-    const s = JSON.parse(JSON.stringify(state)) as GameState;
-    const events: GameEvent[] = [];
-    const ctx = engine.effectContext(s, global, events);
-    fn(ctx);
-    setState(s);
-    showEvents(events);
-  };
-
-  const rollBattleDice = () => {
-    audio.playSe(seUrl(id, 'dice', true));
-    setBattle((b) => ({ ...b, rolling: true, dice: rollDice(Math.random, view.dice).values }));
-    setTimeout(() => setBattle((b) => ({ ...b, rolling: false })), 450);
-  };
-
-  const receive = (i: number) => {
-    const eb = battle.enemies[i]!;
-    battleAction((ctx) => {
-      const r = receiveAttack(ctx, eb.enemy.attack ?? '', eb.func, battle.dice, battle.multiplier);
-      reportAttack(r, ctx.state);
-    });
-  };
-  const reportAttack = (r: AttackResult, s: GameState) => {
-    const label = (k: string) => statusLabel(scenario, k);
-    if (r.kind === 'evaded') {
-      audio.playSe(seUrl(id, 'guard', true));
-      toast('info', '回避', '回避に成功した。');
-    } else if (r.kind === 'stat') {
-      audio.playSe(seUrl(id, 'state', true));
-      toast('dmg', 'ステータス攻撃', `${label(r.stat)}が${r.amount}低下した！`);
-    } else if (r.kind === 'state') {
-      if (r.applied) {
-        audio.playSe(seUrl(id, 'state', true));
-        toast('dmg', '状態異常', `「${STATE_NAMES[r.state] ?? r.state}」を受けた！`);
-      }
-    } else if (r.kind === 'damage') {
-      if (r.hp + r.mp + (r.target.startsWith('free') ? r.damage : 0) === 0) {
-        audio.playSe(seUrl(id, 'guard', true));
-        toast('info', '被ダメージ', '敵の攻撃を防ぎきった！');
-      } else {
-        audio.playSe(seUrl(id, 'damage', true));
-        const msg =
-          r.target === 'hp'
-            ? `${label('hp')}に${r.hp}のダメージ！（現在値：${s.chara.hp}）`
-            : r.target === 'mp'
-              ? `${label('mp')}に${r.mp}のダメージ！（現在値：${s.chara.mp}）`
-              : r.target === 'both'
-                ? `${label('hp')}/${label('mp')}に${r.hp}/${r.mp}のダメージ！`
-                : `${label(r.target)}に${r.damage}のダメージ！`;
-        toast('dmg', '被ダメージ', msg);
-      }
-    }
-  };
-  const attack = (i: number) => {
-    const eb = battle.enemies[i]!;
-    battleAction((ctx) => {
-      const r = attackEnemy(ctx, eb.enemy, eb.hp ?? 0, battle.dice, battle.multiplier);
-      setBattle((b) => ({
-        ...b,
-        enemies: b.enemies.map((x, k) => (k === i ? { ...x, hp: r.hp } : x)),
-      }));
-      toast('info', '敵へのダメージ', `${r.damage} Hit!`);
-    });
-  };
-  const takeDrop = (i: number) => {
-    const eb = battle.enemies[i]!;
-    if (!eb.drop) return;
-    audio.playSe(seUrl(id, 'drop', true));
-    battleAction((ctx) => applyDrop(ctx, eb.drop!.drop));
-    toast('item', '戦利品', `${eb.drop.name}を手に入れた。`);
-    setBattle((b) => ({
-      ...b,
-      enemies: b.enemies.map((x, k) => (k === i ? { ...x, dropTaken: true } : x)),
-    }));
+  const handleBattleFeedback = (feedback: BattleFeedback) => {
+    if (feedback.sound) audio.playSe(seUrl(id, feedback.sound, true));
+    if (feedback.notice)
+      toast(feedback.notice.kind, feedback.notice.title, feedback.notice.message);
   };
 
   // ───── 選択・戻る・魔法 ─────
@@ -388,8 +262,6 @@ export function Play({
   });
 
   const resolveImage = useCallback((src: string) => imageUrl(id, src), [id]);
-  const ruleText =
-    view.enemies.length && view.rule ? engine.sceneText(state, global, view.rule) : '';
   const fontSize = FONT_SIZES[settings.fontSize];
   const endLabel =
     view.end === 'happy'
@@ -499,74 +371,21 @@ export function Play({
           resolveImage={resolveImage}
           onParamChange={onParamChange}
         />
-        {battle.enemies.length > 0 && (
-          <>
-            {ruleText && (
-              <details className="rule-box">
-                <summary>この戦闘のルール</summary>
-                <SceneText className="prose" markdown={ruleText} resolveImage={resolveImage} />
-              </details>
-            )}
-            <div className="battle-controls" style={{ marginBottom: 12 }}>
-              <div
-                className="dice"
-                onClick={rollBattleDice}
-                role="button"
-                tabIndex={0}
-                title="ダイスを振る"
-                onKeyDown={(e) => e.key === 'Enter' && rollBattleDice()}
-              >
-                {battle.dice.map((v, i) => (
-                  <Die key={i} value={v} rolling={battle.rolling} first={i === 0} />
-                ))}
-              </div>
-              <button type="button" className="btn" onClick={rollBattleDice}>
-                ダイスを振る
-              </button>
-              <label className="verdict">
-                ダメージ倍率{' '}
-                <select
-                  value={battle.multiplier}
-                  onChange={(e) => setBattle({ ...battle, multiplier: Number(e.target.value) })}
-                >
-                  <option value={2}>×2</option>
-                  <option value={1}>×1</option>
-                  <option value={0.5}>×1/2</option>
-                  <option value={0.25}>×1/4</option>
-                </select>
-              </label>
-            </div>
-            {battle.enemies.map((eb, i) => (
-              <EnemyCard
-                key={i}
-                enemy={eb.enemy}
-                func={eb.func}
-                funcDisplayOnly={eb.displayOnly}
-                {...(eb.hp !== undefined ? { hp: eb.hp } : {})}
-                {...(eb.drop ? { dropName: eb.drop.name } : {})}
-                dropTaken={eb.dropTaken}
-                onReceive={() => receive(i)}
-                onAttack={() => attack(i)}
-                onDrop={() => takeDrop(i)}
-                defeatedChecked={eb.defeated}
-                {...(battle.enemies.length > 1
-                  ? {
-                      onToggleDefeated: (checked: boolean) =>
-                        setBattle((b) => ({
-                          ...b,
-                          enemies: b.enemies.map((x, k) =>
-                            k === i ? { ...x, defeated: checked } : x,
-                          ),
-                        })),
-                    }
-                  : {})}
-                {...(eb.enemy.attack?.startsWith('free')
-                  ? { attackLabel: statusLabel(scenario, eb.enemy.attack) }
-                  : {})}
-              />
-            ))}
-          </>
-        )}
+        <BattlePanel
+          key={sceneKey}
+          engine={engine}
+          scenario={scenario}
+          state={state}
+          global={global}
+          view={view}
+          onStateChange={(next, events, feedback) => {
+            setState(next);
+            showEvents(events);
+            if (feedback) handleBattleFeedback(feedback);
+          }}
+          onFeedback={handleBattleFeedback}
+          resolveImage={resolveImage}
+        />
         <div className="rule" aria-hidden="true">
           <svg viewBox="0 0 20 20">
             <path d="M10 1 12.4 7.6 19 10 12.4 12.4 10 19 7.6 12.4 1 10 7.6 7.6z" />

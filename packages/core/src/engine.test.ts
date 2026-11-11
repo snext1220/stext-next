@@ -295,6 +295,118 @@ describe('createEngine', () => {
     expect(() => e.enterScene(r.state, r.global, '0')).toThrow();
   });
 
+  it('resolves group-mode BGM independently for every scene', () => {
+    const e = createEngine(
+      scenario(
+        [
+          { id: '0', text: '', choices: [] },
+          { id: '1', text: '', choices: [], bgm: 'scene-track' },
+          { id: '2', text: '', choices: [], bgm: '' },
+          { id: '3', text: '', choices: [], bgm: '@none' },
+        ],
+        { groups: [{ title: '森', start: '0', end: '1', bgm: '@field01' }] },
+      ),
+      { random: fixed(0) },
+    );
+    const { state, global } = e.start(emptyGlobalState());
+    expect(e.bgmMode).toBe('group');
+    expect(e.view(state, global)).toMatchObject({ bgm: '@field01', bgmSource: 'group' });
+
+    expect(e.view(e.enterScene(state, global, '1').state, global)).toMatchObject({
+      bgm: 'scene-track',
+      bgmSource: 'scene',
+    });
+    expect(e.view(e.enterScene(state, global, '2').state, global)).toMatchObject({
+      bgm: '@field05',
+      bgmSource: 'main',
+    });
+    expect(e.view(e.enterScene(state, global, '3').state, global)).toMatchObject({
+      bgm: '@none',
+      bgmSource: 'scene',
+    });
+  });
+
+  it('resolves group-mode endings as scene, configured ending, group, then implicit track', () => {
+    const scenes: Scenario['scenes'] = [
+      { id: '0', text: '', choices: [] },
+      { id: '1', text: '', choices: [], end: 'good' },
+      { id: '2', text: '', choices: [], end: 'bad', bgm: 'scene-ending' },
+      { id: '3', text: '', choices: [], end: 'happy' },
+    ];
+    const globalEnding = createEngine(
+      scenario(scenes, { groups: [{ title: '章', start: '1', end: '3', bgm: 'group-ending' }] }),
+      { random: fixed(0) },
+    );
+    const { state, global } = globalEnding.start(emptyGlobalState());
+    expect(
+      globalEnding.view(globalEnding.enterScene(state, global, '1').state, global),
+    ).toMatchObject({
+      bgm: '@field04',
+      bgmSource: 'ending',
+    });
+    expect(
+      globalEnding.view(globalEnding.enterScene(state, global, '2').state, global),
+    ).toMatchObject({
+      bgm: 'scene-ending',
+      bgmSource: 'scene',
+    });
+
+    const fallbackEnding = createEngine(
+      scenario(scenes, {
+        meta: { id: 'demo', title: 'デモ', bgm: { main: '@field05' } },
+        groups: [{ title: '章', start: '1', end: '3', bgm: 'group-ending' }],
+      }),
+      { random: fixed(0) },
+    );
+    const fallback = fallbackEnding.start(emptyGlobalState());
+    expect(
+      fallbackEnding.view(
+        fallbackEnding.enterScene(fallback.state, fallback.global, '1').state,
+        fallback.global,
+      ),
+    ).toMatchObject({ bgm: 'group-ending', bgmSource: 'group' });
+    expect(
+      fallbackEnding.view(
+        fallbackEnding.enterScene(fallback.state, fallback.global, '3').state,
+        fallback.global,
+      ),
+    ).toMatchObject({ bgm: 'group-ending', bgmSource: 'group' });
+
+    const implicitEnding = createEngine(
+      scenario(scenes, {
+        meta: { id: 'demo', title: 'デモ' },
+        groups: [{ title: '章', start: '1', end: '2', bgm: 'group-ending' }],
+      }),
+      { random: fixed(0) },
+    );
+    const implicit = implicitEnding.start(emptyGlobalState());
+    expect(
+      implicitEnding.view(
+        implicitEnding.enterScene(implicit.state, implicit.global, '3').state,
+        implicit.global,
+      ),
+    ).toMatchObject({ bgm: 'happy', bgmSource: 'implicit' });
+  });
+
+  it('preserves legacy scene-to-scene BGM continuation and ending precedence', () => {
+    const e = createEngine(
+      scenario([
+        { id: '0', text: '', choices: [], bgm: '@field03' },
+        { id: '1', text: '', choices: [] },
+        { id: '2', text: '', choices: [], end: 'happy' },
+      ]),
+      { random: fixed(0) },
+    );
+    const { state, global } = e.start(emptyGlobalState());
+    const next = e.enterScene(state, global, '1');
+    expect(e.bgmMode).toBe('legacy');
+    expect(e.view(next.state, global)).toMatchObject({ bgm: '@field03', bgmSource: 'legacy' });
+    expect(e.view(e.enterScene(next.state, global, '2').state, global)).toMatchObject({
+      bgm: '@field04',
+      bgmSource: 'ending',
+    });
+  });
+
   it('applies the start bonus chosen from the owned bonus items', () => {
     const e = createEngine(scenario([{ id: '0', text: '', choices: [] }]), { random: fixed(0) });
     const { state } = e.start({ ...emptyGlobalState(), items: ['gi23'] });

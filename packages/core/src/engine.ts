@@ -6,6 +6,7 @@
  * 選択 → 魔法の星消費 → シーンの効果 → 状態異常の経過 → 実績 → ボーナス → 経過シーン数 → BGM → エンディング
  */
 import { BACK_SCENE_ID, type Choice, type Enemy, type Scenario, type Scene } from '@stext/schema';
+import { getBgmMode, resolveSceneBgm, type BgmSource } from './bgm.js';
 import { evaluateCondition, type ConditionContext } from './condition.js';
 import { BONUS_ITEMS } from './data.js';
 import {
@@ -75,6 +76,7 @@ export interface SceneView {
   end?: 'happy' | 'bad' | 'good';
   /** 再生する BGM（"@field01" など。空ならメインテーマ） */
   bgm: string;
+  bgmSource: BgmSource;
   se?: string;
   /** Battle Sheet に表示するルールのシーン ID */
   rule?: string;
@@ -270,15 +272,14 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
       choices.push(v);
     });
     const end = scene.end;
+    const bgm = resolveSceneBgm(scenario, scene, state.bgm);
     const v: SceneView = {
       id: scene.id,
       markdown: body.markdown,
       choices,
       enemies: (scene.enemies ?? []).flatMap((id) => enemies.get(id) ?? []),
-      bgm:
-        end && scene.bgm === undefined
-          ? (scenario.meta.bgm?.[end === 'good' ? 'happy' : end] ?? end)
-          : state.bgm,
+      bgm: bgm.track,
+      bgmSource: bgm.source,
     };
     if (scene.summary !== undefined) v.summary = scene.summary;
     if (scene.afterText) v.afterText = inline(scene.afterText);
@@ -454,6 +455,7 @@ export function createEngine(scenario: Scenario, options: EngineOptions = {}) {
 
   return {
     scenario,
+    bgmMode: getBgmMode(scenario),
     scenarioId,
     setParam,
     sceneText,

@@ -152,7 +152,7 @@ export function renameScene(s: Scenario, from: string, to: string): Scenario {
 
 export function updateScene(s: Scenario, id: string, patch: Partial<Scene>): Scenario {
   return mapScenes(s, (scene) =>
-    scene.id === id ? clean({ ...scene, ...patch }, ['id', 'text']) : scene,
+    scene.id === id ? clean({ ...scene, ...patch }, ['id', 'text', 'bgm']) : scene,
   );
 }
 

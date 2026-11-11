@@ -135,14 +135,14 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 @legacy init/bgm/happy
 @related common.bgm, scene.end
 
-ハッピーエンドの曲です（指定しなければ `happy`）。グッドエンドでもこの曲を使います。
+ハッピーエンドの曲です。グッドエンドでもこの曲を使います。グループモードでは、エンディングシーンのBGMが指定されていない場合にグループBGMより優先されます。
 
 ## meta.bgm.bad | BGM（バッド）
 
 @legacy init/bgm/bad
 @related common.bgm, scene.end
 
-バッドエンドの曲です（指定しなければ `bad`）。
+バッドエンドの曲です。グループモードでは、エンディングシーンのBGMが指定されていない場合にグループBGMより優先されます。
 
 ## common.bgm | BGM の指定方法
 
@@ -487,10 +487,10 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 ## groups | グループ
 
 @legacy groups, groups/group
-@related groups.start, groups.rule
+@related groups.start, groups.rule, groups.bgm
 @mark 未実装: 旧版はグループを「Playground Flow でフロー図の表示範囲を絞る」ために使っていましたが、新しい Playground には範囲を絞る表示がありません（作らなかった機能）。
 
-シーンを束ねるグループです。シーン ID の範囲で決めるので、関係するシーンはなるべく近い ID にまとめてください。
+シーンを束ねるグループです。シーン ID の範囲で所属を決めるので、関係するシーンはなるべく近い ID にまとめてください。範囲は整数で指定し、他のグループと重ならないようにします。
 
 ## groups.title | グループの名前
 
@@ -511,6 +511,14 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 @related groups.start, scene.id
 
 グループに入れるシーン ID の最後です。
+
+## groups.bgm | グループのBGM
+
+@related groups.start, groups.end, scene.bgm, common.bgm
+
+グループのシーンで使うBGMです。空欄は未設定、`@none` は明示的な無音です。少なくとも一つのグループにBGMを設定すると、作品全体がグループモードになります。
+
+通常シーンでは、シーン個別のBGM、グループBGM、シナリオ全体の通常曲、既定の `main` の順に決まります。エンディングでは、シーン個別のBGM、終了種別の曲、グループBGM、既定の終了曲名の順です。シーンのBGMが空文字なら通常曲に戻し、グループBGMや終了曲には進みません。
 
 ## groups.rule | グループの戦闘ルール
 
@@ -999,9 +1007,9 @@ ${/if}
 @related common.bgm, meta.bgm.main, scene.end
 @mark 変更: stext/2 では、空の文字列（`""`）でメインテーマに戻せます。
 
-そのシーンに入ったときに、指定した曲に切り替えます。書き方は [BGM の指定方法](#help/common.bgm) と同じです。
+そのシーンに入ったときに、指定した曲に切り替えます。書き方は [BGM の指定方法](#help/common.bgm) と同じです。`@none` は無音です。入力欄を空にすると指定を解除し、チェック欄で「通常曲に戻す」を選ぶと `bgm: ""` を設定します。
 
-エンディングのシーンで BGM も指定したときは、BGM の曲を優先します。
+グループモードでは、通常シーン・エンディングともシーン個別のBGMが最優先です。空文字（`""`）は通常曲に戻す指定です。グループBGMが設定されていると、空欄のシーンBGMとは異なり、そのシーンだけグループBGMを使わず通常曲になります。
 
 ## scene.se | 効果音
 

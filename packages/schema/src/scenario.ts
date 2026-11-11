@@ -261,6 +261,7 @@ export const GroupSchema = z.strictObject({
   title: text,
   start: id,
   end: id,
+  bgm: z.string().optional(),
   rule: id.optional(),
   text: text.optional(),
 });

@@ -115,7 +115,17 @@ export function FlowView({
   });
   // シナリオが変わったら作り直す（ドラッグ中の位置はこのコンポーネントの中で持つ）
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setNodes(toNodes()), [graph, selected, playingScene, problems]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => setNodes(toNodes()), [graph, playingScene, problems]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNodes((current) =>
+      current.map((node) =>
+        node.data.selected === (node.id === selected)
+          ? node
+          : { ...node, data: { ...node.data, selected: node.id === selected } },
+      ),
+    );
+  }, [selected]);
 
   const edges: Edge[] = useMemo(
     () =>

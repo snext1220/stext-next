@@ -210,7 +210,11 @@ describe('scene scrolling', () => {
     fireEvent.click(
       within(dialog.getAllByRole('listitem')[0]!).getByRole('button', { name: 'ロード' }),
     );
-    await waitFor(() => expect(checkbox.checked).toBe(false));
+    await waitFor(() =>
+      expect(
+        (screen.getByRole('checkbox', { name: '敵を撃破した' }) as HTMLInputElement).checked,
+      ).toBe(false),
+    );
   });
 
   it('loads a manual slot without replaying scene effects and replaces autosave and history', async () => {

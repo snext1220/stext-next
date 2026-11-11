@@ -23,11 +23,23 @@ describe('collectResourceReferences', () => {
     ]);
   });
 
-  it('does not turn unsafe Markdown paths into resource references', () => {
+  it('does not turn unsafe Markdown paths into references', () => {
     const scenario = emptyScenario();
     scenario.scenes[0]!.text = '![escape](../../secret.png) ![absolute](/secret.png)';
 
-    expect(collectResourceReferences(scenario)).toEqual([]);
+    expect(collectResourceReferences(scenario)).toEqual([{ path: 'bgm/main.mp3', kind: 'bgm' }]);
+  });
+
+  it('collects group music and implicit tracks used by group mode', () => {
+    const scenario = emptyScenario();
+    scenario.groups = [{ title: '森', start: '100', end: '199', bgm: 'forest' }];
+    scenario.scenes.push({ id: '1', text: '', choices: [], end: 'happy' });
+
+    expect(collectResourceReferences(scenario)).toEqual([
+      { path: 'bgm/forest.mp3', kind: 'bgm' },
+      { path: 'bgm/main.mp3', kind: 'bgm' },
+      { path: 'bgm/happy.mp3', kind: 'bgm' },
+    ]);
   });
 });
 

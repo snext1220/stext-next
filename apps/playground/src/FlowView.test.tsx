@@ -91,6 +91,33 @@ describe('FlowView', () => {
     },
   );
 
+  it('updates only the previously selected and newly selected nodes', () => {
+    const scenario = emptyScenario();
+    scenario.scenes = [
+      { id: '10', text: '', choices: [] },
+      { id: '20', text: '', choices: [] },
+      { id: '30', text: '', choices: [] },
+    ];
+    const props = {
+      scenario,
+      problems: new Map<string, number>(),
+      onSelect: vi.fn(),
+      onMove: vi.fn(),
+      onConnect: vi.fn(),
+    };
+    const { rerender } = render(<FlowView {...props} selected="10" />);
+    const firstNodes = vi.mocked(ReactFlow).mock.calls.at(-1)![0].nodes!;
+
+    rerender(<FlowView {...props} selected="20" />);
+    const nextNodes = vi.mocked(ReactFlow).mock.calls.at(-1)![0].nodes!;
+
+    expect(nextNodes.find((node) => node.id === '10')?.data.selected).toBe(false);
+    expect(nextNodes.find((node) => node.id === '20')?.data.selected).toBe(true);
+    expect(nextNodes.find((node) => node.id === '30')).toBe(
+      firstNodes.find((node) => node.id === '30'),
+    );
+  });
+
   it('centers the requested scene after initialization and scene changes', () => {
     let frameCallback: FrameRequestCallback | undefined;
     vi.stubGlobal(

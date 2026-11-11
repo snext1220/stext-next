@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { emptyScenario } from './model.js';
 
 vi.mock('./FlowView.js', () => ({ FlowView: () => null }));
@@ -9,6 +9,11 @@ vi.mock('./Splitter.js', () => ({
   Splitter: () => null,
   useSideWidth: () => [undefined, vi.fn()],
 }));
+
+beforeEach(() => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+});
 
 afterEach(() => {
   cleanup();
@@ -119,10 +124,14 @@ it('resumes preview after editing without repeating effects, and discards it on 
   fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
   fireEvent.click(screen.getByRole('button', { name: /森へ/ }));
   expect(screen.getByText('森の中')).toBeTruthy();
+  fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
   fireEvent.click(screen.getByRole('tab', { name: 'シーン' }));
   fireEvent.change(screen.getByLabelText('本文'), { target: { value: '編集後の森' } });
   fireEvent.click(screen.getByRole('tab', { name: '試遊' }));
   expect(screen.getByText('編集後の森')).toBeTruthy();
+  expect(screen.getByRole<HTMLInputElement>('checkbox', { name: '音声を再生' }).checked).toBe(
+    false,
+  );
   expect(container.querySelector('audio')?.getAttribute('src')).toContain('/bgm/forest.mp3');
   expect(screen.getByLabelText<HTMLInputElement>('試遊パラメーター p01').value).toBe('1');
 

@@ -983,40 +983,67 @@
     {
       "title": "序章　麓の村",
       "start": "0",
-      "end": "199"
+      "end": "199",
+      "bgm": "village.m4a"
     },
     {
       "title": "第1章　山岳地帯",
       "start": "200",
       "end": "399",
+      "bgm": "battle.m4a",
       "rule": "9100"
     },
     {
       "title": "第2章　天上への門",
       "start": "400",
-      "end": "599"
+      "end": "509",
+      "bgm": "battle.m4a"
+    },
+    {
+      "title": "第2章　天上への門（雲上）",
+      "start": "510",
+      "end": "599",
+      "bgm": "heaven.m4a"
     },
     {
       "title": "第3章　神々の庭園",
       "start": "600",
       "end": "899",
+      "bgm": "heaven.m4a",
       "rule": "9300"
     },
     {
       "title": "第4章　大いなる神ユイター",
       "start": "900",
-      "end": "999"
+      "end": "999",
+      "bgm": "heaven.m4a"
     },
     {
       "title": "終章　星の夜",
       "start": "1000",
+      "end": "1021",
+      "bgm": "prefinal.m4a",
+      "rule": "9700"
+    },
+    {
+      "title": "終章　星の夜（決戦）",
+      "start": "1022",
+      "end": "1029",
+      "bgm": "evil.m4a",
+      "rule": "9700"
+    },
+    {
+      "title": "終章　星の夜（結末）",
+      "start": "1030",
       "end": "1099",
+      "bgm": "ending.mp3",
       "rule": "9700"
     },
     {
       "title": "庭園の探索",
       "start": "1100",
       "end": "1199",
+      "bgm": "heaven.m4a",
       "rule": "9300"
     },
     {

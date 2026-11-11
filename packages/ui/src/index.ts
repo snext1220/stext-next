@@ -20,6 +20,7 @@ export {
   type HistoryEntry,
 } from './Panels.js';
 export { Die, EnemyCard, type EnemyCardProps } from './Battle.js';
+export { BattlePanel, type BattleFeedback, type BattlePanelProps } from './BattlePanel.js';
 export { Toasts, type Toast } from './Toasts.js';
 export { StatusEditor, type StatusEditorProps } from './StatusEditor.js';
 export { Effect } from './Effect.js';

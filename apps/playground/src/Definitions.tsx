@@ -162,6 +162,7 @@ export const TABLES: Record<
       { key: 'title', label: '名前', width: 'm' },
       { key: 'start', label: '最初のシーン' },
       { key: 'end', label: '最後のシーン' },
+      { key: 'bgm', label: 'BGM', width: 'm' },
       { key: 'rule', label: '戦闘ルールのシーン' },
     ],
     newRow: () => ({ title: '新しいグループ', start: '0', end: '0' }),
@@ -267,8 +268,18 @@ function Table({
       `${listKey}:${i}:${col.key}`,
     );
   };
+  const groupMode =
+    listKey === 'groups' &&
+    (rows as Scenario['groups']).some((group) => group.bgm !== undefined && group.bgm !== '');
   return (
     <div className="pg-table-wrap">
+      {listKey === 'groups' && (
+        <p className="pg-hint" role="status">
+          {groupMode
+            ? 'グループBGMが設定されているため、作品全体がグループモードです。通常シーンはシーンBGM → グループBGM → 通常曲、エンディングはシーンBGM → 終了曲 → グループBGM → 既定曲の順で決まります。空欄は未設定、@none は無音です。'
+            : 'グループBGMがないため、従来モードです。グループにBGMを設定すると作品全体がグループモードに切り替わります。'}
+        </p>
+      )}
       <table className="pg-table">
         <thead>
           <tr>

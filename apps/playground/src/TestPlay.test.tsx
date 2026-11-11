@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { emptyGlobalState, GLOBAL_SAVE_KEY } from '@stext/core';
 import type { Scenario } from '@stext/schema';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { emptyPreviewStartOverrides, TestPlay, type PreviewRun } from './TestPlay.js';
@@ -60,6 +60,8 @@ function playProps(scenario: Scenario) {
     scenarioIndexError: null,
     initialRun: null,
     onRunChange: vi.fn(),
+    audioEnabled: true,
+    onAudioEnabledChange: vi.fn(),
   };
 }
 
@@ -86,6 +88,28 @@ const progressScenario: Scenario = {
   ],
 };
 
+const combatScenario: Scenario = {
+  ...scenario,
+  meta: {
+    id: 'combat-preview',
+    title: 'Combat preview',
+    bgm: { main: '@none' },
+  },
+  items: [{ id: 'i01', name: '薬草' }],
+  enemies: [
+    {
+      id: 'm01',
+      name: '魔物',
+      attack: 'physics',
+      func: 'L',
+      funcOpp: '999',
+      hp: 10,
+      drop: 'item/i01/薬草',
+    },
+  ],
+  scenes: [{ id: '0', text: '戦闘', enemies: ['m01'], choices: [] }],
+};
+
 function RetainedPreview({
   startScene,
   onRunChange = () => {},
@@ -98,6 +122,7 @@ function RetainedPreview({
   const [run, setRun] = useState<PreviewRun | null>(null);
   const [overrides, setOverrides] = useState(() => emptyPreviewStartOverrides(playable));
   const [visible, setVisible] = useState(true);
+  const [audioEnabled, setAudioEnabled] = useState(true);
   const [callbacks] = useState(() => playProps(progressScenario));
   return (
     <>
@@ -107,6 +132,8 @@ function RetainedPreview({
       {visible && (
         <TestPlay
           {...callbacks}
+          audioEnabled={audioEnabled}
+          onAudioEnabledChange={setAudioEnabled}
           scenario={playable}
           initialRun={run}
           onRunChange={(next) => {
@@ -126,6 +153,8 @@ function RetainedPreview({
 beforeEach(() => {
   localStorage.clear();
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
 });
 afterEach(() => {
   cleanup();
@@ -133,6 +162,347 @@ afterEach(() => {
 });
 
 describe('TestPlay', () => {
+  it('supports combat actions without saving preview results', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const onRunChange = vi.fn<(run: PreviewRun) => void>();
+    const { container } = render(
+      <TestPlay
+        {...playProps(combatScenario)}
+        onRunChange={onRunChange}
+        resourceUrls={{ 'bgm/se/dice.mp3': 'blob:dice' }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    expect(screen.getByText('状態').closest('details')?.classList.contains('card')).toBe(true);
+
+    const enemyElement = screen.getByRole('region', { name: '敵：魔物' });
+    const enemy = within(enemyElement);
+    expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('10');
+    expect(screen.getAllByRole('img', { name: /ダイス/ })).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'ダイスを振る' }));
+    expect(container.querySelector('audio')?.getAttribute('src')).toBe('blob:dice');
+    const initialHp = Number(onRunChange.mock.lastCall?.[0].state.chara.hp);
+    fireEvent.click(enemy.getByRole('button', { name: '敵の攻撃' }));
+    expect(Number(onRunChange.mock.lastCall?.[0].state.chara.hp)).toBeLessThan(initialHp);
+    expect(screen.getByText(/現在値：/)).toBeTruthy();
+    fireEvent.click(enemy.getByRole('button', { name: '攻撃する' }));
+    expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('0');
+    expect(enemy.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(enemy.getByRole('button', { name: '戦利品：薬草' }));
+    expect(enemy.getByRole('button', { name: '薬草（取得済み）' })).toBeTruthy();
+    expect(onRunChange.mock.lastCall?.[0].state.items).toEqual(['i01']);
+    expect(screen.getByText('薬草を手に入れた。')).toBeTruthy();
+    expect(localStorage.getItem('combat-preview')).toBeNull();
+    expect(localStorage.getItem(GLOBAL_SAVE_KEY)).toBeNull();
+  });
+
+  it('resets battle-only state when the preview tab is reopened', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    function CombatPreview() {
+      const [run, setRun] = useState<PreviewRun | null>(null);
+      const [visible, setVisible] = useState(true);
+      const [callbacks] = useState(() => playProps(combatScenario));
+      return (
+        <>
+          <button type="button" onClick={() => setVisible((current) => !current)}>
+            試遊タブ切り替え
+          </button>
+          {visible && (
+            <TestPlay {...callbacks} initialRun={run} onRunChange={setRun} resourceUrls={{}} />
+          )}
+        </>
+      );
+    }
+
+    render(<CombatPreview />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    const enemyElement = screen.getByRole('region', { name: '敵：魔物' });
+    const enemy = within(enemyElement);
+    const initialHp = enemyElement.querySelector('.enemy-hp b')?.textContent;
+    fireEvent.click(enemy.getByRole('button', { name: '攻撃する' }));
+    expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('0');
+    expect(screen.getByText('999 Hit!')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+
+    const reopenedEnemyElement = screen.getByRole('region', { name: '敵：魔物' });
+    const reopenedEnemy = within(reopenedEnemyElement);
+    expect(reopenedEnemyElement.querySelector('.enemy-hp b')?.textContent).toBe(initialHp);
+    expect(reopenedEnemy.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(
+      false,
+    );
+  });
+
+  const soundScenario: Scenario = {
+    ...scenario,
+    meta: { ...scenario.meta, bgm: { main: '@none' } },
+    scenes: [
+      {
+        id: '0',
+        text: '音のある場面',
+        se: 'bell',
+        choices: [
+          { label: '次の音へ', to: ['1'] },
+          { label: '同じ場面へ', to: ['0'] },
+          { label: '戻る', to: ['90000'] },
+        ],
+      },
+      { id: '1', text: '次の場面', se: 'bell', choices: [{ label: '静かな場面へ', to: ['2'] }] },
+      { id: '2', text: '静かな場面', choices: [] },
+    ],
+  };
+
+  it('plays sound effects once per entry, including the same sound and same scene', () => {
+    const { container, rerender } = render(
+      <TestPlay {...playProps(soundScenario)} resourceUrls={{ 'bgm/se/bell.mp3': 'blob:bell' }} />,
+    );
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    const pause = vi.mocked(HTMLMediaElement.prototype.pause);
+    expect(play).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    const audio = container.querySelector('audio')!;
+    expect(audio.getAttribute('src')).toBe('blob:bell');
+    expect(audio.loop).toBe(false);
+    expect(audio.controls).toBe(false);
+    expect(audio.volume).toBe(0.9);
+    expect(play).toHaveBeenCalledTimes(1);
+    audio.currentTime = 3;
+    fireEvent.click(screen.getByRole('button', { name: /同じ場面へ/ }));
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(audio.currentTime).toBe(0);
+    fireEvent.click(screen.getByRole('button', { name: /戻る/ }));
+    expect(play).toHaveBeenCalledTimes(2);
+    rerender(
+      <TestPlay {...playProps(soundScenario)} resourceUrls={{ 'bgm/se/bell.mp3': 'blob:bell' }} />,
+    );
+    expect(play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: /次の音へ/ }));
+    expect(play).toHaveBeenCalledTimes(3);
+    fireEvent.click(screen.getByRole('button', { name: /静かな場面へ/ }));
+    expect(container.querySelector('audio')).toBeNull();
+    expect(pause).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops effects when muted or hidden, without replaying on enable or tab return', () => {
+    const { container } = render(<RetainedPreview playable={soundScenario} />);
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    const pause = vi.mocked(HTMLMediaElement.prototype.pause);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    expect(container.querySelector('audio')?.getAttribute('src')).toContain('/bgm/se/bell.mp3');
+    expect(play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    expect(pause).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: /次の音へ/ }));
+    expect(play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    expect(play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: '直前のシーンからやり直す' }));
+    expect(play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    expect(pause).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    expect(play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    expect(play).toHaveBeenCalledTimes(3);
+  });
+
+  it('retries blocked effects and cancels pending retries when leaving the scene', async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValueOnce(new DOMException('blocked', 'NotAllowedError'));
+    const { container } = render(<TestPlay {...playProps(soundScenario)} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    await screen.findByText(/効果音の自動再生が制限/);
+    fireEvent.keyDown(container.querySelector('.pg-play')!, { key: 'Enter' });
+    await waitFor(() => expect(screen.queryByText(/効果音の自動再生が制限/)).toBeNull());
+    expect(play).toHaveBeenCalledTimes(2);
+    play.mockRejectedValueOnce(new DOMException('blocked', 'NotAllowedError'));
+    fireEvent.click(screen.getByRole('button', { name: /次の音へ/ }));
+    await screen.findByText(/効果音の自動再生が制限/);
+    fireEvent.click(screen.getByRole('button', { name: /静かな場面へ/ }));
+    fireEvent.keyDown(container.querySelector('.pg-play')!, { key: 'Enter' });
+    expect(play).toHaveBeenCalledTimes(3);
+  });
+
+  it('reports effect playback errors and does not retry after leaving the preview', async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValueOnce(new DOMException('missing effect', 'NotSupportedError'));
+    const { unmount } = render(<TestPlay {...playProps(soundScenario)} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    await screen.findByText(/効果音を再生できませんでした：.*missing effect/);
+    unmount();
+    fireEvent.click(document);
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears blocked effect notices and retries when muted', async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValueOnce(new DOMException('blocked', 'NotAllowedError'));
+    const { container } = render(<RetainedPreview playable={soundScenario} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    await screen.findByText(/効果音の自動再生が制限/);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    fireEvent.keyDown(container.querySelector('.pg-play')!, { key: 'Enter' });
+    expect(screen.queryByText(/効果音の自動再生が制限/)).toBeNull();
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('mutes and stops BGM and effects together', () => {
+    const { unmount } = render(
+      <RetainedPreview
+        playable={{ ...soundScenario, meta: { ...soundScenario.meta, bgm: { main: 'forest' } } }}
+      />,
+    );
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    const pause = vi.mocked(HTMLMediaElement.prototype.pause);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    expect(play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    expect(pause).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    expect(play).toHaveBeenCalledTimes(3);
+    fireEvent.click(screen.getByRole('button', { name: /次の音へ/ }));
+    expect(play).toHaveBeenCalledTimes(4);
+    unmount();
+    expect(pause).toHaveBeenCalledTimes(4);
+  });
+
+  it('autoplays registered BGM, keeps the same track, switches tracks and stops on silence', () => {
+    const playable: Scenario = {
+      ...scenario,
+      scenes: [
+        { id: '0', text: '開始', bgm: 'forest', choices: [{ label: '次へ', to: ['1'] }] },
+        { id: '1', text: '続き', choices: [{ label: '街へ', to: ['2'] }] },
+        { id: '2', text: '街', bgm: '@town01', choices: [{ label: '無音へ', to: ['3'] }] },
+        { id: '3', text: '静寂', bgm: '@none', choices: [] },
+      ],
+    };
+    const { container, unmount } = render(
+      <TestPlay {...playProps(playable)} resourceUrls={{ 'bgm/forest.mp3': 'blob:forest' }} />,
+    );
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    const pause = vi.mocked(HTMLMediaElement.prototype.pause);
+    expect(play).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    const audio = container.querySelector('audio')!;
+    expect(audio.getAttribute('src')).toBe('blob:forest');
+    expect(audio.loop).toBe(true);
+    expect(audio.controls).toBe(false);
+    expect(play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: /次へ/ }));
+    expect(container.querySelector('audio')).toBe(audio);
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(pause).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /街へ/ }));
+    expect(audio.getAttribute('src')).toContain('/bgm/town01.mp3');
+    expect(play).toHaveBeenCalledTimes(2);
+    expect(pause).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: /無音へ/ }));
+    expect(container.querySelector('audio')).toBeNull();
+    expect(pause).toHaveBeenCalledTimes(2);
+    unmount();
+    expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops outside the preview tab and retains the BGM switch when returning', () => {
+    render(<RetainedPreview />);
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    const pause = vi.mocked(HTMLMediaElement.prototype.pause);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    expect(play).toHaveBeenCalledTimes(1);
+    fireEvent(document, new Event('visibilitychange'));
+    expect(pause).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    expect(pause).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    expect(play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    expect(pause).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    expect(screen.getByRole<HTMLInputElement>('checkbox', { name: '音声を再生' }).checked).toBe(
+      false,
+    );
+    expect(play).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    expect(play).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(['click', 'keydown'])(
+    'retries blocked autoplay on %s and clears its notice',
+    async (event) => {
+      const play = vi.mocked(HTMLMediaElement.prototype.play);
+      play.mockRejectedValueOnce(new DOMException('blocked', 'NotAllowedError'));
+      const { container } = render(<TestPlay {...playProps(scenario)} />);
+      fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+      await screen.findByText(/BGMの自動再生が制限/);
+      fireEvent(container.querySelector('.pg-play')!, new Event(event, { bubbles: true }));
+      await waitFor(() => expect(screen.queryByText(/BGMの自動再生が制限/)).toBeNull());
+      expect(play).toHaveBeenCalledTimes(2);
+      fireEvent(container.querySelector('.pg-play')!, new Event(event, { bubbles: true }));
+      expect(play).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('cancels blocked autoplay retries on mute and unmount', async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValue(new DOMException('blocked', 'NotAllowedError'));
+    render(<RetainedPreview />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    await screen.findByText(/BGMの自動再生が制限/);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    fireEvent.keyDown(document, { key: 'Enter' });
+    expect(play).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('checkbox', { name: '音声を再生' }));
+    await screen.findByText(/BGMの自動再生が制限/);
+    fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
+    fireEvent.keyDown(document, { key: 'Enter' });
+    expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a stale rejected request after leaving the preview', async () => {
+    let rejectPlay: (error: unknown) => void = () => {};
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockImplementationOnce(
+      () =>
+        new Promise<void>((_, reject) => {
+          rejectPlay = reject;
+        }),
+    );
+    const { unmount } = render(<TestPlay {...playProps(scenario)} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    unmount();
+    rejectPlay(new DOMException('blocked', 'NotAllowedError'));
+    await Promise.resolve();
+    fireEvent.click(document);
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports playback failures without scheduling autoplay retries', async () => {
+    const play = vi.mocked(HTMLMediaElement.prototype.play);
+    play.mockRejectedValueOnce(new DOMException('missing audio', 'NotSupportedError'));
+    render(<TestPlay {...playProps(scenario)} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    await screen.findByText(/BGMを再生できませんでした：.*missing audio/);
+    fireEvent.click(document);
+    expect(play).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the start BGM override in group mode and shows the selected source', async () => {
+    const groupedScenario: Scenario = {
+      ...progressScenario,
+      groups: [{ title: '森', start: '0', end: '1', bgm: 'forest' }],
+    };
+    render(<TestPlay {...playProps(groupedScenario)} />);
+    const select = screen.getByRole<HTMLSelectElement>('combobox', { name: '試遊の開始BGM' });
+    expect(select.disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+
+    await waitFor(() => expect(screen.getByText(/現在のBGM：forest/)).toBeTruthy());
+    expect(screen.getByText(/所属グループの指定/)).toBeTruthy();
+  });
+
   it('offers referenced and registered BGM without effects or duplicate resource paths', () => {
     const configuredScenario: Scenario = {
       ...progressScenario,

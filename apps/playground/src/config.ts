@@ -34,7 +34,9 @@ export function charaImageUrl(
     : `${ASSET_BASE}common/${file}`;
 }
 
-/** シナリオ固有の効果音 */
-export function seUrl(scenarioId: string, name: string): string {
-  return `${SCENARIO_BASE}${scenarioId}/bgm/se/${name}.mp3`;
+/** 効果音（common なら共通の効果音） */
+export function seUrl(scenarioId: string, name: string, common = false): string {
+  return common
+    ? `${ASSET_BASE}common/se/${name}.mp3`
+    : `${SCENARIO_BASE}${scenarioId}/bgm/se/${name}.mp3`;
 }

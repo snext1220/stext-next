@@ -33,6 +33,47 @@ function follow(engine: Engine, step: Step, labels: string[]): Step {
 }
 
 describe('新・天の神々たち', () => {
+  it('uses group-mode BGM while preserving the scenario music changes', () => {
+    const { engine, step } = setup('10');
+    expect(engine.bgmMode).toBe('group');
+
+    const expected: [string, string, string][] = [
+      ['10', 'village.m4a', 'group'],
+      ['400', 'battle.m4a', 'group'],
+      ['510', 'heaven.m4a', 'scene'],
+      ['600', 'heaven.m4a', 'group'],
+      ['1000', 'prefinal.m4a', 'scene'],
+      ['1002', 'prefinal.m4a', 'group'],
+      ['1022', 'evil.m4a', 'scene'],
+      ['1024', 'evil.m4a', 'group'],
+      ['1030', 'ending.mp3', 'scene'],
+      ['1032', 'ending.mp3', 'group'],
+      ['1100', 'heaven.m4a', 'group'],
+      ['9100', 'village.m4a', 'main'],
+      ['1070', 'ending.mp3', 'ending'],
+      ['939', 'bad.m4a', 'ending'],
+    ];
+
+    for (const [id, bgm, bgmSource] of expected) {
+      const current = engine.enterScene(step.state, step.global, id);
+      expect(engine.view(current.state, current.global), id).toMatchObject({ bgm, bgmSource });
+    }
+
+    expect(scenario.groups.map(({ start, end }) => [start, end])).toEqual([
+      ['0', '199'],
+      ['200', '399'],
+      ['400', '509'],
+      ['510', '599'],
+      ['600', '899'],
+      ['900', '999'],
+      ['1000', '1021'],
+      ['1022', '1029'],
+      ['1030', '1099'],
+      ['1100', '1199'],
+      ['9000', '9999'],
+    ]);
+  });
+
   it('displays scene illustrations with available assets and respects the final battle branches', () => {
     const illustrations: Record<string, string> = {
       '10': 'village.webp',

@@ -4,7 +4,7 @@
 
 更新日：2026年11月6日（オレンジフォーム復旧に伴う再採用を反映）
 
-データ管理との整合方針：[ローカルリソース管理・ZIP出力機能仕様書](./Playground-data-management.md)と、共通素材の除外、生成前の保存完了とスナップショット取得、未登録の固有素材の不足通知、シナリオIDの扱いを統一する。
+データ管理との整合方針：[ローカルリソース管理・ZIP出力機能仕様書](./playground-data-management.md)と、共通素材の除外、生成前の保存完了とスナップショット取得、未登録の固有素材の不足通知、シナリオIDの扱いを統一する。
 
 素材管理とZIP出力は実装済みです。オレンジフォームの復旧と正確な発行HTMLの提示を受け、独自PHP受け口を削除し、通常のフォームPOSTに切り替えました。実フォームの確認画面・受付・管理者通知・投稿者への確認メールは、管理画面での設定と実地確認が必要です。
 
@@ -226,7 +226,7 @@ forest01/
 
 ### 7.1 フォームの設定
 
-- [development.md](./development.md) に従い、フォームID `261098` の管理者通知と `mail` 宛ての自動返信（確認メール）を設定する。
+- [development.md](../development.md) に従い、フォームID `261098` の管理者通知と `mail` 宛ての自動返信（確認メール）を設定する。
 - 発行HTMLと項目名・hidden値・honeypotが一致することを確認する。フォームを再発行・変更した場合はコードとテストを更新する。
 - 必須項目、文字数、入力検査、迷惑投稿対策、完了画面を設定・確認する。クライアントの検査はサーバー側検査の代替ではない。
 - 確認画面・最終送信・受付記録・通知・自動返信の一連の動作を本番Playgroundから確認する。
@@ -293,13 +293,13 @@ ZIPから編集内容を復元する読み込み機能も有用ですが、今�
 
 実装に合わせ、次の文書・画面を更新しました。
 
-- [project-notes.md](./project-notes.md)：オレンジフォームへの切替を決定事項に反映する。
-- [development.md](./development.md)：フォーム設定、通知・確認メール、実送信確認、旧PHP停止を記載する。
-- [manual-playground.md](./manual-playground.md)：素材管理、ZIP保存、提出の操作を更新する。
-- [migration-plan.md](./migration-plan.md)：提出機能の移行状況を更新する。
-- [Playgroundヘルプ](../apps/playground/src/help/reference.md)：投稿項目と新しい提出手順を更新する。
-- [プレイヤーの投稿案内](../apps/player/src/screens/Post.tsx)：Playground経由と代替の提出方法を整合させる。
-- [Copilot向け指示](../.github/copilot-instructions.md)：独自投稿受け口を作らず、オレンジフォームを利用する方針を記載する。
+- [project-notes.md](../project-notes.md)：オレンジフォームへの切替を決定事項に反映する。
+- [development.md](../development.md)：フォーム設定、通知・確認メール、実送信確認、旧PHP停止を記載する。
+- [manual-playground.md](../manual-playground.md)：素材管理、ZIP保存、提出の操作を更新する。
+- [migration-plan.md](../migration-plan.md)：提出機能の移行状況を更新する。
+- [Playgroundヘルプ](../../apps/playground/src/help/reference.md)：投稿項目と新しい提出手順を更新する。
+- [プレイヤーの投稿案内](../../apps/player/src/screens/Post.tsx)：Playground経由と代替の提出方法を整合させる。
+- [Copilot向け指示](../../.github/copilot-instructions.md)：独自投稿受け口を作らず、オレンジフォームを利用する方針を記載する。
 
 ## 12. 残作業と確認事項
 

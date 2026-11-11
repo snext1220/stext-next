@@ -65,10 +65,14 @@ export class AudioDirector {
     else this.bgm.pause();
   }
 
-  stop() {
+  stopBgm() {
     this.clearRetry();
     this.bgm?.pause();
     this.bgm = undefined;
     this.current = '';
+  }
+
+  stop() {
+    this.stopBgm();
   }
 }

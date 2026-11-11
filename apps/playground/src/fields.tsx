@@ -115,7 +115,15 @@ export function SelectField({
   );
 }
 
-/** カーソル位置に文字列を差し込める複数行の入力欄 */
+/** 本文に文字列や Markdown の書式を適用できる複数行入力欄 */
+export interface TextAreaToolbarItem {
+  label: string;
+  title: string;
+  before?: string;
+  after?: string;
+  action?: 'prefix-lines' | 'link';
+}
+
 export function TextArea({
   label,
   help,
@@ -127,20 +135,65 @@ export function TextArea({
   value: string;
   onChange: (v: string) => void;
   /** 差し込む文字列の候補（before…after でカーソル位置・選択範囲を挟む） */
-  toolbar?: readonly { label: string; title: string; before: string; after?: string }[];
+  toolbar?: readonly TextAreaToolbarItem[];
   rows?: number;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const insert = (before: string, after = '') => {
+  const apply = (item: TextAreaToolbarItem) => {
     const el = ref.current;
     if (!el) return;
     const { selectionStart: a, selectionEnd: b } = el;
-    const next = value.slice(0, a) + before + value.slice(a, b) + after + value.slice(b);
+    if (item.action === 'prefix-lines') {
+      const lineStartAt = (position: number) => value.lastIndexOf('\n', position - 1) + 1;
+      const firstLineStart = lineStartAt(a);
+      const lastLineStart = b > a ? lineStartAt(b - 1) : firstLineStart;
+      const lineStarts = [firstLineStart];
+      for (let position = firstLineStart; position < lastLineStart;) {
+        const nextNewline = value.indexOf('\n', position);
+        if (nextNewline < 0 || nextNewline + 1 > lastLineStart) break;
+        position = nextNewline + 1;
+        lineStarts.push(position);
+      }
+      const prefix = item.before ?? '';
+      const next =
+        value.slice(0, firstLineStart) +
+        lineStarts
+          .map((position, index) => {
+            const end = lineStarts[index + 1] ?? lastLineStart;
+            return prefix + value.slice(position, end);
+          })
+          .join('') +
+        value.slice(lastLineStart);
+      const nextStart = a + lineStarts.filter((position) => position <= a).length * prefix.length;
+      const nextEnd =
+        b > a
+          ? b + lineStarts.filter((position) => position < b).length * prefix.length
+          : nextStart;
+      onChange(next);
+      requestAnimationFrame(() => {
+        el.focus();
+        el.selectionStart = nextStart;
+        el.selectionEnd = nextEnd;
+      });
+      return;
+    }
+
+    const before = item.action === 'link' ? '[' : (item.before ?? '');
+    const after = item.action === 'link' ? '](URL)' : (item.after ?? '');
+    const selectedText = value.slice(a, b);
+    const content = item.action === 'link' && a === b ? 'リンク文字列' : selectedText;
+    const next = value.slice(0, a) + before + content + after + value.slice(b);
     onChange(next);
     requestAnimationFrame(() => {
       el.focus();
-      el.selectionStart = a + before.length;
-      el.selectionEnd = b + before.length;
+      if (item.action === 'link' && a === b) {
+        const textStart = a + before.length;
+        el.selectionStart = textStart;
+        el.selectionEnd = textStart + 'リンク文字列'.length;
+      } else {
+        el.selectionStart = a + before.length;
+        el.selectionEnd = b + before.length;
+      }
     });
   };
   return (
@@ -148,13 +201,14 @@ export function TextArea({
       {(id) => (
         <>
           {toolbar && (
-            <div className="pg-toolbar" role="toolbar" aria-label={`${label}に差し込む`}>
+            <div className="pg-toolbar" role="toolbar" aria-label={`${label}の記法・書式`}>
               {toolbar.map((t) => (
                 <button
                   key={t.label}
                   type="button"
                   title={t.title}
-                  onClick={() => insert(t.before, t.after)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => apply(t)}
                 >
                   {t.label}
                 </button>

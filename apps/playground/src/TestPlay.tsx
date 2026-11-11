@@ -8,12 +8,80 @@ import {
   type GlobalState,
 } from '@stext/core';
 import type { DraftScenario, Scenario } from '@stext/schema';
-import { ChoiceList, HeroPanel, SceneText, createCookieRandomCache } from '@stext/ui';
+import {
+  BattlePanel,
+  ChoiceList,
+  HeroPanel,
+  SceneText,
+  createCookieRandomCache,
+  type BattleFeedback,
+} from '@stext/ui';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { bgmUrl, charaImageUrl, imageUrl, seUrl } from './config.js';
 import { localAudioPath } from './resources.js';
 
 const STAR_NAMES = ['月', '火星', '水星', '木星', '金星', '土星', '太陽'];
+
+function usePreviewAudio(
+  ref: React.RefObject<HTMLAudioElement | null>,
+  url: string | undefined,
+  enabled: boolean,
+  trigger: unknown,
+  loop: boolean,
+) {
+  const retry = useRef<(() => void) | null>(null);
+  const lastTrigger = useRef(trigger);
+  const [notice, setNotice] = useState<{ url: string; message: string } | null>(null);
+  useEffect(() => {
+    const changed = lastTrigger.current !== trigger;
+    lastTrigger.current = trigger;
+    const audio = ref.current;
+    if (!audio || !url || !enabled || (!loop && !changed)) return;
+    let active = true;
+    let attempt = 0;
+    const name = loop ? 'BGM' : '効果音';
+    const play = () => {
+      retry.current = null;
+      const currentAttempt = ++attempt;
+      void audio.play().then(
+        () => {
+          if (active && attempt === currentAttempt) setNotice(null);
+        },
+        (error: unknown) => {
+          if (!active || attempt !== currentAttempt) return;
+          if (error instanceof DOMException && error.name === 'NotAllowedError') {
+            setNotice({
+              url,
+              message: `${name}の自動再生が制限されています。試遊内のクリックまたはキー操作で再生します。`,
+            });
+            retry.current = play;
+          } else {
+            setNotice({
+              url,
+              message: `${name}を再生できませんでした：${error instanceof Error ? error.message : String(error)}`,
+            });
+          }
+        },
+      );
+    };
+    audio.volume = loop ? 0.2 : 0.9;
+    if (!loop) audio.currentTime = 0;
+    play();
+    return () => {
+      active = false;
+      retry.current = null;
+      audio.pause();
+      setNotice(null);
+    };
+  }, [ref, url, enabled, trigger, loop]);
+  return {
+    retry: () => retry.current?.(),
+    cancelRetry: () => {
+      retry.current = null;
+    },
+    message: enabled && notice && notice.url === url ? notice.message : null,
+  };
+}
 
 export interface PreviewStartOverrides {
   items: string[];
@@ -63,6 +131,8 @@ export function TestPlay({
   scenarioIndexError,
   initialRun,
   onRunChange,
+  audioEnabled,
+  onAudioEnabledChange,
 }: {
   scenario: Scenario;
   startScene: string | undefined;
@@ -75,6 +145,8 @@ export function TestPlay({
   scenarioIndexError: string | null;
   initialRun: PreviewRun | null;
   onRunChange: (run: PreviewRun) => void;
+  audioEnabled: boolean;
+  onAudioEnabledChange: (enabled: boolean) => void;
 }) {
   const [playerGlobal, setPlayerGlobal] = useState<GlobalState>(
     () => initialRun?.global ?? emptyGlobalState(),
@@ -92,8 +164,24 @@ export function TestPlay({
       }),
     [scenario, scenarioResultTotals, playerGlobal],
   );
+  const groupMode = engine.bgmMode === 'group';
   const [run, setLocalRun] = useState<PreviewRun | null>(initialRun);
-  const setRun = (next: PreviewRun) => {
+  const [error, setError] = useState<string | null>(null);
+  const bgmRef = useRef<HTMLAudioElement>(null);
+  const seRef = useRef<HTMLAudioElement>(null);
+  const battleSeRef = useRef<HTMLAudioElement>(null);
+  const [sceneSoundVersion, setSceneSoundVersion] = useState(0);
+  const [battleSound, setBattleSound] = useState<{ name: string; version: number } | null>(null);
+  const [battleResetId, setBattleResetId] = useState(0);
+  const setRun = (next: PreviewRun, replaySceneSound = false) => {
+    if (next.state !== run?.state) {
+      seAudio.cancelRetry();
+      battleSeAudio.cancelRetry();
+    }
+    const previousSceneKey = run ? `${run.state.scene}:${run.state.ellapsed_scene}` : undefined;
+    const nextSceneKey = `${next.state.scene}:${next.state.ellapsed_scene}`;
+    if (replaySceneSound || previousSceneKey !== nextSceneKey)
+      setSceneSoundVersion((version) => version + 1);
     setLocalRun(next);
     setPlayerGlobal(next.global);
     onRunChange(next);
@@ -101,7 +189,6 @@ export function TestPlay({
   const lastSyncedState = useRef(initialRun?.state);
   const playRef = useRef<HTMLDivElement>(null);
   const pendingSceneScroll = useRef(false);
-  const [error, setError] = useState<string | null>(null);
   const bgmCandidates = useMemo(() => {
     const candidates = new Map<string, string>();
     const add = (name: string) => {
@@ -115,6 +202,9 @@ export function TestPlay({
     }
     for (const scene of scenario.scenes) {
       if (scene.bgm) add(scene.bgm);
+    }
+    for (const group of scenario.groups) {
+      if (group.bgm) add(group.bgm);
     }
     for (const path of Object.keys(resourceUrls)) {
       if (/^bgm\/(?!se\/).+\.(mp3|ogg|wav|m4a|aac)$/i.test(path)) {
@@ -160,7 +250,7 @@ export function TestPlay({
       const rawGlobal = localStorage.getItem(GLOBAL_SAVE_KEY);
       const global = rawGlobal ? readLegacyGlobal(rawGlobal) : emptyGlobalState();
       const character = engine.newCharacter(global);
-      character.bgm = startOverrides.bgm.trim();
+      if (!groupMode) character.bgm = startOverrides.bgm.trim();
       const itemIds = new Set(scenario.items.map((item) => item.id));
       const flagIds = new Set(scenario.flags.map((flag) => flag.id));
       character.items = startOverrides.items.filter((id) => itemIds.has(id));
@@ -195,12 +285,16 @@ export function TestPlay({
         previous = { state: step.state, global: step.global, log: describe(step.events) };
         step = engine.enterScene(step.state, step.global, from);
       }
-      setRun({
-        state: step.state,
-        global: step.global,
-        log: describe(step.events),
-        ...(previous ? { previous } : {}),
-      });
+      setRun(
+        {
+          state: step.state,
+          global: step.global,
+          log: describe(step.events),
+          ...(previous ? { previous } : {}),
+        },
+        true,
+      );
+      setBattleResetId((version) => version + 1);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -231,9 +325,9 @@ export function TestPlay({
         ]),
       ),
       stars: run.state.stars.map(String),
-      bgm: view?.bgm ?? run.state.bgm,
+      bgm: groupMode ? '' : (view?.bgm ?? run.state.bgm),
     });
-  }, [run, view?.bgm, scenario.params, onStartOverridesChange]);
+  }, [run, view?.bgm, scenario.params, onStartOverridesChange, groupMode]);
   const music = view ? view.bgm || scenario.meta.bgm?.main || 'main' : undefined;
   const musicPath = music ? localAudioPath('bgm', music) : undefined;
   const musicUrl =
@@ -247,6 +341,29 @@ export function TestPlay({
     soundName && soundPath
       ? (resourceUrls[soundPath] ?? seUrl(scenario.meta.id ?? 'playground', soundName))
       : undefined;
+  const battleSoundPath = battleSound ? localAudioPath('se', battleSound.name) : undefined;
+  const battleSoundUrl =
+    battleSound && battleSoundPath
+      ? (resourceUrls[battleSoundPath] ??
+        seUrl(scenario.meta.id ?? 'playground', battleSound.name, true))
+      : undefined;
+  const bgmAudio = usePreviewAudio(bgmRef, musicUrl, audioEnabled, musicUrl, true);
+  const seAudio = usePreviewAudio(seRef, soundUrl, audioEnabled, sceneSoundVersion, false);
+  const battleSeAudio = usePreviewAudio(
+    battleSeRef,
+    battleSoundUrl,
+    audioEnabled,
+    battleSound?.version,
+    false,
+  );
+  const handleBattleFeedback = (feedback: BattleFeedback) => {
+    if (feedback.sound) {
+      setBattleSound((current) => ({
+        name: feedback.sound!,
+        version: (current?.version ?? 0) + 1,
+      }));
+    }
+  };
   const portraitPath = run
     ? `chara/${run.state.chara.sex}_${run.state.chara.age}_${run.state.chara.race}.png`.toLowerCase()
     : undefined;
@@ -320,8 +437,32 @@ export function TestPlay({
   };
 
   return (
-    <div ref={playRef} className="pg-play">
+    <div
+      ref={playRef}
+      className="pg-play"
+      onClick={() => {
+        bgmAudio.retry();
+        seAudio.retry();
+        battleSeAudio.retry();
+      }}
+      onKeyDown={() => {
+        bgmAudio.retry();
+        seAudio.retry();
+        battleSeAudio.retry();
+      }}
+    >
       <div className="pg-toolbar">
+        <label
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={audioEnabled}
+            onChange={(event) => onAudioEnabledChange(event.target.checked)}
+          />
+          音声を再生
+        </label>
         <button type="button" onClick={() => start()}>
           最初から試遊
         </button>
@@ -358,7 +499,8 @@ export function TestPlay({
           開始時のBGM
           <select
             aria-label="試遊の開始BGM"
-            value={startOverrides.bgm}
+            value={groupMode ? '' : startOverrides.bgm}
+            disabled={groupMode}
             onChange={(event) =>
               onStartOverridesChange({ ...startOverrides, bgm: event.target.value })
             }
@@ -371,6 +513,9 @@ export function TestPlay({
               </option>
             ))}
           </select>
+          {groupMode && (
+            <small>グループモードではシーンごとにBGMが決まるため、開始BGMは使いません。</small>
+          )}
         </label>
         {scenario.items.length > 0 && (
           <fieldset>
@@ -516,28 +661,64 @@ export function TestPlay({
                 return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
               }}
             />
-            {musicUrl && (
-              <label className="pg-play-audio">
-                BGM
-                <audio key={musicUrl} controls loop preload="none" src={musicUrl} />
-              </label>
-            )}
-            {soundUrl && (
-              <label className="pg-play-audio">
-                効果音
-                <audio key={soundUrl} controls preload="none" src={soundUrl} />
-              </label>
-            )}
-            {view.enemies.length > 0 && (
-              <p className="pg-hint">
-                敵：{view.enemies.map((e) => e.name).join('、')}
-                （戦闘はプレイヤーで確かめてください）
+            {musicUrl && <audio ref={bgmRef} loop preload="none" src={musicUrl} />}
+            {bgmAudio.message && (
+              <p className="pg-hint" role="status">
+                {bgmAudio.message}
               </p>
             )}
+            {groupMode && (
+              <p className="pg-hint" role="status">
+                現在のBGM：{music === '@none' ? '無音' : music}（
+                {
+                  {
+                    scene: 'シーンの指定',
+                    group: '所属グループの指定',
+                    main: 'シナリオの通常曲',
+                    ending: 'シナリオの終了曲',
+                    implicit: '既定のファイル名',
+                    legacy: '従来の再生状態',
+                  }[view.bgmSource]
+                }
+                ）
+              </p>
+            )}
+            {soundUrl && <audio ref={seRef} preload="none" src={soundUrl} />}
+            {battleSoundUrl && <audio ref={battleSeRef} preload="none" src={battleSoundUrl} />}
+            {(seAudio.message ?? battleSeAudio.message) && (
+              <p className="pg-hint" role="status">
+                {seAudio.message ?? battleSeAudio.message}
+              </p>
+            )}
+            <BattlePanel
+              key={`${run.state.scene}:${run.state.ellapsed_scene}:${battleResetId}`}
+              engine={engine}
+              scenario={scenario}
+              state={run.state}
+              global={run.global}
+              view={view}
+              onStateChange={(state, events, feedback) => {
+                setRun({
+                  ...run,
+                  state,
+                  log: [
+                    ...(feedback?.notice ? [feedback.notice.message] : []),
+                    ...describe(events),
+                    ...run.log,
+                  ].slice(0, 30),
+                });
+                if (feedback) handleBattleFeedback(feedback);
+              }}
+              onFeedback={handleBattleFeedback}
+              resolveImage={(src) => {
+                const path = src.startsWith('capture/') ? src : `capture/${src}`;
+                return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
+              }}
+            />
             <ChoiceList choices={view.choices} onChoose={choose} />
             {view.afterText && <SceneText className="prose" markdown={view.afterText} />}
           </div>
-          <details className="pg-play-status">
+          <details className="pg-play-status card">
             <summary>状態</summary>
             <HeroPanel scenario={scenario} state={run.state} portraitUrl={portraitUrl} />
             <p className="pg-hint">
