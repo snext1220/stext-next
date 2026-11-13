@@ -61,14 +61,12 @@ describe('Library', () => {
     vi.restoreAllMocks();
   });
 
-  it('styles the native mark as a bordered badge in the shelf and details', async () => {
+  it('shows the NT badge in the shelf and details at a compact size', async () => {
     const style = document.createElement('style');
     const styles = readFileSync(resolve('packages', 'ui', 'src', 'styles.css'), 'utf8');
-    const rule = styles.match(/\.scenario-v2-mark\s*\{[^}]*\}/)?.[0];
+    const rule = styles.match(/\.scenario-native-mark\s*\{[^}]*\}/)?.[0];
     expect(rule).toBeDefined();
-    expect(rule).toContain('border: 1px solid var(--gold)');
-    // jsdom は border の CSS 変数を解決できないため、色だけ具体値に置き換える。
-    style.textContent = rule!.replaceAll('var(--gold)', '#8f6a14');
+    style.textContent = rule!;
     document.head.append(style);
     try {
       const { container } = renderLibrary();
@@ -76,15 +74,15 @@ describe('Library', () => {
         name: '「新・消えた王様の杖」の詳細を表示',
       });
       fireEvent.click(opener);
-      const marks = container.querySelectorAll('.scenario-v2-mark');
+      const marks = container.querySelectorAll('.scenario-native-mark');
       expect(marks).toHaveLength(2);
       for (const mark of marks) {
         const computed = getComputedStyle(mark);
         expect(computed.display).toBe('inline-block');
-        expect(computed.borderTopStyle).toBe('solid');
-        expect(computed.borderTopWidth).toBe('1px');
-        expect(computed.whiteSpace).toBe('nowrap');
-        expect(computed.fontSize).toBe('0.62em');
+        expect(computed.width).toBe('22px');
+        expect(computed.height).toBe('28px');
+        expect(mark.getAttribute('src')).toMatch(/scenario-native\.png$/);
+        expect(mark.getAttribute('alt')).toBe('NT純正シナリオ');
       }
     } finally {
       style.remove();
@@ -97,8 +95,10 @@ describe('Library', () => {
     const books = container.querySelectorAll('.book');
     expect(books).toHaveLength(2);
     expect(screen.queryByText('開発用テスト')).toBeNull();
-    expect(books[0]!.querySelector('.scenario-v2-mark')!.textContent).toBe('［純正］');
-    expect(books[1]!.querySelector('.scenario-v2-mark')).toBeNull();
+    expect(books[0]!.querySelector('.scenario-native-mark')!.getAttribute('alt')).toBe(
+      'NT純正シナリオ',
+    );
+    expect(books[1]!.querySelector('.scenario-native-mark')).toBeNull();
     expect(books[0]!.querySelector('.image-preview-trigger')).toBeNull();
     expect(books[0]!.querySelector('img')!.getAttribute('src')).toMatch(
       /scepter\/capture\/intro\.png$/,
@@ -114,7 +114,9 @@ describe('Library', () => {
       await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' }),
     );
     const dialog = screen.getByRole('dialog', { name: /新・消えた王様の杖/ });
-    expect(dialog.querySelector('.scenario-v2-mark')?.textContent).toBe('［純正］');
+    expect(dialog.querySelector('.scenario-native-mark')?.getAttribute('alt')).toBe(
+      'NT純正シナリオ',
+    );
     expect(dialog.textContent).toContain('ペンタウァ王家の象徴が盗まれてしまう。');
     expect(dialog.querySelector('.award')?.textContent).toBe('お知らせ');
     expect(dialog.textContent).toContain('作者のコメント');

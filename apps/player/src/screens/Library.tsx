@@ -20,6 +20,7 @@ import level2 from '../images/level2.png';
 import level3 from '../images/level3.png';
 import level4 from '../images/level4.png';
 import level5 from '../images/level5.png';
+import nativeBadge from '../images/scenario-native.png';
 
 const SPINES = [
   '--star-sun',
@@ -297,7 +298,13 @@ export function Library({
                   <div>
                     <h2>
                       {e.title}
-                      {e.v2 && <span className="scenario-v2-mark">［純正］</span>}
+                      {e.v2 && (
+                        <img
+                          className="scenario-native-mark"
+                          src={nativeBadge}
+                          alt="NT純正シナリオ"
+                        />
+                      )}
                     </h2>
                     {e.author && <div className="by">{e.author}</div>}
                   </div>
@@ -440,7 +447,9 @@ function ScenarioDetail({
             {e.series && <div className="eyebrow">{e.series}</div>}
             <h2 id="lib-detail-title">
               {e.title}
-              {e.v2 && <span className="scenario-v2-mark">［純正］</span>}
+              {e.v2 && (
+                <img className="scenario-native-mark" src={nativeBadge} alt="NT純正シナリオ" />
+              )}
             </h2>
             {e.author && <div className="by">{e.author} 作</div>}
           </header>

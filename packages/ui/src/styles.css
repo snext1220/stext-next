@@ -1216,19 +1216,13 @@ h3 {
   font-weight: 700;
   line-height: 1.4;
 }
-.scenario-v2-mark {
+.scenario-native-mark {
   display: inline-block;
-  margin-left: 0.45em;
-  padding: 0 0.35em;
-  border: 1px solid var(--gold);
-  border-radius: 3px;
-  color: var(--gold);
-  font-family: var(--f-ui);
-  font-size: 0.62em;
-  font-weight: 700;
-  line-height: 1.7;
-  vertical-align: 0.16em;
-  white-space: nowrap;
+  width: 22px;
+  height: 28px;
+  margin-left: 0.35em;
+  object-fit: contain;
+  vertical-align: middle;
 }
 .book .by {
   font-size: var(--step--1);
