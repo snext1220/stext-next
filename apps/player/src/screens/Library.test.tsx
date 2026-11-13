@@ -70,6 +70,10 @@ describe('Library', () => {
     document.head.append(style);
     try {
       const { container } = renderLibrary();
+      const description = 'NT勲章は、NText向けに対応したシナリオの目印です。';
+      const note = screen.getByText(description).closest('p')!;
+      expect(note.querySelector('img')?.getAttribute('alt')).toBe('');
+      expect(note.querySelector('img')?.getAttribute('src')).toMatch(/scenario-native\.png$/);
       const opener = await screen.findByRole('button', {
         name: '「新・消えた王様の杖」の詳細を表示',
       });
@@ -83,6 +87,7 @@ describe('Library', () => {
         expect(computed.height).toBe('28px');
         expect(mark.getAttribute('src')).toMatch(/scenario-native\.png$/);
         expect(mark.getAttribute('alt')).toBe('NT純正シナリオ');
+        expect(mark.getAttribute('title')).toBe(description);
       }
     } finally {
       style.remove();

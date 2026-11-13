@@ -14,4 +14,5 @@
 | [playground-markdown-editor.md](./playground-markdown-editor.md) | Playground 本文エディターの Markdown 入力補助仕様（実装済み） |
 | [playground-flow-group-filter.md](./playground-flow-group-filter.md) | Playground フロー図のグループ絞り込み仕様案（未承認・未実装、実装保留） |
 | [site-banner-placement.md](./site-banner-placement.md) | サイト紹介イラスト・バナーの配置仕様（実装済み） |
+| [library-native-mark-help.md](./library-native-mark-help.md) | 書庫のNT勲章アイコンの説明仕様（実装済み） |
 | [refactoring-opportunities.md](./refactoring-opportunities.md) | 長期的なリファクタリング候補 |

@@ -118,7 +118,7 @@ node packages/cli/dist/bin.js --help
 | `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
 | `stext play <scenario.json> [--auto <手数>] [--seed <数値>]` | シナリオをコマンドラインで遊ぶ（`--auto` は選択肢を自動で選ぶ） |
 
-`scenarios/index.json` の `v2: true` は、書庫でシナリオに［純正］マークを表示するフラグです。対応済みのシナリオにだけ設定します。
+`scenarios/index.json` の `v2: true` は、書庫でシナリオにNT勲章アイコンを表示するフラグです。NText向けに対応済みのシナリオにだけ設定します。書庫の冒頭とアイコンのツールヒントで、この目印の意味を説明します。
 
 シナリオ形式の詳細は [scenario-format.md](scenario-format.md)、エンジンの使い方は [engine.md](engine.md) を参照してください。
 

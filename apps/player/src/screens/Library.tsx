@@ -36,6 +36,7 @@ const SPINES = [
 const LEVEL_LABELS = ['簡単', 'やや簡単', '普通', 'やや難', '難'];
 /** 旧サイトの難易度のアイコン（image/scena/lv1〜5.png。赤い短剣の数が難易度） */
 const LEVEL_ICONS = [level1, level2, level3, level4, level5];
+const NATIVE_MARK_DESCRIPTION = 'NT勲章は、NText向けに対応したシナリオの目印です。';
 
 function levelLabel(level: number) {
   const name = LEVEL_LABELS[level - 1];
@@ -146,6 +147,10 @@ export function Library({
           <h1>ペンタウァの書庫</h1>
           <p className="lede">
             {listed.length} 編のシナリオ。誰でも書けて、誰でも遊べるゲームブック。
+          </p>
+          <p className="lib-native-note">
+            <img src={nativeBadge} alt="" width={22} height={28} />
+            <span>{NATIVE_MARK_DESCRIPTION}</span>
           </p>
         </div>
       </div>
@@ -298,13 +303,7 @@ export function Library({
                   <div>
                     <h2>
                       {e.title}
-                      {e.v2 && (
-                        <img
-                          className="scenario-native-mark"
-                          src={nativeBadge}
-                          alt="NT純正シナリオ"
-                        />
-                      )}
+                      {e.v2 && <NativeMark />}
                     </h2>
                     {e.author && <div className="by">{e.author}</div>}
                   </div>
@@ -341,6 +340,17 @@ export function Library({
         />
       )}
     </div>
+  );
+}
+
+function NativeMark() {
+  return (
+    <img
+      className="scenario-native-mark"
+      src={nativeBadge}
+      alt="NT純正シナリオ"
+      title={NATIVE_MARK_DESCRIPTION}
+    />
   );
 }
 
@@ -447,9 +457,7 @@ function ScenarioDetail({
             {e.series && <div className="eyebrow">{e.series}</div>}
             <h2 id="lib-detail-title">
               {e.title}
-              {e.v2 && (
-                <img className="scenario-native-mark" src={nativeBadge} alt="NT純正シナリオ" />
-              )}
+              {e.v2 && <NativeMark />}
             </h2>
             {e.author && <div className="by">{e.author} 作</div>}
           </header>
