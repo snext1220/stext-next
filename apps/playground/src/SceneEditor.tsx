@@ -1,7 +1,9 @@
 import {
   CONDITION_FUNCTIONS,
   MAGIC_NAMES,
+  STAT_KEYS,
   parseCondition,
+  type StatKey,
   type DraftChoice as Choice,
   type Effects,
   type DraftScenario as Scenario,
@@ -615,6 +617,18 @@ function describe(name: string, text: string | undefined): string {
   return `${name}（${t.length > 30 ? `${t.slice(0, 30)}…` : t}）`;
 }
 
+const CONDITION_STAT_NAMES: Record<StatKey, string> = {
+  hp: 'HP',
+  mp: 'MP',
+  str: 'STR',
+  int: 'INT',
+  dex: 'DEX',
+  krm: 'KRM',
+  free1: 'FREEI',
+  free2: 'FREEII',
+  free3: 'FREEIII',
+};
+
 /** 表示条件の入力欄。旧 Playground の条件ビルダーのように、項目を選んで差し込める */
 function ConditionField({
   scenario,
@@ -642,9 +656,41 @@ function ConditionField({
   const groups: [string, (string | [token: string, label: string])[]][] = [
     ['フラグ', scenario.flags.map((f) => [f.id, describe(f.id, f.text)])],
     ['アイテム', scenario.items.map((i) => [i.id, describe(i.name || i.id, i.text)])],
-    ['パラメーター', scenario.params.map((p) => [`${p.id}:@0`, describe(p.id, p.text)])],
+    [
+      '実績',
+      scenario.meta.id
+        ? scenario.results.map((r) => [`${r.id}:${scenario.meta.id}`, describe(r.id, r.name)])
+        : [],
+    ],
+    [
+      'パラメーター',
+      scenario.params.flatMap((p) => [
+        [`${p.id}:@0`, `${describe(p.id, p.text)}（数値が0）`],
+        [`${p.id}:0`, `${describe(p.id, p.text)}（数値が0以上）`],
+        [`${p.id}:値`, `${describe(p.id, p.text)}（文字列が「値」）`],
+      ]),
+    ],
     ['魔法', MAGIC_NAMES.map((m) => `m${m}`)],
-    ['ステータス', ['oHP10', 'oMP10', 'oSTR5', 'oINT5', 'oDEX5', 'oKRM5', 'oFREEI1']],
+    [
+      '星',
+      [
+        ['s10', '星の合計が10以上'],
+        ['s1:0:0:0:0:0:0', '月の星が1以上'],
+      ],
+    ],
+    [
+      '能力値',
+      STAT_KEYS.flatMap((key) => {
+        const name = CONDITION_STAT_NAMES[key];
+        return [
+          [`o${name}10`, `${name}が10以上`],
+          [`o${name}10+`, `${name}が10超`],
+          [`o${name}10-`, `${name}が10未満`],
+          [`o${name}11-`, `${name}が10以下`],
+          [`o${name}10&o${name}11-`, `${name}が10`],
+        ];
+      }),
+    ],
     [
       '基本情報',
       [
@@ -658,8 +704,14 @@ function ConditionField({
         'xADULT',
         'xOLD',
         'xPOISON',
+        'xFROZEN',
+        'xSTONE',
+        'xCURSE',
+        'xFORGET',
       ],
     ],
+    ['経過シーン数', [['e30', '30以上']]],
+    ['その他', [['q01', '未定義 ID（フラグ／アイテム互換）']]],
     [
       '関数',
       CONDITION_FUNCTIONS.map(

@@ -162,6 +162,35 @@ afterEach(() => {
 });
 
 describe('TestPlay', () => {
+  it('shows only the configured dice controls in an enemyless scene', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const diceScenario: Scenario = {
+      ...scenario,
+      scenes: [{ id: '0', text: '渡河', dice: '8:2', choices: [] }],
+    };
+    const onRunChange = vi.fn<(run: PreviewRun) => void>();
+    render(<TestPlay {...playProps(diceScenario)} onRunChange={onRunChange} resourceUrls={{}} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+
+    expect(screen.getAllByRole('img', { name: /ダイス/ })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
+    expect(screen.queryByLabelText('ダメージ倍率')).toBeNull();
+    expect(screen.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
+    expect(screen.queryByRole('region', { name: /敵：/ })).toBeNull();
+
+    const callsBeforeReroll = onRunChange.mock.calls.length;
+    const stateBeforeReroll = onRunChange.mock.lastCall?.[0].state;
+    fireEvent.click(screen.getByRole('button', { name: 'ダイスを振る' }));
+    expect(onRunChange).toHaveBeenCalledTimes(callsBeforeReroll);
+    expect(onRunChange.mock.lastCall?.[0].state).toEqual(stateBeforeReroll);
+  });
+
+  it('does not show dice controls in an enemyless scene without a dice setting', () => {
+    render(<TestPlay {...playProps(scenario)} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    expect(screen.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
+  });
+
   it('supports combat actions without saving preview results', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const onRunChange = vi.fn<(run: PreviewRun) => void>();

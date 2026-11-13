@@ -282,12 +282,14 @@ export function RecordPanel({
   scenario,
   scenarioId,
   global,
+  elapsedSceneCount,
   history,
   trophyUrl,
 }: {
   scenario: Scenario;
   scenarioId: string;
   global: GlobalState;
+  elapsedSceneCount: number;
   history: HistoryEntry[];
   /** 実績レベルのアイコン（0 は未獲得）。省略時はアイコンを出さない */
   trophyUrl?: (level: number) => string;
@@ -340,6 +342,10 @@ export function RecordPanel({
           ),
         )}
       </ul>
+      <div className="section-h">
+        <span>経過シーン数</span>
+        <span>{elapsedSceneCount}</span>
+      </div>
       <div className="section-h">
         <span>辿った節</span>
         <span>{history.length}</span>

@@ -148,6 +148,7 @@ export function BattlePanel({
   const [battle, setBattle] = useState(() => initializeBattle(engine, state, view));
   const [rolling, setRolling] = useState(false);
   const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasEnemies = battle.enemies.length > 0;
 
   useEffect(
     () => () => {
@@ -156,7 +157,7 @@ export function BattlePanel({
     [],
   );
 
-  if (!battle.enemies.length) return null;
+  if (!hasEnemies && !view.dice) return null;
 
   const roll = () => {
     if (rollTimer.current !== null) clearTimeout(rollTimer.current);
@@ -231,7 +232,7 @@ export function BattlePanel({
 
   return (
     <>
-      {ruleText && (
+      {hasEnemies && ruleText && (
         <details className="rule-box">
           <summary>この戦闘のルール</summary>
           <SceneText className="prose" markdown={ruleText} resolveImage={resolveImage} />
@@ -253,20 +254,22 @@ export function BattlePanel({
         <button type="button" className="btn" onClick={roll}>
           ダイスを振る
         </button>
-        <label className="verdict">
-          ダメージ倍率{' '}
-          <select
-            value={battle.multiplier}
-            onChange={(event) =>
-              setBattle((current) => ({ ...current, multiplier: Number(event.target.value) }))
-            }
-          >
-            <option value={2}>×2</option>
-            <option value={1}>×1</option>
-            <option value={0.5}>×1/2</option>
-            <option value={0.25}>×1/4</option>
-          </select>
-        </label>
+        {hasEnemies && (
+          <label className="verdict">
+            ダメージ倍率{' '}
+            <select
+              value={battle.multiplier}
+              onChange={(event) =>
+                setBattle((current) => ({ ...current, multiplier: Number(event.target.value) }))
+              }
+            >
+              <option value={2}>×2</option>
+              <option value={1}>×1</option>
+              <option value={0.5}>×1/2</option>
+              <option value={0.25}>×1/4</option>
+            </select>
+          </label>
+        )}
       </div>
       {battle.enemies.map((enemy, index) => (
         <EnemyCard

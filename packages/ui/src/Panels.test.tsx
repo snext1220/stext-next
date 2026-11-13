@@ -101,6 +101,7 @@ describe('panels', () => {
         scenario={scenario}
         scenarioId="demo"
         global={global}
+        elapsedSceneCount={17}
         history={[]}
         trophyUrl={(level) => `/trophy${level}.png`}
       />,
@@ -117,10 +118,32 @@ describe('panels', () => {
     expect(queryByText('Lv.5')).toBeNull();
   });
 
+  it('shows elapsed scenes separately from the back history count', () => {
+    const { getByText } = render(
+      <RecordPanel
+        scenario={scenario}
+        scenarioId="demo"
+        global={emptyGlobalState()}
+        elapsedSceneCount={17}
+        history={[{ id: '10', label: '次へ' }]}
+      />,
+    );
+    expect(getByText('経過シーン数')).toBeTruthy();
+    expect(getByText('17')).toBeTruthy();
+    expect(getByText('辿った節')).toBeTruthy();
+    expect(getByText('1')).toBeTruthy();
+  });
+
   it('omits the trophies when no icon is given', () => {
     const global = { ...emptyGlobalState(), results: { demo: ['r01'] } };
     const { queryByRole, getByText } = render(
-      <RecordPanel scenario={scenario} scenarioId="demo" global={global} history={[]} />,
+      <RecordPanel
+        scenario={scenario}
+        scenarioId="demo"
+        global={global}
+        elapsedSceneCount={1}
+        history={[]}
+      />,
     );
     expect(getByText('Lv.3')).toBeTruthy();
     expect(queryByRole('img')).toBeNull();

@@ -38,6 +38,21 @@ function EditableSceneEditor({ text }: { text: string }) {
   );
 }
 
+function EditableChoiceSceneEditor({ initial }: { initial: DraftScenario }) {
+  const [current, setCurrent] = useState(initial);
+  const scene = current.scenes[0]!;
+  return (
+    <SceneEditor
+      scenario={current}
+      scene={scene}
+      onChange={setCurrent}
+      onRenamed={vi.fn()}
+      onDelete={vi.fn()}
+      onAddScene={vi.fn()}
+    />
+  );
+}
+
 describe('SceneEditor settings', () => {
   it('distinguishes restoring the normal BGM from clearing a scene override', () => {
     const onChange = vi.fn();
@@ -108,6 +123,59 @@ describe('SceneEditor settings', () => {
     fireEvent.change(screen.getByLabelText('HP の最大値・初期値'), { target: { value: '' } });
     expect(onChange.mock.lastCall?.[0].scenes[0]?.effects).toBeUndefined();
     expect(onChange.mock.lastCall?.[1]).toBe('0:effects.max.hp');
+  });
+});
+
+describe('SceneEditor choice conditions', () => {
+  it('offers the supported condition forms and inserts a valid expression', () => {
+    const choice = { label: '次へ', to: ['0'], if: 'f01' };
+    const scene = { ...scenario.scenes[0]!, choices: [choice] };
+    const conditionScenario: Scenario = {
+      ...scenario,
+      params: [{ id: 'p01', text: 'ポイント' }],
+      results: [{ id: 'r01', name: '達成' }],
+      scenes: [scene],
+    };
+    render(<EditableChoiceSceneEditor initial={conditionScenario} />);
+
+    const optionValues = (name: string) =>
+      Array.from(screen.getByRole<HTMLSelectElement>('combobox', { name }).options).map(
+        (option) => option.value,
+      );
+    expect(optionValues('実績を差し込む')).toContain('r01:settings');
+    expect(optionValues('パラメーターを差し込む')).toEqual(
+      expect.arrayContaining(['p01:@0', 'p01:0', 'p01:値']),
+    );
+    expect(optionValues('星を差し込む')).toEqual(expect.arrayContaining(['s10', 's1:0:0:0:0:0:0']));
+    expect(optionValues('能力値を差し込む')).toEqual(
+      expect.arrayContaining([
+        'oHP10',
+        'oHP10+',
+        'oHP10-',
+        'oHP11-',
+        'oHP10&oHP11-',
+        'oFREEII10',
+        'oFREEIII10',
+      ]),
+    );
+    expect(optionValues('基本情報を差し込む')).toEqual(
+      expect.arrayContaining(['xFROZEN', 'xSTONE', 'xCURSE', 'xFORGET']),
+    );
+    expect(optionValues('経過シーン数を差し込む')).toContain('e30');
+    expect(optionValues('その他を差し込む')).toContain('q01');
+
+    fireEvent.change(screen.getByRole('combobox', { name: '能力値を差し込む' }), {
+      target: { value: 'oFREEII10&oFREEII11-' },
+    });
+    const conditionInput = screen.getByLabelText<HTMLInputElement>('表示条件');
+    expect(conditionInput.value).toBe('f01&oFREEII10&oFREEII11-');
+    expect(screen.getByText('✓ 条件として読めます')).toBeTruthy();
+
+    fireEvent.change(conditionInput, { target: { value: '' } });
+    fireEvent.change(screen.getByRole('combobox', { name: '経過シーン数を差し込む' }), {
+      target: { value: 'e30' },
+    });
+    expect(conditionInput.value).toBe('e30');
   });
 });
 

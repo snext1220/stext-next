@@ -143,6 +143,33 @@ describe('gods feature demonstrations', () => {
 });
 
 describe('scene scrolling', () => {
+  it('shows configured dice without enemy controls in an enemyless scene', () => {
+    const diceScenario: Scenario = {
+      ...scenario,
+      meta: { id: 'dice-only', title: 'Dice only' },
+      scenes: [{ id: '0', text: '渡河', dice: '8:2', choices: [] }],
+    };
+    const global = emptyGlobalState();
+    const { state } = createEngine(diceScenario).start(global);
+    render(
+      <Play
+        id="dice-only"
+        scenario={diceScenario}
+        initial={state}
+        global={global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole('img', { name: /ダイス/ })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
+    expect(screen.queryByLabelText('ダメージ倍率')).toBeNull();
+    expect(screen.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
+  });
+
   it('refuses a missing scene without replacing the current autosave', async () => {
     const global = emptyGlobalState();
     const { state } = createEngine(scenario).start(global);

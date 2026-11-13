@@ -284,6 +284,7 @@ export function Play({
         scenario={scenario}
         scenarioId={id}
         global={global}
+        elapsedSceneCount={state.ellapsed_scene}
         history={history.map((h) => h.entry)}
         trophyUrl={trophyUrl}
       />
