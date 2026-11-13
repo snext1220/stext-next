@@ -5,7 +5,7 @@ SORCERIAN Text v2 のシナリオは、JSON 形式（`format: "stext/2"`）で�
 
 - スキーマの定義: `packages/schema/src/scenario.ts`（型と JSON Schema はここから生成）
 - エディター補完用の JSON Schema: [`schema/scenario.v2.json`](../schema/scenario.v2.json)（GitHub Pages で `https://snext1220.github.io/stext-next/schema/scenario.v2.json` として公開）
-- 変換済みの旧シナリオ: [`scenarios/`](../scenarios/)（一覧は `index.json`、変換時の指摘は `REPORT.md`）
+- シナリオの原本: [`scenarios/`](../scenarios/)（一覧は `index.json`。`REPORT.md` は過去の変換時の指摘であり、現在のシナリオの検査結果ではない）
 
 ファイルの先頭に `$schema` を書いておくと、VS Code などで項目の補完と検査が効きます。
 

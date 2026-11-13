@@ -91,7 +91,7 @@
 | `apps/player` | `@stext/player` | Browser | プレイヤー（書庫、キャラ作成、冒険、戦闘、魔法。メニューは「案内所」（ソーサリアンTextとは？・冒険の記録・音楽室・資料室［画廊・作り手たち・関連リンク］）と「制作工房」（投稿ページへのリンク）。素材・募集中の企画・記録の変換所は投稿ページから案内。案内所・制作工房はプレイ画面以外、音切替はプレイ画面のみ、書庫・昼／夜は全画面で表示。フッターに CONTACT） |
 | `apps/playground` | `@stext/playground` | Browser | シナリオの編集環境（React Flow、dagre） |
 | `prototype/` | — | — | デザインプロトタイプ |
-| `scenarios/` | — | — | 旧シナリオ。シナリオごとのフォルダーに `scenario.json`・挿絵（`capture/`）・BGM（`bgm/`）をまとめる。ほかに `REPORT.md`、`index.json`（書庫の一覧。音楽室が使う `bgm` も入れる）。`gods`（新・天の神々たち）は旧シナリオの変換ではなく、stext/2 で直接書いたシナリオ |
+| `scenarios/` | — | — | シナリオの原本。旧形式からの変換作品を含め `scenario.json` が原本。作品ごとに挿絵（`capture/`）・BGM（`bgm/`）をまとめる。`REPORT.md` は過去の変換レポート、`index.json` は書庫の一覧 |
 | `assets/` | — | — | どのシナリオでも使う共通の画像・BGM・効果音（`assets/common/`）と、旧サイトの画像（`assets/site/`。案内所の画面・フッターで使う） |
 | `schema/` | — | — | JSON Schema（生成物） |
 
@@ -186,7 +186,7 @@
 ## 6. 残っている課題
 
 1. Playground の PR（[snext1220/stext-next#9](https://github.com/snext1220/stext-next/pull/9)）のレビューとマージ。
-2. **`scenarios/REPORT.md` の変換エラー12件**：旧リポジトリのシナリオを直すかどうかの判断。直す場合は `npm run convert:legacy` で変換し直す。
+2. **`scenarios/REPORT.md` の過去の変換エラー**：現行シナリオを検査し、必要な修正があれば v2 JSON の原本で対応する。
 3. **Phase 5 の残り**：旧版からの導線、実際に遊んでの確認。
 4. **GitHub Pages の設定**：Source を「GitHub Actions」にする（未設定なら）。
 5. **ヘルプの移行メモの確認**：`apps/playground/src/help/reference.md` の `@mark 要確認`（4項目・5件）と `@mark 未実装`（`imageSet`、`randomCacheDays`、`${result?id}`、ライセンス表示など）を見て、仕様を決めるか実装する。Playground の目次で「移行メモ：要確認」などに絞り込める。
@@ -244,7 +244,7 @@ node scripts/e2e-playground.mjs --shots /tmp/shots
 |---|---|
 | e2e でハッシュの移動が速すぎて不安定になる | ストレージを書き換えたあとに再読み込みする |
 | e2e で遅延読み込み（`loading="lazy"`）の画像が読まれず、表示されていないと判定される | ページを下まで少しずつスクロールしてから、すべての画像の `complete` を待つ |
-| `index.json` を作り直すと、手元の `../stext` が古いため `slayer` などが古い版に戻る | 全体の作り直しをやめ、コミット済みの `scenario.json` から `bgm` を集計して足した。旧リポジトリを最新にしてから `npm run convert:legacy` すれば同じ結果になる |
+| `index.json` を作り直すと、手元の `../stext` が古いため `slayer` などが古い版に戻る | 全体の作り直しをやめ、コミット済みの `scenario.json` から `bgm` を集計して足した。現在は旧XMLからの再変換を行わず、v2 JSON を原本として扱う |
 | `.gitignore` の `site/`（公開用に組み立てるサイト）が `assets/site/` まで無視していた | ルートだけを指す `/site/` にした |
 | `npm i -w` で依存が追加されない | 先に `npm install` してワークスペースを認識させる |
 | React Flow の Node data の型制約 | `Record<string, unknown>` と交差型にする |

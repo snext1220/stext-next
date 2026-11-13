@@ -127,11 +127,12 @@ node packages/cli/dist/bin.js --help
 | 生成物 | 更新方法 | いつ |
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
-| `scenarios/` | `npm run build && npm run convert:legacy` | 変換器を変えたとき、旧シナリオを直したとき。`snext1220/stext` をこのリポジトリと同じ階層（`../stext`）に clone しておきます。`index.json` は旧シナリオだけで作り直されるので、stext/2 で直接書いたシナリオ（`gods`）の項目や、`v2` フラグは作り直したあとに戻してください |
 | `assets/common/`、`scenarios/<id>/capture/`・`bgm/`・`chara/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` と `assets/site/` は消しません |
 | `assets/site/` | `node scripts/import-site-images.mjs` | 旧サイト（https://www.web-deli.com/sorcerian/text/）の画像を取り込み直すとき。取り込む画像はスクリプトの一覧に書きます |
 
-`scenarios/`・`schema/`・`assets/` は生成物なので Prettier の対象外です。
+`scenarios/` の既存シナリオは、旧形式から変換したものも含めて v2 JSON が原本です。既存作品の更新のために旧XMLから再変換せず、原本を直接編集してください。`convert-all` を `scenarios/` に実行すると原本や一覧を上書きするため、実行しないでください。
+
+`scenarios/`・`schema/`・`assets/` は Prettier の対象外です。直接作成・v2原本のシナリオは生成物ではありません。
 
 ## テストの補足
 

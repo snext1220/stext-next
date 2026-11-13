@@ -339,7 +339,7 @@ npm run dev:playground
 | --- | --- |
 | `import ... from './engine.js'` なのに `engine.ts` しかない | ESM の決まりで、相対 import には `.js` を付ける。TypeScript が `.ts` に読み替える |
 | `@stext/core` を変えたのにアプリに反映されない？ | 開発サーバーとテストは [workspace-aliases.ts](../workspace-aliases.ts) で `src/` を直接見ているので、ビルド不要で反映される。CLI（`dist/`）は `npm run build` が必要 |
-| `scenarios/` の JSON を直したい | 変換の生成物。直すなら旧シナリオか変換器を直し、`npm run convert:legacy` で作り直す（`../stext` が必要） |
+| `scenarios/` の JSON を直したい | 旧形式からの変換作品も含めて JSON が原本。旧データは参照用とし、再変換せず JSON を直接編集する |
 | `schema/scenario.v2.json` が古いとテストが落ちる | `npm run build` のあとに `npm run schema` |
 | 選択肢の番号（`index`）が飛んでいる | `view` は条件を満たす選択肢だけ返すが、`index` は全選択肢（共通フッターを含む）での位置。`choose` にはその `index` を渡す |
 | Universal パッケージで `localStorage` を使いたい | 使えない。引数（`EngineOptions` など）で受け取り、アプリ側で実装を渡す |

@@ -1,5 +1,7 @@
 # ソーサリアンText 次世代化 移行計画（v2 計画書・ドラフト）
 
+> 本書の旧シナリオ再変換に関する記述は当時の計画です。現在は `scenarios/` の v2 JSON を原本として扱い、既存作品の更新のために再変換しません。現行の手順は [開発手順](development.md) を参照してください。
+
 > ステータス: **Phase 5（並行公開・検証）進行中**。プレイヤーを GitHub Pages で公開する仕組みを用意した（§5.4）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
 > 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
