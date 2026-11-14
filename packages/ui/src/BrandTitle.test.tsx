@@ -5,7 +5,7 @@ import { BrandTitle } from './BrandTitle.js';
 describe('BrandTitle', () => {
   it('renders the title and an optional note', () => {
     expect(renderToStaticMarkup(<BrandTitle />)).toBe(
-      '<h1 class="stext-brand">SORCERIAN Text</h1>',
+      '<h1 class="stext-brand">SORCERIAN NText</h1>',
     );
     expect(renderToStaticMarkup(<BrandTitle note="v2" />)).toContain('<small> v2</small>');
   });
