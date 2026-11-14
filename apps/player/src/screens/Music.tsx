@@ -31,7 +31,7 @@ export function Music() {
         <div className="eyebrow">Music Room</div>
         <h1 className="page-title">音楽室</h1>
         <p className="lede">
-          ソーサリアン Text の各シナリオで流れる標準の BGM
+          ソーサリアン NText の各シナリオで流れる標準の BGM
           と効果音です。あのシナリオ、この場面を思い出しながらお楽しみください。
         </p>
       </div>

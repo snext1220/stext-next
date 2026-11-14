@@ -40,7 +40,7 @@ export const CONTACTS = [
     icon: 'contact/twitter.png',
     title: 'X（旧 Twitter）',
     url: 'https://x.com/snext1220',
-    text: 'ソーサリアン Text の公式アカウント。半人半 bot の王さまが、更新情報やどうでもいいことをつぶやいています。寂しがりやなので、絡むと喜びます。',
+    text: 'ソーサリアン NText の公式アカウント。半人半 bot の王さまが、更新情報やどうでもいいことをつぶやいています。寂しがりやなので、絡むと喜びます。',
   },
   {
     icon: 'contact/manual.png',
@@ -52,12 +52,12 @@ export const CONTACTS = [
     icon: 'contact/qa.png',
     title: '質問・要望箱',
     url: 'https://peing.net/ja/yy7512',
-    text: 'SText への質問や機能のリクエストを、匿名で送れます。お返事は X の王さまから不定期に。',
+    text: 'NText への質問や機能のリクエストを、匿名で送れます。お返事は X の王さまから不定期に。',
   },
   {
     icon: 'contact/github.png',
     title: 'GitHub',
     url: REPOSITORY,
-    text: 'SText のシステムは GitHub で開発しています。ご意見はもちろん、開発に参加したい方もこちらから。',
+    text: 'NText のシステムは GitHub で開発しています。ご意見はもちろん、開発に参加したい方もこちらから。',
   },
 ] as const;

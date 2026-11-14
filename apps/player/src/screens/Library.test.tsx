@@ -25,6 +25,14 @@ const entries: ScenarioEntry[] = [
     prologue: 'ペンタウァ王家の象徴が盗まれてしまう。\n\n<p class="award">お知らせ</p>',
   },
   { id: 'doll', title: 'プレアオブ・ドールズ', listed: true, level: 1, scenes: 24, results: 4 },
+  {
+    id: 'unpublished',
+    title: '未公開シナリオ',
+    listed: true,
+    unpublished: true,
+    scenes: 1,
+    results: 0,
+  },
   { id: 'test', title: '開発用テスト', listed: false, scenes: 3, results: 0 },
 ];
 
@@ -71,9 +79,20 @@ describe('Library', () => {
     try {
       const { container } = renderLibrary();
       const description = 'NT勲章は、NText向けに対応したシナリオの目印です。';
-      const note = screen.getByText(description).closest('p')!;
+      const helpSummary = screen.getByText(description).closest('summary')!;
+      const note = helpSummary.querySelector('.lib-native-note')!;
       expect(note.querySelector('img')?.getAttribute('alt')).toBe('');
       expect(note.querySelector('img')?.getAttribute('src')).toMatch(/scenario-native\.png$/);
+      const help = helpSummary.closest('details')!;
+      expect(help.open).toBe(false);
+      fireEvent.click(helpSummary);
+      expect(help.open).toBe(true);
+      expect(help.textContent).toContain(
+        '「NT純正シナリオ」とは、NText最新の仕様に沿って戦闘システム、パラメーターの自動更新などが調整されたシナリオのことです。',
+      );
+      expect(help.textContent).toContain(
+        '純正マークのないシナリオでもNTextは動作しますが、一部のシーンに不自然な操作が混じる場合があります。',
+      );
       const opener = await screen.findByRole('button', {
         name: '「新・消えた王様の杖」の詳細を表示',
       });
@@ -100,6 +119,7 @@ describe('Library', () => {
     const books = container.querySelectorAll('.book');
     expect(books).toHaveLength(2);
     expect(screen.queryByText('開発用テスト')).toBeNull();
+    expect(screen.queryByText('未公開シナリオ')).toBeNull();
     expect(books[0]!.querySelector('.scenario-native-mark')!.getAttribute('alt')).toBe(
       'NT純正シナリオ',
     );
@@ -111,6 +131,15 @@ describe('Library', () => {
     expect(books[0]!.textContent).toContain('253 シーン');
     const level = screen.getByRole('img', { name: '難易度 3（普通）' });
     expect(level.getAttribute('src')).toMatch(/level3\.png$/);
+  });
+
+  it('does not show an unpublished scenario in the continue banner', async () => {
+    localStorage.setItem('unpublished', JSON.stringify(newGameState(() => 0)));
+    render(
+      <Library global={emptyGlobalState()} settings={{ ...settings, recent: 'unpublished' }} />,
+    );
+    await screen.findByRole('button', { name: '「新・消えた王様の杖」の詳細を表示' });
+    expect(document.querySelector('.continue')).toBeNull();
   });
 
   it('opens the details with the prologue and starts a new adventure from there', async () => {
@@ -179,7 +208,9 @@ describe('Library', () => {
     fireEvent.change(screen.getByLabelText('難易度'), { target: { value: '3' } });
     expect(books()).toEqual(['新・消えた王様の杖']);
     expect(screen.getByRole('status').textContent).toBe('1 編 / 全 2 編');
-    expect(container.querySelector('summary')!.textContent).toContain('1 件で絞り込み中');
+    expect(container.querySelector('.lib-search > summary')!.textContent).toContain(
+      '1 件で絞り込み中',
+    );
 
     fireEvent.change(screen.getByLabelText('検索キーワード'), { target: { value: 'ドールズ' } });
     expect(books()).toEqual([]);
@@ -187,6 +218,10 @@ describe('Library', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '条件クリア' }));
     expect(books()).toEqual(['新・消えた王様の杖', 'プレアオブ・ドールズ']);
+
+    fireEvent.click(screen.getByLabelText('NText純正のシナリオだけ'));
+    expect(books()).toEqual(['新・消えた王様の杖']);
+    fireEvent.click(screen.getByRole('button', { name: '条件クリア' }));
 
     fireEvent.click(screen.getByLabelText('アンケートのあるシナリオだけ'));
     expect(books()).toEqual(['新・消えた王様の杖']);

@@ -28,11 +28,11 @@ export function Post({ section }: { section?: string }) {
       section={section}
       eyebrow="Post"
       title="制作工房（シナリオを投稿する）"
-      lede="ソーサリアン Text は、プレイヤーの皆さん一人ひとりが物語を紡ぎ、世界を創るプラットフォームです。新しいシナリオを、いつでも、いつまでも（！）募集しています。"
+      lede="ソーサリアン NText は、プレイヤーの皆さん一人ひとりが物語を紡ぎ、世界を創るプラットフォームです。新しいシナリオを、いつでも、いつまでも（！）募集しています。"
     >
       <DocSection page="post" chapter={CHAPTERS.create} eyebrow="Create" seed={53}>
         <p>
-          皆に遊んでもらえるシナリオを手軽に形にしたい――と常々思っている方は、まずは SText
+          皆に遊んでもらえるシナリオを手軽に形にしたい――と常々思っている方は、まずは NText
           で挑戦してみてはいかがでしょう。シナリオを書くための道具、資料、音楽素材などをそろえてお待ちしています。
         </p>
         <h3>Playground で書く</h3>

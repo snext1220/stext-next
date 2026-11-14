@@ -2,7 +2,7 @@
   "name": "@stext/player",
   "version": "0.0.0",
   "private": true,
-  "description": "SORCERIAN Text v2 プレイヤー（Vite + React）",
+  "description": "SORCERIAN NText プレイヤー（Vite + React）",
   "type": "module",
   "scripts": {
     "dev": "vite",

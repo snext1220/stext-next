@@ -79,7 +79,10 @@ export function Library({
     );
   }, []);
 
-  const listed = useMemo(() => (entries ?? []).filter((e) => e.listed), [entries]);
+  const listed = useMemo(
+    () => (entries ?? []).filter((e) => e.listed && !e.unpublished),
+    [entries],
+  );
   const seriesList = useMemo(
     () => [...new Set(listed.map((e) => e.series).filter((s): s is string => Boolean(s)))],
     [listed],
@@ -100,7 +103,7 @@ export function Library({
 
   return (
     <div>
-      {recent && recentEntry && !recent.isEnded && (
+      {recent && recentEntry && !recentEntry.unpublished && !recent.isEnded && (
         <div className="continue">
           <Parchment seed={11} curl={28}>
             <div className="eyebrow" style={{ color: 'var(--ink-soft)' }}>
@@ -148,10 +151,18 @@ export function Library({
           <p className="lede">
             {listed.length} 編のシナリオ。誰でも書けて、誰でも遊べるゲームブック。
           </p>
-          <p className="lib-native-note">
-            <img src={nativeBadge} alt="" width={22} height={28} />
-            <span>{NATIVE_MARK_DESCRIPTION}</span>
-          </p>
+          <details className="lib-native-help">
+            <summary>
+              <span className="lib-native-note">
+                <img src={nativeBadge} alt="" width={22} height={28} />
+                <span>{NATIVE_MARK_DESCRIPTION}</span>
+              </span>
+            </summary>
+            <p>
+              「NT純正シナリオ」とは、NText最新の仕様に沿って戦闘システム、パラメーターの自動更新などが調整されたシナリオのことです。
+              純正マークのないシナリオでもNTextは動作しますが、一部のシーンに不自然な操作が混じる場合があります。
+            </p>
+          </details>
         </div>
       </div>
       <details className="lib-search">
@@ -256,6 +267,14 @@ export function Library({
               <option value="asc">昇順</option>
             </select>
           </div>
+          <label className="lib-search-check">
+            <input
+              type="checkbox"
+              checked={filter.ntext}
+              onChange={(ev) => update({ ntext: ev.target.checked })}
+            />
+            NText純正のシナリオだけ
+          </label>
           <label className="lib-search-check">
             <input
               type="checkbox"

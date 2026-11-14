@@ -7,7 +7,7 @@ export interface BrandTitleProps {
 export function BrandTitle({ note }: BrandTitleProps) {
   return (
     <h1 className="stext-brand">
-      SORCERIAN Text
+      SORCERIAN NText
       {note ? <small> {note}</small> : null}
     </h1>
   );

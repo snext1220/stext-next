@@ -183,7 +183,7 @@ Playground のダイナミックヘルプ。旧 Playground の lib/reference.xml
 @related text.tweet
 @mark 変更: 新しいプレイヤーでは X（旧 Twitter）で共有する文に使います。ゲーム画面のメタ情報や Twitter カードには使っていません。
 
-シナリオの紹介文です。プレイ画面の「共有」で使う文になります（指定しなければ SText 共通の文）。
+シナリオの紹介文です。プレイ画面の「共有」で使う文になります（指定しなければ NText 共通の文）。
 
 シーンの本文で [`${tweet}…${/tweet}`](#help/text.tweet) を書いたシーンでは、そちらが優先されます。
 

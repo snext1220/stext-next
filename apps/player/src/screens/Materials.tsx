@@ -43,7 +43,7 @@ export function Materials() {
       <DocSheet seed={71}>
         <h3>BGM 素材（AZ さん）</h3>
         <p>
-          SText の標準の BGM は、シナリオで自由に使えます。シーンの BGM に <code>@field05</code>{' '}
+          NText の標準の BGM は、シナリオで自由に使えます。シーンの BGM に <code>@field05</code>{' '}
           のように、曲の名前に <code>@</code>{' '}
           を付けて指定するだけで、ファイルを同梱する必要はありません。どんな曲かは「
           <a href={href({ name: 'music' })}>音楽室</a>」で試聴できます。

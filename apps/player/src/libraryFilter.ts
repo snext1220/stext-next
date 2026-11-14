@@ -12,6 +12,8 @@ export interface LibraryFilter {
   level: '' | '1' | '2' | '3' | '4' | '5';
   levelOp: 'gte' | 'eq' | 'lte';
   clear: '' | 'not_clear' | 'not_complete' | 'clear' | 'complete';
+  /** NText対応シナリオだけ */
+  ntext: boolean;
   /** アンケートのあるシナリオだけ */
   quest: boolean;
   sort: 'published' | 'updated' | 'scenes' | 'results';
@@ -25,6 +27,7 @@ export const DEFAULT_FILTER: LibraryFilter = {
   level: '',
   levelOp: 'eq',
   clear: '',
+  ntext: false,
   quest: false,
   sort: 'published',
   order: 'desc',
@@ -53,7 +56,8 @@ export const SORT_KEYS = [
 
 /** 既定から変えた条件の数（並び順は数えない） */
 export function activeConditions(f: LibraryFilter): number {
-  return [f.series, f.keyword.trim(), f.length, f.level, f.clear, f.quest].filter(Boolean).length;
+  return [f.series, f.keyword.trim(), f.length, f.level, f.clear, f.ntext, f.quest].filter(Boolean)
+    .length;
 }
 
 /** クリアとみなす実績のどれかを獲得している */
@@ -141,6 +145,7 @@ export function filterScenarios(
         if (!isComplete(e, global)) return false;
         break;
     }
+    if (f.ntext && !e.v2) return false;
     if (f.quest && !e.quest) return false;
     return true;
   });

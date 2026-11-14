@@ -2,7 +2,7 @@
   "name": "@stext/playground",
   "version": "0.0.0",
   "private": true,
-  "description": "SORCERIAN Text v2 のシナリオ開発環境（Vite + React）",
+  "description": "SORCERIAN NText のシナリオ開発環境（Vite + React）",
   "type": "module",
   "scripts": {
     "dev": "vite",

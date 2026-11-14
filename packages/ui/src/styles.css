@@ -1184,6 +1184,25 @@ h3 {
   flex: none;
   object-fit: contain;
 }
+.lib-native-help {
+  max-width: 62ch;
+  margin-top: 0.3em;
+  color: var(--on-desk-soft);
+  font-size: var(--step--1);
+}
+.lib-native-help > summary {
+  list-style-position: inside;
+  cursor: pointer;
+}
+.lib-native-help > summary > .lib-native-note {
+  display: inline-flex;
+  margin: 0;
+  vertical-align: middle;
+}
+.lib-native-help > p {
+  margin: 0.35em 0 0;
+  line-height: 1.6;
+}
 .shelf {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

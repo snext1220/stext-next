@@ -370,7 +370,7 @@ export function App() {
     <div className="pg">
       <header className="pg-bar">
         <strong className="stext-brand">
-          SORCERIAN Text <small>Playground</small>
+          SORCERIAN NText <small>Playground</small>
         </strong>
         <input
           className="pg-title"

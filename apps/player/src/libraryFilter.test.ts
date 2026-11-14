@@ -87,6 +87,16 @@ describe('filterScenarios', () => {
     expect(ids({ quest: true })).toEqual(['new']);
   });
 
+  it('filters to NText-compatible scenarios', () => {
+    const ntextEntries = entries.map((e) => (e.id === 'mid' ? { ...e, v2: true } : e));
+    expect(
+      filterScenarios(ntextEntries, { ...DEFAULT_FILTER, ntext: true }, emptyGlobalState()).map(
+        (e) => e.id,
+      ),
+    ).toEqual(['mid']);
+    expect(activeConditions({ ...DEFAULT_FILTER, ntext: true })).toBe(1);
+  });
+
   it('sorts by dates and numbers, leaving missing values last', () => {
     expect(ids({ sort: 'published', order: 'asc' })).toEqual(['old', 'mid', 'new', 'nodate']);
     expect(ids({ sort: 'updated' })).toEqual(['mid', 'new', 'old', 'nodate']);

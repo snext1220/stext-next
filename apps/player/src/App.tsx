@@ -89,7 +89,7 @@ export function App() {
       <header className="topbar">
         <div className="topbar-in">
           <a href={href({ name: 'library' })} style={{ textDecoration: 'none' }}>
-            <BrandTitle note="v2" />
+            <BrandTitle />
           </a>
           <Menu route={route} />
           <div className="tools">

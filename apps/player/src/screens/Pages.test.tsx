@@ -174,7 +174,7 @@ describe('Menu', () => {
     fireEvent.click(guide);
     const guideList = document.getElementById(guide.getAttribute('aria-controls')!)!;
     expect([...guideList.querySelectorAll(':scope > li > a')].map((a) => a.textContent)).toEqual([
-      'ソーサリアンTextとは？',
+      'NTextとは？',
       '冒険の記録',
       '音楽室',
     ]);
