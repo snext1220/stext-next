@@ -53,7 +53,8 @@ graph LR
 | `ItemsPanel` | 所持アイテム・手記を表示。`scenario`、`state`、`onUse?: (id) => void`。利用可能なアイテムの使用操作は callback があるとき表示。 | `@stext/core`、`@stext/schema` |
 | `RecordPanel` | 実績と辿ったシーン履歴を表示。`scenario`、`scenarioId`、`global`、`history: {id, label}[]`、`trophyUrl?: (level) => string`。 | `@stext/core`、`@stext/schema` |
 | `Die` | ダイスの目を描画。`value`、`rolling?`、`first?`。7 以上は数字表示。 | React、styles.css |
-| `EnemyCard` | 敵の情報、HP、攻撃・戦利品の操作を表示。必須: `enemy`。任意: `func`、`funcDisplayOnly`、`hp`、`dropName`、`dropTaken`、`defeatedChecked`、`onToggleDefeated`、`onReceive`、`onAttack`、`onDrop`、`attackLabel`。 | `@stext/schema` の `Enemy`、`@stext/core` の属性・状態名 |
+| `EnemyCard` | 敵の情報、HP、攻撃・戦利品の操作を表示。撃破チェックで詳細を折りたたみ、チェックしたまま詳細の開閉も可能。未取得戦利品は折りたたみ中も表示する。必須: `enemy`。任意: `func`、`funcDisplayOnly`、`hp`、`dropName`、`dropTaken`、`defeatedChecked`、`onToggleDefeated`、`onReceive`、`onAttack`、`onDrop`、`attackLabel`。 | `@stext/schema` の `Enemy`、`@stext/core` の属性・状態名 |
+| `BattlePanel` | プレイヤーと試遊で共通の戦闘状態・操作・結果通知を扱う。敵一覧の範囲内で出目・振り直し・倍率の操作帯を追従させる。必須: `engine`、`scenario`、`state`、`global`、`view`、`onStateChange`、`onFeedback`。任意: `resolveImage`。 | `@stext/core`、`EnemyCard`、`Die`、`SceneText` |
 | `StatusEditor` | 冒険者状態を手入力するフォーム。`scenario`、`state`、`onSave: (state) => void`、`onCancel`。 | `@stext/core` の職業・種族・状態定義、`@stext/schema`、`statusLabel` |
 | `Toasts` | 通知一覧を表示。`toasts: Toast[]`（各要素は `id`、`kind`、`title`、`message`）。 | `Toast` 型（`kind`: `item` / `result` / `dmg` / `warn` / `info`） |
 | `Effect` | 本文を文字単位のアニメーションにする。`name`、`children`。許可された効果名以外は `fadeIn` で表示。 | React.Children / element cloning、styles.css のアニメーション |

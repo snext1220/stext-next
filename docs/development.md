@@ -83,6 +83,8 @@ CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への p
 
 依存の向き: `schema` ← `core` / `convert` ← `cli`、`ui` ← `player` / `playground`。逆向きの依存は作りません。
 
+戦闘表示・操作は `packages/ui/src/BattlePanel.tsx` をプレイヤーと試遊で共用します。追従するダイス操作帯の上端は CSS 変数 `--battle-sticky-top`（既定0px）で指定します。プレイヤーの `App.tsx` はヘッダーの実測高さとセーフエリアから値を設定し、折り返し・画面幅変更に対応します。Playground は通常、編集パネル内で追従し、狭い画面の試遊タブだけは内側の `overflow` を解除してページ全体のスクロールに追従します。戦闘計算・保存形式は変更しません。詳細は[戦闘欄の操作性改善仕様](spec/battle-panel-usability.md)を参照してください。
+
 ### Universal パッケージの決まり
 
 `schema` / `core` / `convert` はブラウザでも Node でも動く必要があります。

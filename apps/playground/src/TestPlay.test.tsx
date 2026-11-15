@@ -227,10 +227,15 @@ describe('TestPlay', () => {
 
   it('resets battle-only state when the preview tab is reopened', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
+    const multiScenario: Scenario = {
+      ...combatScenario,
+      enemies: [...combatScenario.enemies, { id: 'm02', name: '魔物2' }],
+      scenes: [{ id: '0', text: '戦闘', enemies: ['m01', 'm02'], choices: [] }],
+    };
     function CombatPreview() {
       const [run, setRun] = useState<PreviewRun | null>(null);
       const [visible, setVisible] = useState(true);
-      const [callbacks] = useState(() => playProps(combatScenario));
+      const [callbacks] = useState(() => playProps(multiScenario));
       return (
         <>
           <button type="button" onClick={() => setVisible((current) => !current)}>
@@ -251,6 +256,8 @@ describe('TestPlay', () => {
     fireEvent.click(enemy.getByRole('button', { name: '攻撃する' }));
     expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('0');
     expect(screen.getByText('999 Hit!')).toBeTruthy();
+    fireEvent.click(enemy.getByRole('checkbox'));
+    expect(enemy.getByRole('button', { name: '魔物の詳細を開く' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
     fireEvent.click(screen.getByRole('button', { name: '試遊タブ切り替え' }));
 
@@ -260,6 +267,8 @@ describe('TestPlay', () => {
     expect(reopenedEnemy.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(
       false,
     );
+    expect(reopenedEnemy.queryByRole('button', { name: '魔物の詳細を開く' })).toBeNull();
+    expect((reopenedEnemy.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
   });
 
   const soundScenario: Scenario = {

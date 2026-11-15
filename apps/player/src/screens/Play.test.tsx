@@ -201,7 +201,7 @@ describe('scene scrolling', () => {
     const battleScenario: Scenario = {
       ...scenario,
       enemies: [
-        { id: 'enemy', name: '敵' },
+        { id: 'enemy', name: '敵', text: '折りたたむ敵の説明' },
         { id: 'enemy2', name: '敵2' },
       ],
       scenes: [{ id: '0', text: '戦闘', enemies: ['enemy', 'enemy2'], choices: [] }],
@@ -231,6 +231,7 @@ describe('scene scrolling', () => {
     const checkbox = screen.getByRole('checkbox', { name: '敵を撃破した' }) as HTMLInputElement;
     fireEvent.click(checkbox);
     expect(checkbox.checked).toBe(true);
+    expect(screen.getByRole('button', { name: '敵の詳細を開く' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'セーブ／ロード' }));
     dialog = within(screen.getByRole('dialog', { name: 'セーブ／ロード' }));
     fireEvent.click(dialog.getByRole('button', { name: 'ロード', pressed: false }));
@@ -242,6 +243,8 @@ describe('scene scrolling', () => {
         (screen.getByRole('checkbox', { name: '敵を撃破した' }) as HTMLInputElement).checked,
       ).toBe(false),
     );
+    expect(screen.queryByRole('button', { name: '敵の詳細を開く' })).toBeNull();
+    expect(screen.getByText('折りたたむ敵の説明').closest('[hidden]')).toBeNull();
   });
 
   it('loads a manual slot without replaying scene effects and replaces autosave and history', async () => {

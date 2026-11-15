@@ -238,68 +238,75 @@ export function BattlePanel({
           <SceneText className="prose" markdown={ruleText} resolveImage={resolveImage} />
         </details>
       )}
-      <div className="battle-controls" style={{ marginBottom: 12 }}>
-        <div
-          className="dice"
-          onClick={roll}
-          role="button"
-          tabIndex={0}
-          title="ダイスを振る"
-          onKeyDown={(event) => event.key === 'Enter' && roll()}
-        >
-          {battle.dice.map((value, index) => (
-            <Die key={index} value={value} rolling={rolling} first={index === 0} />
-          ))}
+      <div className={hasEnemies ? 'battle-sheet' : undefined}>
+        <div className={'battle-controls battle-dice' + (hasEnemies ? ' sticky' : '')}>
+          <div
+            className="dice"
+            onClick={roll}
+            role="button"
+            tabIndex={0}
+            title="ダイスを振る"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                roll();
+              }
+            }}
+          >
+            {battle.dice.map((value, index) => (
+              <Die key={index} value={value} rolling={rolling} first={index === 0} />
+            ))}
+          </div>
+          <button type="button" className="btn" onClick={roll}>
+            ダイスを振る
+          </button>
+          {hasEnemies && (
+            <label className="verdict">
+              ダメージ倍率{' '}
+              <select
+                value={battle.multiplier}
+                onChange={(event) =>
+                  setBattle((current) => ({ ...current, multiplier: Number(event.target.value) }))
+                }
+              >
+                <option value={2}>×2</option>
+                <option value={1}>×1</option>
+                <option value={0.5}>×1/2</option>
+                <option value={0.25}>×1/4</option>
+              </select>
+            </label>
+          )}
         </div>
-        <button type="button" className="btn" onClick={roll}>
-          ダイスを振る
-        </button>
-        {hasEnemies && (
-          <label className="verdict">
-            ダメージ倍率{' '}
-            <select
-              value={battle.multiplier}
-              onChange={(event) =>
-                setBattle((current) => ({ ...current, multiplier: Number(event.target.value) }))
-              }
-            >
-              <option value={2}>×2</option>
-              <option value={1}>×1</option>
-              <option value={0.5}>×1/2</option>
-              <option value={0.25}>×1/4</option>
-            </select>
-          </label>
-        )}
+        {battle.enemies.map((enemy, index) => (
+          <EnemyCard
+            key={index}
+            enemy={enemy.enemy}
+            func={enemy.func}
+            funcDisplayOnly={enemy.displayOnly}
+            {...(enemy.hp !== undefined ? { hp: enemy.hp } : {})}
+            {...(enemy.drop ? { dropName: enemy.drop.name } : {})}
+            dropTaken={enemy.dropTaken}
+            onReceive={() => receive(index)}
+            onAttack={() => attack(index)}
+            onDrop={() => takeDrop(index)}
+            defeatedChecked={enemy.defeated}
+            {...(battle.enemies.length > 1
+              ? {
+                  onToggleDefeated: (checked: boolean) =>
+                    setBattle((current) => ({
+                      ...current,
+                      enemies: current.enemies.map((entry, i) =>
+                        i === index ? { ...entry, defeated: checked } : entry,
+                      ),
+                    })),
+                }
+              : {})}
+            {...(enemy.enemy.attack?.startsWith('free')
+              ? { attackLabel: statusLabel(scenario, enemy.enemy.attack) }
+              : {})}
+          />
+        ))}
       </div>
-      {battle.enemies.map((enemy, index) => (
-        <EnemyCard
-          key={index}
-          enemy={enemy.enemy}
-          func={enemy.func}
-          funcDisplayOnly={enemy.displayOnly}
-          {...(enemy.hp !== undefined ? { hp: enemy.hp } : {})}
-          {...(enemy.drop ? { dropName: enemy.drop.name } : {})}
-          dropTaken={enemy.dropTaken}
-          onReceive={() => receive(index)}
-          onAttack={() => attack(index)}
-          onDrop={() => takeDrop(index)}
-          defeatedChecked={enemy.defeated}
-          {...(battle.enemies.length > 1
-            ? {
-                onToggleDefeated: (checked: boolean) =>
-                  setBattle((current) => ({
-                    ...current,
-                    enemies: current.enemies.map((entry, i) =>
-                      i === index ? { ...entry, defeated: checked } : entry,
-                    ),
-                  })),
-              }
-            : {})}
-          {...(enemy.enemy.attack?.startsWith('free')
-            ? { attackLabel: statusLabel(scenario, enemy.enemy.attack) }
-            : {})}
-        />
-      ))}
     </>
   );
 }

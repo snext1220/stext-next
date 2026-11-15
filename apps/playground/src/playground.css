@@ -1055,6 +1055,10 @@ body {
   .pg-splitter {
     display: none;
   }
+  .pg-side-body:has(.pg-play) {
+    overflow: visible;
+    --battle-sticky-top: env(safe-area-inset-top, 0px);
+  }
   .pg-flow-pane {
     height: 60vh;
     border-right: 0;

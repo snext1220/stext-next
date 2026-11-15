@@ -2014,6 +2014,47 @@ span.level {
   background: transparent;
   color: var(--ink);
 }
+.battle-sheet {
+  display: flow-root;
+}
+.battle-dice {
+  margin-bottom: 12px;
+}
+.battle-dice.sticky {
+  position: sticky;
+  top: var(--battle-sticky-top, 0px);
+  z-index: 5;
+  background: var(--page);
+  padding-block: 8px;
+  border-bottom: 1px solid var(--page-edge);
+}
+.battle-dice .dice {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.enemy-details {
+  display: grid;
+  gap: 10px;
+}
+.enemy [hidden] {
+  display: none;
+}
+.enemy-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.enemy.collapsed {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  opacity: 1;
+}
+.enemy.collapsed h3 {
+  font-size: var(--step-0);
+}
 .enemy-hp {
   font-variant-numeric: tabular-nums;
   font-size: var(--step--1);

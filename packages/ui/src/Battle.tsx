@@ -1,5 +1,6 @@
 import type { Enemy } from '@stext/schema';
 import { ELEMENT_NAMES, STATE_NAMES } from '@stext/core';
+import { useId, useState } from 'react';
 
 const PIPS: Record<number, number[]> = {
   1: [4],
@@ -76,9 +77,16 @@ export function EnemyCard({
   onDrop,
   attackLabel,
 }: EnemyCardProps) {
+  const detailsId = useId();
+  const tagsId = useId();
+  const [showDefeatedDetails, setShowDefeatedDetails] = useState(false);
   const defeated = (hp !== undefined && hp <= 0) || Boolean(defeatedChecked);
+  const collapsed = Boolean(defeatedChecked) && !showDefeatedDetails;
   return (
-    <section className={'enemy' + (defeated ? ' defeated' : '')} aria-label={`敵：${enemy.name}`}>
+    <section
+      className={'enemy' + (defeated ? ' defeated' : '') + (collapsed ? ' collapsed' : '')}
+      aria-label={`敵：${enemy.name}`}
+    >
       <div className="enemy-top">
         <h3>
           {onToggleDefeated && (
@@ -86,14 +94,33 @@ export function EnemyCard({
               type="checkbox"
               className="defeat-check"
               checked={Boolean(defeatedChecked)}
-              onChange={(e) => onToggleDefeated(e.target.checked)}
+              onChange={(e) => {
+                setShowDefeatedDetails(false);
+                onToggleDefeated(e.target.checked);
+              }}
               aria-label={`${enemy.name}を撃破した`}
               title="撃破した"
             />
           )}
           {enemy.name}
         </h3>
-        <div className="tags">
+        {defeatedChecked && (
+          <div className="enemy-summary">
+            <span>撃破済み</span>
+            {dropName && !dropTaken && <span>未取得の戦利品あり</span>}
+            <button
+              type="button"
+              className="btn ghost"
+              aria-label={`${enemy.name}の詳細を${collapsed ? '開く' : '閉じる'}`}
+              aria-expanded={!collapsed}
+              aria-controls={`${tagsId} ${detailsId}`}
+              onClick={() => setShowDefeatedDetails((current) => !current)}
+            >
+              詳細を{collapsed ? '開く' : '閉じる'}
+            </button>
+          </div>
+        )}
+        <div className="tags" id={tagsId} hidden={collapsed}>
           <span className="tag">
             属性 <b>{ELEMENT_NAMES[enemy.element ?? ''] ?? '無'}</b>
           </span>
@@ -111,28 +138,30 @@ export function EnemyCard({
           )}
         </div>
       </div>
-      {enemy.text && <p className="enemy-desc">{enemy.text}</p>}
-      <div className="battle-controls">
-        {hp !== undefined && (
-          <span className="enemy-hp">
-            HP <b>{hp}</b>
-          </span>
-        )}
-        {onReceive && func && !funcDisplayOnly && (
-          <button type="button" className="btn" onClick={onReceive}>
-            敵の攻撃
-          </button>
-        )}
-        {onAttack && hp !== undefined && enemy.funcOpp && (
-          <button type="button" className="btn ghost" onClick={onAttack} disabled={defeated}>
-            攻撃する
-          </button>
-        )}
-        {onDrop && dropName && (
-          <button type="button" className="btn ghost" onClick={onDrop} disabled={dropTaken}>
-            {dropTaken ? `${dropName}（取得済み）` : `戦利品：${dropName}`}
-          </button>
-        )}
+      <div className="enemy-details" id={detailsId} hidden={collapsed}>
+        {enemy.text && <p className="enemy-desc">{enemy.text}</p>}
+        <div className="battle-controls">
+          {hp !== undefined && (
+            <span className="enemy-hp">
+              HP <b>{hp}</b>
+            </span>
+          )}
+          {onReceive && func && !funcDisplayOnly && (
+            <button type="button" className="btn" onClick={onReceive}>
+              敵の攻撃
+            </button>
+          )}
+          {onAttack && hp !== undefined && enemy.funcOpp && (
+            <button type="button" className="btn ghost" onClick={onAttack} disabled={defeated}>
+              攻撃する
+            </button>
+          )}
+          {onDrop && dropName && (
+            <button type="button" className="btn ghost" onClick={onDrop} disabled={dropTaken}>
+              {dropTaken ? `${dropName}（取得済み）` : `戦利品：${dropName}`}
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );

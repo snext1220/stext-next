@@ -1,7 +1,7 @@
 import { createEngine, type GameState, type GlobalState } from '@stext/core';
 import type { Scenario } from '@stext/schema';
 import { BrandTitle } from '@stext/ui';
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioDirector } from './audio.js';
 import { loadScenario } from './data.js';
 import { href, navigate, useRoute, type Route } from './router.js';
@@ -48,6 +48,8 @@ const LAZY_PAGES: readonly Route['name'][] = [
 ];
 
 export function App() {
+  const headerRef = useRef<HTMLElement>(null);
+  const shellRef = useRef<HTMLElement>(null);
   const route = useRoute();
   const [global, setGlobal] = useState<GlobalState>(loadGlobal);
   const [settings, setSettingsRaw] = useState<Settings>(loadSettings);
@@ -70,6 +72,26 @@ export function App() {
 
   useEffect(() => () => audio.stop(), [audio]);
 
+  useEffect(() => {
+    const header = headerRef.current;
+    const shell = shellRef.current;
+    if (!header || !shell) return;
+    const update = () => {
+      shell.style.setProperty(
+        '--battle-sticky-top',
+        `calc(env(safe-area-inset-top, 0px) + ${header.getBoundingClientRect().height}px)`,
+      );
+    };
+    update();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    observer?.observe(header);
+    window.addEventListener('resize', update);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
   const toggleSound = () => {
     const g = { ...global, bgm: !global.bgm };
     setGlobal(g);
@@ -86,7 +108,7 @@ export function App() {
 
   return (
     <>
-      <header className="topbar">
+      <header className="topbar" ref={headerRef}>
         <div className="topbar-in">
           <a href={href({ name: 'library' })} style={{ textDecoration: 'none' }}>
             <BrandTitle />
@@ -114,7 +136,7 @@ export function App() {
           </div>
         </div>
       </header>
-      <main className="shell">
+      <main className="shell" ref={shellRef}>
         {route.name === 'library' && (
           <Library
             key={route.quest ? 'quest' : 'all'}
