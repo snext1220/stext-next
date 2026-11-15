@@ -393,6 +393,7 @@
   {
     "id": "captive",
     "title": "新・囚われた魔法使い",
+    "v2": true,
     "listed": true,
     "scenes": 138,
     "results": 5,
@@ -474,6 +475,7 @@
   {
     "id": "negotiator",
     "title": "ドラゴンネゴシエーター",
+    "v2": true,
     "listed": true,
     "scenes": 39,
     "results": 4,
@@ -721,6 +723,7 @@
   {
     "id": "kenshin",
     "title": "戦国ソーサリアン外伝・上杉謙信の章",
+    "v2": true,
     "listed": true,
     "scenes": 48,
     "results": 3,

@@ -65,6 +65,12 @@ Playgroundでは受付・メール送信の完了を判定しません。実際�
 
 CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への push で format:check → lint → typecheck → test → build を実行します。
 
+### Copilot の仕様承認と権限確認
+
+[個別改善のスキル](../.github/skills/individual-improvement/SKILL.md)では、実装への着手を承認した後、合意範囲内の通常の読み書き・実装・文書更新・検証について作業確認を繰り返しません。仕様書なしで進める確認も、その範囲の着手承認として扱います。実装を待つ指定や、仕様・対象範囲の変更がある場合は別途確認します。
+
+この承認と、Copilot・VS Code が表示するツール実行の権限確認は別です。スキルから権限確認を無効化・迂回することはありません。Assisted permissions ではツールごとに判定されるため、通常の読み書きでも確認が出る場合があります。自動承認を調整する場合は、[VS Code の権限設定の説明](https://code.visualstudio.com/docs/agents/run/approvals)に従い、対象と範囲を確認してください。通常の読み書きを許可する目的で、削除・シェル実行・外部送信などまで一括許可しないようにします。
+
 ## 構成
 
 | パス              | パッケージ       | 動作環境  | 役割                                             |
