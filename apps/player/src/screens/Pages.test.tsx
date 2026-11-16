@@ -101,6 +101,24 @@ describe('guide and toolbox pages', () => {
     expect(document.getElementById('about-sorcerian')).not.toBeNull();
   });
 
+  it('highlights key points sparingly in the guide and creator pages', () => {
+    const about = render(<About />);
+    expect(about.container.querySelector('mark.doc-marker')).not.toBeNull();
+    for (const block of about.container.querySelectorAll('.doc p, .doc li')) {
+      expect(block.querySelectorAll('mark.doc-marker').length).toBeLessThanOrEqual(2);
+    }
+
+    about.unmount();
+    const post = render(<Post />);
+    expect(post.container.querySelector('mark.doc-marker')?.textContent).toBe(
+      'インストールは要りません。',
+    );
+    expect(post.container.querySelector('#post-submit .doc-marker')).toBeNull();
+    for (const block of post.container.querySelectorAll('.doc p, .doc li')) {
+      expect(block.querySelectorAll('mark.doc-marker').length).toBeLessThanOrEqual(2);
+    }
+  });
+
   it('shows the staff and the gallery on their own pages', () => {
     render(<Staff />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('作り手たち');

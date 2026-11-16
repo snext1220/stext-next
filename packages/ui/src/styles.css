@@ -17,6 +17,9 @@
   --gold: #8f6a14;
   --gold-bright: #b98a23;
   --lapis: #2f3f8f; /* 旧メニューの群青を継承 */
+  --marker: #39d3cc;
+  --link-page: #2f3f8f;
+  --link-desk: #6a4b08;
   --lapis-soft: #dfe3f4;
   --blood: #a8322a;
   --mana: #2f6fae;
@@ -59,6 +62,7 @@
     --ink-soft: #66543c;
     --gold: #d6b062;
     --gold-bright: #ecc979;
+    --link-desk: #ecc979;
     --lapis: #8b9be6;
     --lapis-soft: #262c52;
     --blood: #d65a4e;
@@ -80,6 +84,7 @@
   --ink-soft: #66543c;
   --gold: #d6b062;
   --gold-bright: #ecc979;
+  --link-desk: #ecc979;
   --lapis: #8b9be6;
   --lapis-soft: #262c52;
   --blood: #d65a4e;
@@ -2550,8 +2555,29 @@ label.drop {
 .doc li {
   margin-bottom: 0.4em;
 }
-.doc a {
-  color: var(--lapis);
+.doc mark.doc-marker {
+  color: inherit;
+  background: linear-gradient(
+    transparent 48%,
+    color-mix(in srgb, var(--marker) 40%, transparent) 48%
+  );
+  border-radius: 2px;
+  padding: 0 0.04em;
+}
+.doc a:not(.btn):not(.face-grid a) {
+  color: var(--link-page);
+  text-decoration-color: color-mix(in srgb, var(--link-page) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.doc a:not(.btn):not(.face-grid a):hover {
+  color: var(--ink);
+  text-decoration-color: var(--gold);
+}
+.doc a:not(.btn):not(.face-grid a):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 .doc .btn {
   color: var(--page);
@@ -2879,8 +2905,20 @@ label.drop {
   margin: 8px 0 12px;
   padding-left: 1.2em;
 }
-.link-list a {
-  color: var(--gold-bright);
+.music a:not(.btn) {
+  color: var(--link-desk);
+  text-decoration-color: color-mix(in srgb, var(--link-desk) 60%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.music a:not(.btn):hover {
+  color: var(--on-desk);
+  text-decoration-color: var(--gold);
+}
+.music a:not(.btn):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 .link-note {
   margin-left: 8px;

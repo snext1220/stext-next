@@ -39,7 +39,7 @@ export function Footer() {
           </ul>
         </section>
         <nav className="footer-nav" aria-label="サイトの案内">
-          <a href={href({ name: 'about' })}>ソーサリアン Text とは</a>
+          <a href={href({ name: 'about' })}>ソーサリアン NText とは</a>
           <a href={href({ name: 'about', section: 'sorcerian' })}>ソーサリアンとは</a>
           <a href={href({ name: 'post' })}>シナリオを投稿する</a>
           <a href={href({ name: 'links' })}>関連リンク</a>
