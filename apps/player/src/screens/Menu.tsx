@@ -11,7 +11,7 @@ export const MENU: readonly { label: string; items: readonly MenuEntry[] }[] = [
   {
     label: '案内所',
     items: [
-      { page: 'about', label: 'ソーサリアンTextとは？' },
+      { page: 'about', label: 'ソーサリアン NTextとは？' },
       { page: 'records', label: '冒険の記録' },
       { page: 'music', label: '音楽室' },
       {

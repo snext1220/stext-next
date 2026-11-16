@@ -1,3 +1,4 @@
+import { ImagePreview } from '@stext/ui';
 import { PLAYGROUND_URL } from '../config.js';
 import { MANUALS, POST_THREAD } from '../links.js';
 import { href } from '../router.js';
@@ -36,6 +37,14 @@ export function Post({ section }: { section?: string }) {
           で挑戦してみてはいかがでしょう。シナリオを書くための道具、資料、音楽素材などをそろえてお待ちしています。
         </p>
         <h3>Playground で書く</h3>
+        <ImagePreview
+          className="doc-float"
+          triggerClassName="doc-float"
+          src={`${import.meta.env.BASE_URL}manual/image/01-playground.png`}
+          alt="Playgroundの全体画面。左側にフロー図、右側に選択中のシーン編集欄が表示されている"
+          width={1280}
+          height={900}
+        />
         <p>
           Playground
           は、ブラウザーで動くシナリオの編集環境です。インストールは要りません。シーンをフロー図の上でつなぎ、つなぎ替えながら、ゲームブックの流れを組み立てられます。フラグやアイテム、敵などは「定義」のタブで編集できます。書いたシナリオは、「試遊」のタブでその場で遊べます。
@@ -72,6 +81,14 @@ export function Post({ section }: { section?: string }) {
       </DocSection>
 
       <DocSection page="post" chapter={CHAPTERS.submit} eyebrow="Submit" seed={59}>
+        <ImagePreview
+          className="doc-float"
+          triggerClassName="doc-float"
+          src={`${import.meta.env.BASE_URL}manual/image/12-submit.png`}
+          alt="作品名、シナリオID、ZIP作成、提出情報の入力欄が並ぶ提出画面"
+          width={760}
+          height={820}
+        />
         <ol className="doc-steps">
           <li>
             Playground

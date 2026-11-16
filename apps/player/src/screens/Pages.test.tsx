@@ -55,6 +55,22 @@ describe('Music', () => {
 });
 
 describe('guide and toolbox pages', () => {
+  it('shows the v2 eGBP diagram', () => {
+    render(<About />);
+    const diagram = screen.getByRole('img', {
+      name: 'eGBPの構成図。シナリオを、Playground・Converter・Systemで支えるソーサリアン Text v2のプラットフォーム',
+    });
+    expect(diagram.getAttribute('src')).toBe('/assets/site/about-egb-v2.svg');
+    expect(diagram.parentElement?.classList.contains('doc-float')).toBe(true);
+  });
+
+  it('shows the Sorcerian world illustration beside the text', () => {
+    render(<About />);
+    const illustration = screen.getByRole('img', { name: 'ドラゴンに立ち向かう冒険者たち' });
+    expect(illustration.getAttribute('src')).toBe('/assets/site/sorcerian-next-add2.jpg');
+    expect(illustration.parentElement?.classList.contains('doc-float')).toBe(true);
+  });
+
   it('introduces SText and scrolls to the chapter about the original game', () => {
     render(<About section="sorcerian" />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ソーサリアン Text とは');
@@ -122,6 +138,16 @@ describe('guide and toolbox pages', () => {
 
   it('explains how to post and points to the creator materials', () => {
     const { container } = render(<Post />);
+    const playgroundImage = screen.getByRole('img', {
+      name: 'Playgroundの全体画面。左側にフロー図、右側に選択中のシーン編集欄が表示されている',
+    });
+    expect(playgroundImage.getAttribute('src')).toBe('/manual/image/01-playground.png');
+    expect(playgroundImage.parentElement?.classList.contains('doc-float')).toBe(true);
+    const submitImage = screen.getByRole('img', {
+      name: '作品名、シナリオID、ZIP作成、提出情報の入力欄が並ぶ提出画面',
+    });
+    expect(submitImage.getAttribute('src')).toBe('/manual/image/12-submit.png');
+    expect(submitImage.parentElement?.classList.contains('doc-float')).toBe(true);
     expect(
       screen.getByRole('link', { name: 'GitHub から投稿する（要ログイン）' }).getAttribute('href'),
     ).toBe('https://github.com/snext1220/stext/discussions/299');

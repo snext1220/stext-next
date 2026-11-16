@@ -9,12 +9,14 @@ const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const scenariosDir = join(repoRoot, 'scenarios');
 /** 共通の画像・BGM・効果音（シナリオごとの挿絵・BGM は scenarios/<id>/ にある） */
 const assetsDir = join(repoRoot, 'assets');
+const manualImagesDir = join(repoRoot, 'docs', 'image');
 
 const TYPES: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
   '.mp3': 'audio/mpeg',
   '.m4a': 'audio/mp4',
   '.md': 'text/markdown; charset=utf-8',
@@ -51,7 +53,12 @@ function publish(name: string, dir: string): Plugin {
 }
 
 export default defineConfig(() => ({
-  plugins: [react(), publish('scenarios', scenariosDir), publish('assets', assetsDir)],
+  plugins: [
+    react(),
+    publish('scenarios', scenariosDir),
+    publish('assets', assetsDir),
+    { name: 'stext-manual-images', configureServer: serveDir('/manual/image', manualImagesDir) },
+  ],
   resolve: { alias: workspaceAliases },
   base: './',
   // 本体は React・zod（シナリオの検証）・Markdown の描画で約 500 kB（gzip で約 160 kB）。変換所は別に読み込む

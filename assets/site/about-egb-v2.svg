@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1214" height="684" viewBox="0 0 1214 684">
+  <defs>
+    <linearGradient id="paper" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8f5ec"/>
+      <stop offset="1" stop-color="#eee8d9"/>
+    </linearGradient>
+    <pattern id="grain" width="13" height="13" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="3" r=".7" fill="#746b59" opacity=".16"/>
+      <circle cx="9" cy="10" r=".45" fill="#746b59" opacity=".11"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1 1l5 3-5 3" fill="none" stroke="#788276" stroke-width="1.2"/>
+    </marker>
+  </defs>
+
+  <rect width="1214" height="684" fill="url(#paper)"/>
+  <rect width="1214" height="684" fill="url(#grain)" opacity=".34"/>
+  <path d="M24 24h1166v636H24z" fill="none" stroke="#a99b80" stroke-width="1"/>
+  <path d="M35 35h1144v614H35z" fill="none" stroke="#d2c8b4" stroke-width=".8"/>
+  <path d="M38 46h196m746 0h196" fill="none" stroke="#bcae91" stroke-width="1"/>
+  <circle cx="244" cy="46" r="2.5" fill="#ad7656"/>
+  <circle cx="970" cy="46" r="2.5" fill="#ad7656"/>
+
+  <g fill="#354039" text-anchor="middle" font-family="Georgia, 'Yu Mincho', 'Meiryo', serif">
+    <text x="607" y="58" font-size="31" font-weight="700" letter-spacing="1">eGBP</text>
+    <text x="607" y="82" font-size="13" letter-spacing="3">e GAMEBOOK PLATFORM</text>
+  </g>
+
+  <path d="M42 117c94-18 280-13 405 5v480c-128 15-306 14-405-1z" fill="#eee0d3"/>
+  <path d="M462 116c179-15 512-18 708 1v230c-201 14-534 13-708-1z" fill="#e4eadc"/>
+  <path d="M462 352c184-14 515-14 708 1v249c-191 13-525 14-708-1z" fill="#eee6d2"/>
+  <path d="M448 116v488m10-488v488" fill="none" stroke="#c7b59d" stroke-width=".8"/>
+
+  <g fill="#354039" font-family="Georgia, 'Yu Mincho', 'Meiryo', serif">
+    <text x="76" y="156" font-size="23" font-weight="700">Utility</text>
+    <text x="76" y="178" font-size="13" fill="#75695a" letter-spacing="1">つくる・変換する</text>
+    <text x="500" y="156" font-size="23" font-weight="700">Scenario</text>
+    <text x="500" y="178" font-size="13" fill="#697665" letter-spacing="1">物語が集う場所</text>
+    <text x="500" y="391" font-size="21" font-weight="700">System</text>
+    <text x="601" y="391" font-size="14" fill="#756d5b">SORCERIAN Text Core</text>
+  </g>
+
+  <path d="M75 193h344M500 193h640M500 415h640" fill="none" stroke="#b9ac96" stroke-width=".9"/>
+  <path d="M77 194v2m342-2v2m81-2v2m640-2v2m-640 220v2m640-2v2" stroke="#ad7656" stroke-width="2"/>
+
+  <g fill="none" stroke="#9d684e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="91" cy="239" r="8"/>
+    <circle cx="121" cy="221" r="7"/>
+    <circle cx="121" cy="257" r="7"/>
+    <path d="M99 236l15-11m-15 17l15 12m-7-32v31"/>
+    <path d="M88 349h20v25H88zM101 357h20v25h-20z"/>
+    <path d="M112 361h12m-4-4l4 4-4 4"/>
+  </g>
+  <g fill="#354039" font-family="Georgia, 'Yu Mincho', 'Meiryo', serif">
+    <text x="145" y="235" font-size="22" font-weight="700">Playground</text>
+    <text x="145" y="261" font-size="15">フロー図でシナリオを編集・試遊</text>
+    <text x="145" y="284" font-size="14" fill="#75695a">リンクする物語を作成</text>
+    <text x="145" y="364" font-size="22" font-weight="700">Converter</text>
+    <text x="88" y="407" font-size="14">旧 scenario.xml ／ 旧 Playground JSON</text>
+    <text x="88" y="432" font-size="14" font-weight="700" fill="#9d684e">→ stext/2 JSON</text>
+  </g>
+  <path d="M76 453h343" fill="none" stroke="#c6b7a3" stroke-width=".8"/>
+  <g fill="none" stroke="#9d684e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M88 488h27v23H88z"/>
+    <circle cx="95" cy="495" r="2"/>
+    <path d="M90 507l7-7 5 5 4-4 4 6"/>
+    <path d="M126 487v16m0 0c-5-4-10 2-5 5 3 2 7-1 7-4v-12l10-2v11m0 0c-5-4-10 2-5 5 3 2 7-1 7-4v-14z"/>
+  </g>
+  <g fill="#354039" font-family="Georgia, 'Yu Mincho', 'Meiryo', serif">
+    <text x="155" y="499" font-size="20" font-weight="700">Resources</text>
+  </g>
+  <text x="155" y="522" fill="#75695a" font-family="'Meiryo', sans-serif" font-size="13">BGM・キャラクター画像など</text>
+  <text x="155" y="542" fill="#75695a" font-family="'Meiryo', sans-serif" font-size="13">冒険を彩る素材を登録</text>
+
+  <g fill="none" stroke="#74846f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M559 220c9-8 21-8 30 0v34c-9-8-21-8-30 0z"/>
+    <path d="M589 220c9-8 21-8 30 0v34c-9-8-21-8-30 0"/>
+    <path d="M721 219v36m-10-25l10-11 10 11m-20 15l10 10 10-10"/>
+    <path d="M866 219c-7 9-7 25 0 35m30-35c7 9 7 25 0 35m-30-17h30"/>
+    <path d="M1030 216l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>
+    <path d="M1051 234v10m-5-5h10"/>
+  </g>
+  <g fill="#354039" text-anchor="middle" font-family="Georgia, 'Yu Mincho', 'Meiryo', serif">
+    <text x="589" y="270" font-size="16" font-weight="700">
+      <tspan x="589">Independent</tspan>
+      <tspan x="589" dy="18">scenario</tspan>
+      <tspan x="589" dy="17" font-size="13" font-weight="400">(Posted)</tspan>
+    </text>
+    <text x="736" y="270" font-size="16" font-weight="700">
+      <tspan x="736">Minimini 30</tspan>
+      <tspan x="736" dy="18" font-size="13" font-weight="400">(Lightweight)</tspan>
+    </text>
+    <text x="881" y="270" font-size="16" font-weight="700">
+      <tspan x="881">Dragon Mode</tspan>
+      <tspan x="881" dy="18" font-size="13" font-weight="400">(Joint Work)</tspan>
+    </text>
+    <text x="1030" y="277" font-size="24">…</text>
+  </g>
+  <path d="M647 214v106m178-106v106m178-106v106" fill="none" stroke="#c1cbb8" stroke-width=".8"/>
+  <g fill="#697665" font-family="'Meiryo', sans-serif" font-size="13">
+    <text x="500" y="337">誰でも参加・投稿できる</text>
+  </g>
+  <path d="M663 316h476" fill="none" stroke="#b7c1af" stroke-width=".8"/>
+  <circle cx="1140" cy="316" r="3" fill="#74846f"/>
+
+  <g fill="none" stroke="#788276" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M613 456H824m17 0h210" marker-end="url(#arrow)"/>
+    <path d="M613 456v18m228-18v18m228-18v18"/>
+    <path d="M583 435h17l8 8v17h-25zM600 435v8h8m-19 6l4 4 8-9"/>
+    <circle cx="841" cy="443" r="14"/>
+    <path d="M841 433v20m-10-10h20m-17-7l14 14m0-14l-14 14"/>
+    <path d="M1058 442c10-8 21-8 31 0v17c-10-8-21-8-31 0z"/>
+    <path d="M1089 442c10-8 21-8 31 0v17c-10-8-21-8-31 0"/>
+  </g>
+  <g fill="#354039" text-anchor="middle" font-family="Georgia, 'Yu Mincho', 'Meiryo', serif">
+    <text x="596" y="500" font-size="17" font-weight="700">
+      <tspan x="596">stext/2 Schema</tspan>
+      <tspan x="596" dy="21" font-size="14" font-weight="400">Validator</tspan>
+    </text>
+    <text x="841" y="500" font-size="17" font-weight="700">
+      <tspan x="841">Gamebook Engine</tspan>
+      <tspan x="841" dy="21" font-size="13" font-weight="400">シナリオを進行</tspan>
+    </text>
+    <text x="1089" y="500" font-size="17" font-weight="700">
+      <tspan x="1089">Gamebook Player</tspan>
+      <tspan x="1089" dy="21" font-size="13" font-weight="400">アイテム／フラグ管理を自動化</tspan>
+    </text>
+  </g>
+
+  <g fill="none" stroke="#bcae91" stroke-width="1">
+    <path d="M38 630h520m178 0h440"/>
+    <path d="M607 621l8 9-8 9-8-9z"/>
+  </g>
+</svg>
