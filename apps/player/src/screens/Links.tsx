@@ -273,34 +273,35 @@ export function Links() {
           </a>
         </div>
         <p>
-          2017年12月に始まったソーサリアン
-          Text（SText）は、シナリオを遊ぶだけでなく、誰もが作品を投稿できる場として育ちました。その後、Next
-          チームは「
+          そして、NextチームではSText以降も「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/allabout.aspx">
             All About 計画
           </ExtLink>
-          」のもとで創作を続け、2020～21年には MV ツクール版「
+          」の名のもとで、ソーサリアン関連の創作を展開中です。2020～21年には MV ツクール版「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/2020">SORCERIAN Next 2020</ExtLink>
-          を発表しました。Next
+          」を発表しました。Next
           2020は独立したゲーム作品で、プレイヤーを刷新したNTextとは別の展開です。
         </p>
+        <div className="doc-banner-links">
+          <a
+            className="doc-banner-link"
+            href="https://www.web-deli.com/sorcerian/next/2020"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src={siteImageUrl('link/sn2020_banner_2.png')}
+              alt="SORCERIAN Next 2020"
+              width={180}
+              height={180}
+              loading="lazy"
+            />
+          </a>
+        </div>
         <p>
-          NTextは、STextのシナリオとセーブデータを引き継ぎながら、プレイヤーを次世代向けに作り直したものです。NextからText、そしてNTextへ――それぞれの試みを通じて、ソーサリアンの物語を楽しみ、創る場をつないでいます。
+          そして2026年、NTextは、STextのシナリオとセーブデータを引き継ぎながら、プレイヤーを次世代向けに作り直したものです。NextからText、そしてNTextへ――それぞれの試みを通じて、ソーサリアンの物語を楽しみ、創る場をつないでいます。
         </p>
-        <a
-          className="doc-banner-link"
-          href="https://www.web-deli.com/sorcerian/next/2020"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            src={siteImageUrl('link/sn2020_banner_2.png')}
-            alt="SORCERIAN Next 2020"
-            width={180}
-            height={180}
-            loading="lazy"
-          />
-        </a>
+
         <ImagePreview
           triggerClassName="doc-banner"
           src={siteImageUrl('banner/ntext-660x80.png')}

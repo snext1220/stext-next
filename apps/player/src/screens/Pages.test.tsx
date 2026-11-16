@@ -71,12 +71,21 @@ describe('guide and toolbox pages', () => {
     expect(illustration.parentElement?.classList.contains('doc-float')).toBe(true);
   });
 
+  it('shows the NText banner beside the story invitation', () => {
+    render(<About />);
+    const banner = screen.getByRole('img', {
+      name: 'SORCERIAN Nextのロゴと「遊ぶ。創る。無限の冒険譚へ。」を描いたバナー',
+    });
+    expect(banner.getAttribute('src')).toBe('/assets/site/banner/ntext-300x250.png');
+    expect(banner.parentElement?.classList.contains('doc-float')).toBe(true);
+  });
+
   it('introduces SText and scrolls to the chapter about the original game', () => {
     render(<About section="sorcerian" />);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ソーサリアン Text とは');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ソーサリアン NText とは');
     expect(screen.queryByRole('navigation', { name: '目次' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'ソーサリアン Text から NText へ' })).toBeTruthy();
-    expect(screen.getByText(/ソーサリアン NText/)).toBeTruthy();
+    expect(screen.getByText(/ソーサリアン Text v2/)).toBeTruthy();
     expect(
       screen
         .getByRole('img', {
@@ -200,7 +209,7 @@ describe('Menu', () => {
     fireEvent.click(guide);
     const guideList = document.getElementById(guide.getAttribute('aria-controls')!)!;
     expect([...guideList.querySelectorAll(':scope > li > a')].map((a) => a.textContent)).toEqual([
-      'ソーサリアンTextとは？',
+      'ソーサリアン NTextとは？',
       '冒険の記録',
       '音楽室',
     ]);

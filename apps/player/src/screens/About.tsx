@@ -65,13 +65,15 @@ export function About({ section }: { section?: string }) {
           で、古くて新しいゲームブックの世界を開拓してみませんか？
         </p>
         <h3>ソーサリアン Text から NText へ</h3>
-        <ImagePreview
-          triggerClassName="doc-banner"
-          src={siteImageUrl('banner/ntext-history-660x80.png')}
-          alt="NextからText、そしてNTextへ…冒険譚を受け継ぎ、新しい世代へ。"
-          width={660}
-          height={80}
-        />
+        <div className="doc-banner-links">
+          <ImagePreview
+            triggerClassName="doc-banner"
+            src={siteImageUrl('banner/ntext-history-660x80.png')}
+            alt="NextからText、そしてNTextへ…冒険譚を受け継ぎ、新しい世代へ。"
+            width={660}
+            height={80}
+          />
+        </div>
         <p>
           2017年12月20日に生まれた「ソーサリアン
           Text」（SText）は、原作の世界をゲームブックとして楽しみ、誰もがシナリオを投稿できる場として育ってきました。その遊びと作品を次の世代へ引き継ぐため、プレイ画面はもちろん、開発環境まで完全に作り直したのが「ソーサリアン
@@ -146,6 +148,15 @@ export function About({ section }: { section?: string }) {
         </p>
         <h3>で、どんな物語を創ればいいの？</h3>
         <p>で、ソーサリアン Textでどんな物語を創ればいいのかというと。</p>
+        <ImagePreview
+          className="doc-float"
+          triggerClassName="doc-float"
+          src={siteImageUrl('banner/ntext-300x250.png')}
+          alt="SORCERIAN Nextのロゴと「遊ぶ。創る。無限の冒険譚へ。」を描いたバナー"
+          width={300}
+          height={250}
+          loading="lazy"
+        />
         <p>
           個人的には、なんでもありだと思っています。いつかどこかの世界、自分で「ここがソーサリアンの世界だ」と宣言したら、それで良し（そこがどんなに現代日本に似ていたとしても、です！）。
         </p>
