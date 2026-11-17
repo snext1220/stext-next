@@ -62,6 +62,26 @@ describe('SceneText', () => {
     expect(onParamChange).toHaveBeenLastCalledWith('p01', '4');
   });
 
+  it('lets non-parameter number fields act as local memos', () => {
+    const onParamChange = vi.fn();
+    const { getByLabelText, getByRole } = render(
+      <SceneText
+        markdown={'<stext-input value="0"></stext-input>'}
+        onParamChange={onParamChange}
+      />,
+    );
+    const input = getByLabelText('値') as HTMLInputElement;
+
+    expect(input.readOnly).toBe(false);
+    fireEvent.change(input, { target: { value: '5' } });
+    expect(input.value).toBe('5');
+    fireEvent.click(getByRole('button', { name: '1増やす' }));
+    expect(input.value).toBe('6');
+    fireEvent.click(getByRole('button', { name: '1減らす' }));
+    expect(input.value).toBe('5');
+    expect(onParamChange).not.toHaveBeenCalled();
+  });
+
   it('renders labels inline', () => {
     const { container } = render(
       <SceneText inline markdown="森の<ruby>主<rt>ぬし</rt></ruby>へ" />,

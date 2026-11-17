@@ -129,7 +129,7 @@ function Secret({ children }: { children: ReactNode }) {
   );
 }
 
-/** ${input?p01} の入力欄。パラメーター以外（${input?値}）は飾りの入力欄 */
+/** ${input?p01} はゲームパラメーター、それ以外はシーン内だけの数値メモ */
 function ParamInput({
   param,
   value,
@@ -139,8 +139,13 @@ function ParamInput({
   value: string;
   onChange?: (id: string, value: string) => void;
 }) {
-  const set = (v: string) => param && onChange?.(param, v);
-  const step = (d: number) => set(String((Number(value) || 0) + d));
+  const [memo, setMemo] = useState(value);
+  const currentValue = param ? value : memo;
+  const set = (v: string) => {
+    if (param) onChange?.(param, v);
+    else setMemo(v);
+  };
+  const step = (d: number) => set(String((Number(currentValue) || 0) + d));
   return (
     <span className="param-input">
       <button type="button" onClick={() => step(-1)} aria-label="1減らす">
@@ -149,10 +154,9 @@ function ParamInput({
       <input
         type="text"
         inputMode="numeric"
-        value={value}
+        value={currentValue}
         aria-label={param ? `パラメーター ${param}` : '値'}
         onChange={(e) => set(e.target.value)}
-        readOnly={!param}
       />
       <button type="button" onClick={() => step(1)} aria-label="1増やす">
         ＋

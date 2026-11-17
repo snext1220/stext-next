@@ -367,6 +367,7 @@ export function Play({
           セーブ／ロード
         </button>
         <SceneText
+          key={`${sceneKey}:body`}
           className="prose"
           markdown={view.markdown}
           resolveImage={resolveImage}
@@ -395,6 +396,7 @@ export function Play({
         <ChoiceList choices={view.choices} onChoose={choose} />
         {view.afterText && (
           <SceneText
+            key={`${sceneKey}:after`}
             className="prose after-text"
             markdown={view.afterText}
             resolveImage={resolveImage}

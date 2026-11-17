@@ -98,7 +98,8 @@ if (r.kind === 'moved') ({ state, global, events } = r);
 | `<span class="stext-hidden">` | `%white%`…`%/%` | 見えない文字（選択すると見える） |
 | `<ruby>主<rp>（</rp><rt>ぬし</rt><rp>）</rp></ruby>` | `${主\|ぬし}` | ルビ |
 | `<div class="stext-effect" data-effect="fadeInDown">` | `${effect fadeInDown}`…`${/effect}` | 文字の演出 |
-| `<stext-input param="p01" value="3">` | `${input?p01}` | パラメーターを増減する入力欄 |
+| `<stext-input param="p01" value="3">` | `${input?p01}` | ゲームパラメーターを増減する入力欄 |
+| `<stext-input value="0">` | `${input?0}` | シーン内だけで使う数値メモ欄。シーンを離れると初期値に戻る |
 
 本文中の画像（`![説明](file.png)`）のパスはシナリオのディレクトリからの相対パスのままです。URL の自動リンクも Markdown の描画側で行います。
 

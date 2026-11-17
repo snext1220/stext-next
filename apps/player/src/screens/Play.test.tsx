@@ -143,6 +143,51 @@ describe('gods feature demonstrations', () => {
 });
 
 describe('scene scrolling', () => {
+  it('edits non-parameter input as a scene-local memo', () => {
+    const memoScenario: Scenario = {
+      ...scenario,
+      meta: { ...scenario.meta, id: 'scene-memo-test', title: 'Scene memo test' },
+      scenes: [
+        {
+          id: '0',
+          text: '最初のメモ：${input?0}',
+          choices: [{ label: '次へ', to: ['1'] }],
+        },
+        {
+          id: '1',
+          text: '次のメモ：${input?3}',
+          choices: [{ label: '戻る', to: ['90000'] }],
+        },
+      ],
+    };
+    const global = emptyGlobalState();
+    const { state } = createEngine(memoScenario).start(global);
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <Play
+        id="scene-memo-test"
+        scenario={memoScenario}
+        initial={state}
+        global={global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('値'), { target: { value: '8' } });
+    expect((screen.getByLabelText('値') as HTMLInputElement).value).toBe('8');
+    fireEvent.click(screen.getByRole('button', { name: /次へ/ }));
+    expect((screen.getByLabelText('値') as HTMLInputElement).value).toBe('3');
+    fireEvent.click(
+      within(screen.getByRole('navigation', { name: '選択肢' })).getByRole('button', {
+        name: /戻る/,
+      }),
+    );
+    expect((screen.getByLabelText('値') as HTMLInputElement).value).toBe('0');
+  });
+
   it('shows configured dice without enemy controls in an enemyless scene', () => {
     const diceScenario: Scenario = {
       ...scenario,

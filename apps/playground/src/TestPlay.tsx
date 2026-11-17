@@ -654,6 +654,7 @@ export function TestPlay({
               </span>
             </div>
             <SceneText
+              key={`scene-body:${run.state.scene}:${run.state.ellapsed_scene}`}
               className="prose"
               markdown={view.markdown}
               resolveImage={(src) => {
@@ -716,7 +717,13 @@ export function TestPlay({
               }}
             />
             <ChoiceList choices={view.choices} onChoose={choose} />
-            {view.afterText && <SceneText className="prose" markdown={view.afterText} />}
+            {view.afterText && (
+              <SceneText
+                key={`after-text:${run.state.scene}:${run.state.ellapsed_scene}`}
+                className="prose"
+                markdown={view.afterText}
+              />
+            )}
           </div>
           <details className="pg-play-status card">
             <summary>状態</summary>
