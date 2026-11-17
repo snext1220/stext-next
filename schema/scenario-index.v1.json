@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "description": "シナリオ ID。scenarios/<id>/scenario.json の <id> と一致させます。"
+      },
+      "title": {
+        "type": "string",
+        "description": "書庫に表示するタイトル。"
+      },
+      "author": {
+        "description": "作者名。",
+        "type": "string"
+      },
+      "v2": {
+        "description": "true の場合、書庫に NText 対応マークを表示します。",
+        "type": "boolean"
+      },
+      "listed": {
+        "type": "boolean",
+        "description": "true の場合に書庫の候補になります。"
+      },
+      "series": {
+        "description": "シリーズ名。",
+        "type": "string"
+      },
+      "tags": {
+        "description": "分類。",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "published": {
+        "description": "公開日。YYYY-MM-DD 形式を推奨します。",
+        "type": "string"
+      },
+      "updated": {
+        "description": "更新日。YYYY-MM-DD 形式を推奨します。",
+        "type": "string"
+      },
+      "level": {
+        "description": "難易度。1～5 の整数です。",
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+      },
+      "comment": {
+        "description": "書庫に表示する紹介文。",
+        "type": "string"
+      },
+      "scenes": {
+        "type": "number",
+        "description": "シナリオのシーン数。"
+      },
+      "results": {
+        "type": "number",
+        "description": "シナリオの実績数。"
+      },
+      "clears": {
+        "description": "いずれかを獲得するとクリアとみなす実績 ID。",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "unpublished": {
+        "description": "true の場合、公開前として書庫に表示しません。",
+        "type": "boolean"
+      },
+      "quest": {
+        "description": "感想アンケートの Google フォーム ID。",
+        "type": "string"
+      },
+      "prologue": {
+        "description": "書庫の詳細に表示するプロローグ。",
+        "type": "string"
+      },
+      "bgm": {
+        "description": "使用する共通 BGM 名。@ は付けません。",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "id",
+      "title",
+      "listed",
+      "scenes",
+      "results"
+    ],
+    "additionalProperties": false
+  }
+}

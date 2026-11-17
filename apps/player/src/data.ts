@@ -1,33 +1,8 @@
-import { validateScenario, type Scenario } from '@stext/schema';
+import { validateScenario, type Scenario, type ScenarioIndexEntry } from '@stext/schema';
 import { SCENARIO_BASE } from './config.js';
 
 /** scenarios/index.json の一件 */
-export interface ScenarioEntry {
-  id: string;
-  title: string;
-  author?: string;
-  /** stext/2 対応済み */
-  v2?: boolean;
-  listed: boolean;
-  series?: string;
-  tags?: string[];
-  published?: string;
-  updated?: string;
-  level?: number;
-  comment?: string;
-  scenes: number;
-  results: number;
-  /** どれかを獲得していればクリアとみなす実績 */
-  clears?: string[];
-  /** 公開前 */
-  unpublished?: boolean;
-  /** 感想アンケート（Google フォーム）の ID */
-  quest?: string;
-  /** 書庫の詳細に出すプロローグ（Markdown） */
-  prologue?: string;
-  /** 使っている共通 BGM（@ を除いた名前。音楽室で使う） */
-  bgm?: string[];
-}
+export type ScenarioEntry = ScenarioIndexEntry;
 
 let indexPromise: Promise<ScenarioEntry[]> | undefined;
 const scenarioCache = new Map<string, Promise<Scenario>>();

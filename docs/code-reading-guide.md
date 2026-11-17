@@ -137,6 +137,8 @@ if (r.kind === 'moved') ({ state, global } = r);  // 新しい状態を受け取
   - `validateScenario`：構造が正しいか（zod）
   - `checkScenario`（[check.ts](../packages/schema/src/check.ts)）：遷移先があるか、条件が読めるかなどの整合性
 
+書庫一覧の型と JSON Schema は [scenario-index.ts](../packages/schema/src/scenario-index.ts) から生成します。[`scenarios/index.json`](../scenarios/index.json) の編集時は JSON Schema で項目を補完・検査できます。
+
 ### 3.4 条件式は AST が正式、文字列も受け付ける
 
 選択肢の `if` は、AST（`{ all: [{ flag: 'f01' }, ...] }`）と文字列（旧記法）の両方を受け付けます。
@@ -289,7 +291,7 @@ React の部品と [styles.css](../packages/ui/src/styles.css)（デザイント
 | `difftest.mjs` | 旧エンジンとの差分テスト（Chromium と playwright が必要） |
 | `e2e-player.mjs`、`e2e-playground.mjs` | ブラウザでの一通りの操作確認 |
 | `import-legacy-assets.mjs`、`import-playground-templates.mjs` | 旧リポジトリから素材・テンプレートを取り込む |
-| `write-json-schema.mjs` | `schema/scenario.v2.json` を作る |
+| `write-json-schema.mjs` | `schema/scenario.v2.json` と `schema/scenario-index.v1.json` を作る |
 
 ---
 

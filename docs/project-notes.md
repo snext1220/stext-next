@@ -23,6 +23,7 @@
   - Playgroundのマニュアル：https://snext1220.github.io/stext-next/manual/playground.html
   - デザインプロトタイプ：https://snext1220.github.io/stext-next/prototype/design/index.html
   - JSON Schema：https://snext1220.github.io/stext-next/schema/scenario.v2.json
+  - 書庫一覧 JSON Schema：https://snext1220.github.io/stext-next/schema/scenario-index.v1.json
 
 ---
 
@@ -84,7 +85,7 @@
 
 | パス | パッケージ | 動作環境 | 役割 |
 |---|---|---|---|
-| `packages/schema` | `@stext/schema` | Universal | stext/2 の zod スキーマ・型・条件パーサ、`validateScenario`、`checkScenario`、`SCENARIO_FORMAT` |
+| `packages/schema` | `@stext/schema` | Universal | stext/2・書庫一覧の zod スキーマ・型・条件パーサ、`validateScenario`、`checkScenario`、`SCENARIO_FORMAT` |
 | `packages/core` | `@stext/core` | Universal | ゲームエンジン `createEngine`（start、newCharacter、begin、view、choose、enterScene、castMagic、useItem、setParam、sceneText、effectContext、paramValue）。旧エンジンと互換の GameState / GlobalState（localStorage のキーはシナリオ ID と `sorcerian_text`）、playerRank |
 | `packages/convert` | `@stext/convert` | Universal | `convertScenarioXml`、`convertPlaygroundJson`（旧 Playground の `edges` 形式） |
 | `packages/cli` | `@stext/cli` | Node | `stext` コマンド（convert-all、play など） |

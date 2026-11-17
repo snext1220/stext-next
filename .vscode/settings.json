@@ -1,0 +1,8 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/scenarios/index.json"],
+      "url": "./schema/scenario-index.v1.json"
+    }
+  ]
+}

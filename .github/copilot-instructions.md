@@ -21,7 +21,7 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 
 | パス               | パッケージ          | 動作環境  | 役割                                                                                                             |
 | ------------------ | ------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
-| `packages/schema`  | `@stext/schema`     | Universal | stext/2 の zod スキーマ・型・条件パーサ、`validateScenario`、`checkScenario`                                     |
+| `packages/schema`  | `@stext/schema`     | Universal | stext/2・書庫一覧の zod スキーマ・型・条件パーサ、`validateScenario`、`checkScenario`                             |
 | `packages/core`    | `@stext/core`       | Universal | ゲームエンジン `createEngine`、旧エンジン互換の GameState / GlobalState                                          |
 | `packages/convert` | `@stext/convert`    | Universal | 旧形式（scenario.xml / 旧 Playground JSON）からの変換                                                            |
 | `packages/cli`     | `@stext/cli`        | Node      | `stext` コマンド（convert、convert-all、validate、play）                                                         |
@@ -76,6 +76,7 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 - 本文はプレイヤーに見える表示名を使い、自動で適用される効果は結果として記述する。戦闘欄の判定は自動適用ではなく操作が必要なため、必要な操作・回数・順序を残す。
 - バッドエンドを追加するときは、危険を予告し、極力それぞれに実績を付ける。数値調整は複数の能力値やダイスで実際の損耗・失敗率を検証する。
 - シナリオの分析・改善手順は [scenario-improvement スキル](./skills/scenario-improvement/SKILL.md) を参照する。
+- 書庫一覧への新規登録は [scenario-index-entry スキル](./skills/scenario-index-entry/SKILL.md) を参照する。
 
 ## 生成物
 
@@ -84,6 +85,7 @@ npm workspaces のモノレポ（`packages/*`、`apps/*`）。Node 22 以上。
 | 生成物                                              | 更新方法                                       | いつ                                                                           |
 | --------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------ |
 | `schema/scenario.v2.json`                           | `npm run build` のあとに `npm run schema`      | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗する） |
+| `schema/scenario-index.v1.json`                    | `npm run build` のあとに `npm run schema`      | `packages/schema/src/scenario-index.ts` を変えたとき（古いままだとテストが失敗する） |
 | `assets/common/`、`scenarios/<id>/capture/`・`bgm/` | `node scripts/import-legacy-assets.mjs`        | 旧リポジトリの素材を取り込み直すとき（`../stext` が必要）                      |
 | `assets/site/`                                      | `node scripts/import-site-images.mjs`          | 旧サイトの画像（案内・投稿・フッターで使う）を取り込み直すとき                 |
 | `apps/playground/public/templates/`                 | `node scripts/import-playground-templates.mjs` | 旧 Playground のテンプレートを取り込み直すとき                                 |

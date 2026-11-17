@@ -75,7 +75,7 @@ CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への p
 
 | パス              | パッケージ       | 動作環境  | 役割                                             |
 | ----------------- | ---------------- | --------- | ------------------------------------------------ |
-| `packages/schema` | `@stext/schema`  | Universal | シナリオ JSON（stext/2）のスキーマ・型・条件パーサ |
+| `packages/schema` | `@stext/schema`  | Universal | シナリオ JSON（stext/2）・書庫一覧 JSON のスキーマと型、条件パーサ |
 | `packages/core`   | `@stext/core`    | Universal | ゲームエンジン                                   |
 | `packages/convert`| `@stext/convert` | Universal | 旧形式（scenario.xml / Playground JSON）からの変換 |
 | `packages/cli`    | `@stext/cli`     | Node      | `stext` コマンド                                 |
@@ -128,13 +128,14 @@ node packages/cli/dist/bin.js --help
 
 `scenarios/index.json` の `v2: true` は、書庫でシナリオにNT勲章アイコンを表示するフラグです。NText向けに対応済みのシナリオにだけ設定します。書庫では「NT勲章は、NText向けに対応したシナリオの目印です。」を折り畳みパネルのタイトルとして常時表示し、開くとNT純正シナリオの定義と、純正マークのないシナリオでもNTextは動作することを説明します。
 
-シナリオ形式の詳細は [scenario-format.md](scenario-format.md)、エンジンの使い方は [engine.md](engine.md) を参照してください。
+シナリオ形式の詳細は [scenario-format.md](scenario-format.md)、書庫一覧の項目は [scenario-index-format.md](scenario-index-format.md)、エンジンの使い方は [engine.md](engine.md) を参照してください。
 
 ## 生成物の更新
 
 | 生成物 | 更新方法 | いつ |
 | --- | --- | --- |
 | `schema/scenario.v2.json` | `npm run build && npm run schema` | `packages/schema/src/scenario.ts` を変えたとき（古いままだとテストが失敗します） |
+| `schema/scenario-index.v1.json` | `npm run build && npm run schema` | `packages/schema/src/scenario-index.ts` を変えたとき（古いままだとテストが失敗します） |
 | `assets/common/`、`scenarios/<id>/capture/`・`bgm/`・`chara/` | `node scripts/import-legacy-assets.mjs` | 旧リポジトリの画像・BGM を取り込み直すとき（`../stext` に clone しておきます）。`scenario.json` と `assets/site/` は消しません |
 | `assets/site/` | `node scripts/import-site-images.mjs` | 旧サイト（https://www.web-deli.com/sorcerian/text/）の画像を取り込み直すとき。取り込む画像はスクリプトの一覧に書きます |
 
@@ -240,6 +241,7 @@ Playground のヘルプ（各欄の「?」や項目名のダブルクリック�
 | `/stext-next/manual/playground.html` | Playgroundのマニュアル（`docs/manual-playground.md` から生成） |
 | `/stext-next/prototype/design/index.html` | デザインプロトタイプ（これまでと同じ URL） |
 | `/stext-next/schema/scenario.v2.json` | シナリオの JSON Schema（各シナリオの `$schema` が指す URL） |
+| `/stext-next/schema/scenario-index.v1.json` | 書庫一覧の JSON Schema（VS Code のワークスペース設定から参照） |
 
 マニュアルの画像は `docs/image/`、スタイルは `docs/manual.css` を使います。本文は `marked` で HTML に変換し、プレイヤーと同じビルド済みスタイルを読み込んで羊皮紙の画面に近い見た目で公開します。
 
