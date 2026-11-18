@@ -2033,6 +2033,12 @@ span.level {
   padding-block: 8px;
   border-bottom: 1px solid var(--page-edge);
 }
+.scene-dice-scope--end-visible .battle-dice.sticky {
+  position: static;
+}
+.scene-dice-scope-end {
+  height: 1px;
+}
 .battle-dice .dice {
   flex-wrap: wrap;
   min-width: 0;

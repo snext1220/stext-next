@@ -12,6 +12,7 @@ import {
   BattlePanel,
   ChoiceList,
   HeroPanel,
+  SceneDiceScope,
   SceneText,
   createCookieRandomCache,
   type BattleFeedback,
@@ -436,6 +437,79 @@ export function TestPlay({
     setError(null);
   };
 
+  const sceneDiceOnly = Boolean(view && view.enemies.length === 0 && view.dice);
+  const battlePanel =
+    run && view ? (
+      <BattlePanel
+        key={`${run.state.scene}:${run.state.ellapsed_scene}:${battleResetId}`}
+        engine={engine}
+        scenario={scenario}
+        state={run.state}
+        global={run.global}
+        view={view}
+        onStateChange={(state, events, feedback) => {
+          setRun({
+            ...run,
+            state,
+            log: [
+              ...(feedback?.notice ? [feedback.notice.message] : []),
+              ...describe(events),
+              ...run.log,
+            ].slice(0, 30),
+          });
+          if (feedback) handleBattleFeedback(feedback);
+        }}
+        onFeedback={handleBattleFeedback}
+        resolveImage={(src) => {
+          const path = src.startsWith('capture/') ? src : `capture/${src}`;
+          return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
+        }}
+      />
+    ) : null;
+  const sceneBody =
+    run && view ? (
+      <>
+        <SceneText
+          key={`scene-body:${run.state.scene}:${run.state.ellapsed_scene}`}
+          className="prose"
+          markdown={view.markdown}
+          resolveImage={(src) => {
+            const path = src.startsWith('capture/') ? src : `capture/${src}`;
+            return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
+          }}
+        />
+        {musicUrl && <audio ref={bgmRef} loop preload="none" src={musicUrl} />}
+        {bgmAudio.message && (
+          <p className="pg-hint" role="status">
+            {bgmAudio.message}
+          </p>
+        )}
+        {groupMode && (
+          <p className="pg-hint" role="status">
+            現在のBGM：{music === '@none' ? '無音' : music}（
+            {
+              {
+                scene: 'シーンの指定',
+                group: '所属グループの指定',
+                main: 'シナリオの通常曲',
+                ending: 'シナリオの終了曲',
+                implicit: '既定のファイル名',
+                legacy: '従来の再生状態',
+              }[view.bgmSource]
+            }
+            ）
+          </p>
+        )}
+        {soundUrl && <audio ref={seRef} preload="none" src={soundUrl} />}
+        {battleSoundUrl && <audio ref={battleSeRef} preload="none" src={battleSoundUrl} />}
+        {(seAudio.message ?? battleSeAudio.message) && (
+          <p className="pg-hint" role="status">
+            {seAudio.message ?? battleSeAudio.message}
+          </p>
+        )}
+      </>
+    ) : null;
+
   return (
     <div
       ref={playRef}
@@ -653,69 +727,19 @@ export function TestPlay({
                 {scenario.meta.showSummary && view.summary ? view.summary : view.id}
               </span>
             </div>
-            <SceneText
-              key={`scene-body:${run.state.scene}:${run.state.ellapsed_scene}`}
-              className="prose"
-              markdown={view.markdown}
-              resolveImage={(src) => {
-                const path = src.startsWith('capture/') ? src : `capture/${src}`;
-                return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
-              }}
-            />
-            {musicUrl && <audio ref={bgmRef} loop preload="none" src={musicUrl} />}
-            {bgmAudio.message && (
-              <p className="pg-hint" role="status">
-                {bgmAudio.message}
-              </p>
+            {sceneDiceOnly ? (
+              <SceneDiceScope
+                key={`scene-dice-scope:${run.state.scene}:${run.state.ellapsed_scene}:${battleResetId}`}
+              >
+                {battlePanel}
+                {sceneBody}
+              </SceneDiceScope>
+            ) : (
+              <>
+                {sceneBody}
+                {battlePanel}
+              </>
             )}
-            {groupMode && (
-              <p className="pg-hint" role="status">
-                現在のBGM：{music === '@none' ? '無音' : music}（
-                {
-                  {
-                    scene: 'シーンの指定',
-                    group: '所属グループの指定',
-                    main: 'シナリオの通常曲',
-                    ending: 'シナリオの終了曲',
-                    implicit: '既定のファイル名',
-                    legacy: '従来の再生状態',
-                  }[view.bgmSource]
-                }
-                ）
-              </p>
-            )}
-            {soundUrl && <audio ref={seRef} preload="none" src={soundUrl} />}
-            {battleSoundUrl && <audio ref={battleSeRef} preload="none" src={battleSoundUrl} />}
-            {(seAudio.message ?? battleSeAudio.message) && (
-              <p className="pg-hint" role="status">
-                {seAudio.message ?? battleSeAudio.message}
-              </p>
-            )}
-            <BattlePanel
-              key={`${run.state.scene}:${run.state.ellapsed_scene}:${battleResetId}`}
-              engine={engine}
-              scenario={scenario}
-              state={run.state}
-              global={run.global}
-              view={view}
-              onStateChange={(state, events, feedback) => {
-                setRun({
-                  ...run,
-                  state,
-                  log: [
-                    ...(feedback?.notice ? [feedback.notice.message] : []),
-                    ...describe(events),
-                    ...run.log,
-                  ].slice(0, 30),
-                });
-                if (feedback) handleBattleFeedback(feedback);
-              }}
-              onFeedback={handleBattleFeedback}
-              resolveImage={(src) => {
-                const path = src.startsWith('capture/') ? src : `capture/${src}`;
-                return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
-              }}
-            />
             <ChoiceList choices={view.choices} onChoose={choose} />
             {view.afterText && (
               <SceneText

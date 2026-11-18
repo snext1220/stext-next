@@ -166,7 +166,7 @@ describe('TestPlay', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const diceScenario: Scenario = {
       ...scenario,
-      scenes: [{ id: '0', text: '渡河', dice: '8:2', choices: [] }],
+      scenes: [{ id: '0', text: '渡河', dice: '8:2', choices: [{ label: '次へ', to: ['0'] }] }],
     };
     const onRunChange = vi.fn<(run: PreviewRun) => void>();
     render(<TestPlay {...playProps(diceScenario)} onRunChange={onRunChange} resourceUrls={{}} />);
@@ -177,6 +177,10 @@ describe('TestPlay', () => {
     expect(screen.queryByLabelText('ダメージ倍率')).toBeNull();
     expect(screen.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
     expect(screen.queryByRole('region', { name: /敵：/ })).toBeNull();
+    const scope = document.querySelector('.scene-dice-scope');
+    expect(scope?.querySelector('.battle-dice.sticky')).toBeTruthy();
+    expect(scope?.textContent).toContain('渡河');
+    expect(scope?.contains(screen.getByRole('button', { name: /次へ/ }))).toBe(false);
 
     const callsBeforeReroll = onRunChange.mock.calls.length;
     const stateBeforeReroll = onRunChange.mock.lastCall?.[0].state;
@@ -189,6 +193,7 @@ describe('TestPlay', () => {
     render(<TestPlay {...playProps(scenario)} />);
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
     expect(screen.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
+    expect(document.querySelector('.scene-dice-scope')).toBeNull();
   });
 
   it('supports combat actions without saving preview results', () => {

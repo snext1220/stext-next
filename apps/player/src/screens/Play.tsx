@@ -15,6 +15,7 @@ import {
   MagicPanel,
   Parchment,
   RecordPanel,
+  SceneDiceScope,
   SceneText,
   StatusEditor,
   Toasts,
@@ -273,6 +274,33 @@ export function Play({
           : null;
 
   const shareUrl = shareLink(view.tweet ?? scenario.meta.description ?? DEFAULT_SHARE_TEXT);
+  const sceneDiceOnly = view.enemies.length === 0 && Boolean(view.dice);
+  const sceneBody = (
+    <SceneText
+      key={`${sceneKey}:body`}
+      className="prose"
+      markdown={view.markdown}
+      resolveImage={resolveImage}
+      onParamChange={onParamChange}
+    />
+  );
+  const battlePanel = (
+    <BattlePanel
+      key={sceneKey}
+      engine={engine}
+      scenario={scenario}
+      state={state}
+      global={global}
+      view={view}
+      onStateChange={(next, events, feedback) => {
+        setState(next);
+        showEvents(events);
+        if (feedback) handleBattleFeedback(feedback);
+      }}
+      onFeedback={handleBattleFeedback}
+      resolveImage={resolveImage}
+    />
+  );
 
   const panelBody = (t: PanelTab) =>
     t === 'magic' ? (
@@ -366,28 +394,17 @@ export function Play({
         <button type="button" className="chip-btn" onClick={() => setSaveDialog(true)}>
           セーブ／ロード
         </button>
-        <SceneText
-          key={`${sceneKey}:body`}
-          className="prose"
-          markdown={view.markdown}
-          resolveImage={resolveImage}
-          onParamChange={onParamChange}
-        />
-        <BattlePanel
-          key={sceneKey}
-          engine={engine}
-          scenario={scenario}
-          state={state}
-          global={global}
-          view={view}
-          onStateChange={(next, events, feedback) => {
-            setState(next);
-            showEvents(events);
-            if (feedback) handleBattleFeedback(feedback);
-          }}
-          onFeedback={handleBattleFeedback}
-          resolveImage={resolveImage}
-        />
+        {sceneDiceOnly ? (
+          <SceneDiceScope key={`${sceneKey}:dice-scope`}>
+            {battlePanel}
+            {sceneBody}
+          </SceneDiceScope>
+        ) : (
+          <>
+            {sceneBody}
+            {battlePanel}
+          </>
+        )}
         <div className="rule" aria-hidden="true">
           <svg viewBox="0 0 20 20">
             <path d="M10 1 12.4 7.6 19 10 12.4 12.4 10 19 7.6 12.4 1 10 7.6 7.6z" />

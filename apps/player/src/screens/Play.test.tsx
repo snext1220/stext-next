@@ -192,7 +192,7 @@ describe('scene scrolling', () => {
     const diceScenario: Scenario = {
       ...scenario,
       meta: { id: 'dice-only', title: 'Dice only' },
-      scenes: [{ id: '0', text: '渡河', dice: '8:2', choices: [] }],
+      scenes: [{ id: '0', text: '渡河', dice: '8:2', choices: [{ label: '次へ', to: ['0'] }] }],
     };
     const global = emptyGlobalState();
     const { state } = createEngine(diceScenario).start(global);
@@ -213,6 +213,10 @@ describe('scene scrolling', () => {
     expect(screen.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
     expect(screen.queryByLabelText('ダメージ倍率')).toBeNull();
     expect(screen.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
+    const scope = document.querySelector('.scene-dice-scope');
+    expect(scope?.querySelector('.battle-dice.sticky')).toBeTruthy();
+    expect(scope?.textContent).toContain('渡河');
+    expect(scope?.contains(screen.getByRole('button', { name: /次へ/ }))).toBe(false);
   });
 
   it('refuses a missing scene without replacing the current autosave', async () => {
