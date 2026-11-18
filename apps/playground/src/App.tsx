@@ -160,6 +160,25 @@ export function App() {
       );
   }, []);
 
+  useEffect(() => {
+    if (tab === 'play') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Backspace' || e.defaultPrevented) return;
+      const target = e.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+        const acceptsText =
+          target instanceof HTMLTextAreaElement ||
+          /^(text|search|url|tel|email|password|number)$/.test(target.type);
+        if (acceptsText && !target.readOnly && !target.matches(':disabled')) return;
+      } else if (target instanceof HTMLElement && target.isContentEditable) {
+        return;
+      }
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tab]);
+
   // Ctrl+Z / Ctrl+Shift+Z（入力欄の中では、ブラウザの取り消しに任せる）
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

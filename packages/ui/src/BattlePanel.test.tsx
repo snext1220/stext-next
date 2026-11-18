@@ -150,3 +150,60 @@ describe('battle card folding', () => {
     expect(second.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(true);
   });
 });
+
+describe('scene rules', () => {
+  it('shows a referenced rule without showing battle controls in a non-battle scene', () => {
+    const ruleScenario: Scenario = {
+      ...scenario,
+      scenes: [
+        { id: '0', text: '通常の場面', rule: '1100', choices: [] },
+        { id: '1100', text: '参照先のルール', choices: [] },
+      ],
+    };
+    const engine = createEngine(ruleScenario);
+    const global = emptyGlobalState();
+    const { state } = engine.start(global);
+
+    render(
+      <BattlePanel
+        engine={engine}
+        scenario={ruleScenario}
+        state={state}
+        global={global}
+        view={engine.view(state, global)}
+        onStateChange={vi.fn()}
+        onFeedback={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('参照先のルール')).toBeTruthy();
+    expect(screen.getByText('このシーンのルール')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
+  });
+});
+
+describe('non-battle dice', () => {
+  it('keeps the dice controls floating in a non-battle scene', () => {
+    const diceScenario: Scenario = {
+      ...scenario,
+      scenes: [{ id: '0', text: 'ダイスを使う場面', dice: '6:3', choices: [] }],
+    };
+    const engine = createEngine(diceScenario);
+    const global = emptyGlobalState();
+    const { state } = engine.start(global);
+    const { container } = render(
+      <BattlePanel
+        engine={engine}
+        scenario={diceScenario}
+        state={state}
+        global={global}
+        view={engine.view(state, global)}
+        onStateChange={vi.fn()}
+        onFeedback={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('.battle-dice')?.classList.contains('sticky')).toBe(true);
+    expect(screen.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
+  });
+});

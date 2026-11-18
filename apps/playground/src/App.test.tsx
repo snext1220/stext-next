@@ -1,5 +1,13 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  createEvent,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { emptyScenario } from './model.js';
@@ -58,6 +66,58 @@ async function seedProjects(scenarios: unknown[]) {
     };
   });
 }
+
+it('prevents Backspace navigation only outside editable fields in the editor', async () => {
+  await seedProjects([emptyScenario('編集中の作品')]);
+  const { App } = await import('./App.js');
+  render(<App />);
+  const title = await screen.findByDisplayValue<HTMLInputElement>('編集中の作品');
+  const body = screen.getByLabelText('本文');
+  const workButton = screen.getByRole('button', { name: '作品…' });
+  const keyIsPrevented = (target: HTMLElement, key = 'Backspace') => {
+    target.focus();
+    const event = createEvent.keyDown(target, { key });
+    fireEvent(target, event);
+    return event.defaultPrevented;
+  };
+
+  expect(keyIsPrevented(document.body)).toBe(true);
+  expect(keyIsPrevented(workButton)).toBe(true);
+  expect(keyIsPrevented(workButton, 'ArrowLeft')).toBe(false);
+  expect(keyIsPrevented(title)).toBe(false);
+  expect(keyIsPrevented(body)).toBe(false);
+  title.readOnly = true;
+  expect(keyIsPrevented(title)).toBe(true);
+  title.readOnly = false;
+
+  fireEvent.click(screen.getByRole('tab', { name: '試遊' }));
+  expect(keyIsPrevented(document.body)).toBe(false);
+  fireEvent.click(screen.getByRole('tab', { name: 'シーン' }));
+  expect(keyIsPrevented(document.body)).toBe(true);
+});
+
+it('keeps the editor open while either group boundary is cleared and re-entered', async () => {
+  await seedProjects([emptyScenario('グループを編集中')]);
+  const { App } = await import('./App.js');
+  render(<App />);
+  await screen.findByDisplayValue('グループを編集中');
+  fireEvent.click(screen.getByRole('tab', { name: '定義' }));
+  fireEvent.click(screen.getByRole('tab', { name: /^グループ/ }));
+  const add = screen.getByRole('button', { name: /グループを追加/ });
+  fireEvent.click(add);
+  fireEvent.click(add);
+  const sceneSelect = screen.getByRole('combobox', { name: '編集するシーン' });
+  for (const boundary of ['最初のシーン', '最後のシーン']) {
+    const field = screen.getByRole<HTMLInputElement>('textbox', { name: `${boundary}（2行目）` });
+    expect(field.value).toBe('0');
+    fireEvent.change(field, { target: { value: '' } });
+    expect(field.isConnected).toBe(true);
+    expect(field.value).toBe('');
+    expect(sceneSelect.querySelectorAll('optgroup')).toHaveLength(1);
+    fireEvent.change(field, { target: { value: '0' } });
+    expect(sceneSelect.querySelectorAll('optgroup')).toHaveLength(2);
+  }
+});
 
 it('opens an unfinished saved work, reports problems, and allows correction before test play', async () => {
   await seedProjects([

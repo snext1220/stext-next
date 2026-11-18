@@ -150,6 +150,14 @@ export function BattlePanel({
   const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasEnemies = battle.enemies.length > 0;
   const sceneDiceOnly = !hasEnemies && Boolean(view.dice);
+  const hasBattleControls = hasEnemies || Boolean(view.dice);
+  const ruleText = view.rule ? engine.sceneText(state, global, view.rule) : '';
+  const ruleBox = ruleText ? (
+    <details className="rule-box">
+      <summary>{hasEnemies ? 'この戦闘のルール' : 'このシーンのルール'}</summary>
+      <SceneText className="prose" markdown={ruleText} resolveImage={resolveImage} />
+    </details>
+  ) : null;
 
   useEffect(
     () => () => {
@@ -158,7 +166,7 @@ export function BattlePanel({
     [],
   );
 
-  if (!hasEnemies && !view.dice) return null;
+  if (!hasBattleControls) return ruleBox;
 
   const roll = () => {
     if (rollTimer.current !== null) clearTimeout(rollTimer.current);
@@ -228,8 +236,6 @@ export function BattlePanel({
       notice: { kind: 'item', title: '戦利品', message: `${target.drop.name}を手に入れた。` },
     });
   };
-
-  const ruleText = view.rule ? engine.sceneText(state, global, view.rule) : '';
 
   const diceControls = (
     <div className={`battle-controls battle-dice${hasEnemies || sceneDiceOnly ? ' sticky' : ''}`}>
@@ -303,12 +309,7 @@ export function BattlePanel({
 
   return (
     <>
-      {hasEnemies && ruleText && (
-        <details className="rule-box">
-          <summary>この戦闘のルール</summary>
-          <SceneText className="prose" markdown={ruleText} resolveImage={resolveImage} />
-        </details>
-      )}
+      {ruleBox}
       {hasEnemies ? (
         <div className="battle-sheet">
           {diceControls}

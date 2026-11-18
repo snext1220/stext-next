@@ -13,6 +13,8 @@ interface Column {
   label: string;
   /** 数値として保存する */
   number?: boolean;
+  /** 下書きでは必須の文字列なので、空欄でもキーを削除しない */
+  keepEmpty?: boolean;
   /** チェックボックス */
   boolean?: boolean;
   placeholder?: string;
@@ -159,9 +161,9 @@ export const TABLES: Record<
   groups: {
     label: 'グループ',
     columns: [
-      { key: 'title', label: '名前', width: 'm' },
-      { key: 'start', label: '最初のシーン' },
-      { key: 'end', label: '最後のシーン' },
+      { key: 'title', label: '名前', width: 'm', keepEmpty: true },
+      { key: 'start', label: '最初のシーン', keepEmpty: true },
+      { key: 'end', label: '最後のシーン', keepEmpty: true },
       { key: 'bgm', label: 'BGM', width: 'm' },
       { key: 'rule', label: '戦闘ルールのシーン' },
     ],
@@ -255,7 +257,7 @@ function Table({
     if (col.boolean) {
       if (raw) row[col.key] = true;
       else delete row[col.key];
-    } else if (raw === '') delete row[col.key];
+    } else if (raw === '' && !col.keepEmpty) delete row[col.key];
     else if (
       col.number ||
       (col.key === 'initial' && /^-?\d+$/.test(String(raw))) ||

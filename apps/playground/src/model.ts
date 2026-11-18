@@ -43,7 +43,9 @@ export function sceneSelectionGroups(s: Scenario): { title: string; scenes: Scen
   };
   const scenes = [...s.scenes].sort((a, b) => compareIds(a.id, b.id));
   const assigned = new Set<string>();
-  const groups = [...s.groups]
+  const isValidBound = (id: string) => /^-?\d+$/.test(id) && Number.isSafeInteger(Number(id));
+  const groups = s.groups
+    .filter(({ start, end }) => isValidBound(start) && isValidBound(end))
     .sort((a, b) => compareIds(a.start, b.start))
     .map((group) => ({
       title: group.title,
