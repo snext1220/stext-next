@@ -133,6 +133,11 @@ describe('gods feature demonstrations', () => {
 
   it('lets the player defeat the guardian and claim its item from the battle sheet', () => {
     renderGods('305');
+    const controls = within(screen.getByRole('region', { name: 'シーン操作' }));
+    expect(controls.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
+    expect(
+      within(screen.getByRole('article')).queryByRole('button', { name: '攻撃する' }),
+    ).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '攻撃する' }));
     expect(screen.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: '戦利品：旅人の薬草' }));
@@ -143,6 +148,46 @@ describe('gods feature demonstrations', () => {
 });
 
 describe('scene scrolling', () => {
+  it('moves the inn 5100 controls into a single persistent action tab', () => {
+    const data: unknown = JSON.parse(readFileSync(resolve('scenarios/inn/scenario.json'), 'utf8'));
+    const checked = validateScenario(data);
+    if (!checked.ok) throw new Error(JSON.stringify(checked.issues));
+    const global = emptyGlobalState();
+    const engine = createEngine(checked.scenario);
+    const initial = engine.start(global);
+    const entered = engine.enterScene(initial.state, initial.global, '5100');
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    render(
+      <Play
+        id="inn"
+        scenario={checked.scenario}
+        initial={entered.state}
+        global={entered.global}
+        onGlobal={vi.fn()}
+        audio={new AudioDirector(false)}
+        settings={{ theme: 'system', fontSize: 'medium', fontFamily: 'mincho' }}
+        onSettings={vi.fn()}
+      />,
+    );
+    const article = within(screen.getByRole('article'));
+    expect(article.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
+    expect(article.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
+    const action = within(screen.getByRole('region', { name: 'シーン操作' }));
+    expect(action.getByRole('button', { name: '敵の攻撃' })).toBeTruthy();
+    const memo = action.getByRole<HTMLInputElement>('textbox', { name: 'シーン内メモ' });
+    expect(memo.value).toBe('0');
+    fireEvent.change(memo, { target: { value: '7' } });
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    fireEvent.click(action.getByRole('button', { name: 'ダイスを振る' }));
+    expect(action.getByText('合計 2')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: '魔法' }));
+    fireEvent.click(article.getByRole('button', { name: 'シーン操作で入力' }));
+    expect(document.activeElement).toBe(memo);
+    expect(memo.value).toBe('7');
+    expect(action.getByText('合計 2')).toBeTruthy();
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
   it('edits non-parameter input as a scene-local memo', () => {
     const memoScenario: Scenario = {
       ...scenario,
@@ -213,10 +258,11 @@ describe('scene scrolling', () => {
     expect(screen.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
     expect(screen.queryByLabelText('ダメージ倍率')).toBeNull();
     expect(screen.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
-    const scope = document.querySelector('.scene-dice-scope');
-    expect(scope?.querySelector('.battle-dice.sticky')).toBeTruthy();
-    expect(scope?.textContent).toContain('渡河');
-    expect(scope?.contains(screen.getByRole('button', { name: /次へ/ }))).toBe(false);
+    const controls = within(screen.getByRole('region', { name: 'シーン操作' }));
+    expect(controls.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
+    const article = within(screen.getByRole('article'));
+    expect(article.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
+    expect(article.getByRole('button', { name: /次へ/ })).toBeTruthy();
   });
 
   it('refuses a missing scene without replacing the current autosave', async () => {

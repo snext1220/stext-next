@@ -646,6 +646,12 @@ h3 {
   border-radius: 8px;
   overflow: hidden;
 }
+.tabs.tabs-five,
+.mtabs.tabs-five {
+  grid-template-columns: repeat(5, minmax(max-content, 1fr));
+  overflow-x: auto;
+  white-space: nowrap;
+}
 .tabs button {
   background: transparent;
   border: 0;
@@ -2042,6 +2048,67 @@ span.level {
 .battle-dice .dice {
   flex-wrap: wrap;
   min-width: 0;
+}
+.scene-action-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 2px 4px;
+}
+.scene-action-scroll .battle-dice.sticky {
+  top: 0;
+  background: var(--desk-2);
+}
+.scene-action-inputs {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.scene-action-inputs label {
+  display: block;
+}
+.scene-action-notice:not(:empty) {
+  flex-basis: 100%;
+}
+.player-action-card {
+  display: grid;
+  min-width: 0;
+  max-height: calc(100dvh - var(--battle-sticky-top, 72px) - 72px);
+}
+.player-action-card[data-selected='false'],
+.action-sheet-tabs {
+  display: none;
+}
+@media (min-width: 901px) {
+  .play > .sheet-backdrop {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  html:has(.play > .panel[data-action-sheet='true']) {
+    overflow: hidden;
+  }
+  .play > .panel[data-action-sheet='true'] {
+    display: block;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 41;
+  }
+  .panel[data-action-sheet='true'] .desktop-panel-tabs,
+  .panel[data-action-sheet='true'] .desktop-panel-content {
+    display: none;
+  }
+  .panel[data-action-sheet='true'] .player-action-card {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    max-height: 76dvh;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+  .action-sheet-tabs {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
 }
 .enemy-details {
   display: grid;

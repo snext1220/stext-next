@@ -162,6 +162,36 @@ afterEach(() => {
 });
 
 describe('TestPlay', () => {
+  it('moves visible inputs into the action tab and keeps their separate values while switching tabs', () => {
+    const playable: Scenario = {
+      ...stateScenario,
+      scenes: [
+        {
+          id: '0',
+          text: '${input?0} / ${input?0} / ${input?p01} / %secret%${input?1}%/%',
+          dice: '6:2',
+          choices: [],
+        },
+      ],
+    };
+    const onRunChange = vi.fn<(run: PreviewRun) => void>();
+    render(<TestPlay {...playProps(playable)} onRunChange={onRunChange} />);
+    fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
+    const panel = within(screen.getByRole('region', { name: '試遊の状態と操作' }));
+    const [first, second, param] = panel.getAllByRole<HTMLInputElement>('textbox');
+    expect(screen.getAllByRole('button', { name: 'シーン操作で入力' })).toHaveLength(3);
+    fireEvent.change(first!, { target: { value: '5' } });
+    fireEvent.change(param!, { target: { value: '8' } });
+    expect(second?.value).toBe('0');
+    expect(onRunChange.mock.lastCall?.[0].state.params['p01']).toBe(8);
+    fireEvent.click(panel.getByRole('tab', { name: '状態' }));
+    expect(panel.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: 'シーン操作で入力' })[1]!);
+    expect(document.activeElement).toBe(second);
+    expect(first?.value).toBe('5');
+    expect(panel.getAllByRole('button', { name: 'ダイスを振る' })).toHaveLength(1);
+  });
+
   it('shows only the configured dice controls in an enemyless scene', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const diceScenario: Scenario = {
@@ -177,10 +207,9 @@ describe('TestPlay', () => {
     expect(screen.queryByLabelText('ダメージ倍率')).toBeNull();
     expect(screen.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
     expect(screen.queryByRole('region', { name: /敵：/ })).toBeNull();
-    const scope = document.querySelector('.scene-dice-scope');
-    expect(scope?.querySelector('.battle-dice.sticky')).toBeTruthy();
-    expect(scope?.textContent).toContain('渡河');
-    expect(scope?.contains(screen.getByRole('button', { name: /次へ/ }))).toBe(false);
+    const panel = within(screen.getByRole('region', { name: '試遊の状態と操作' }));
+    expect(panel.getByRole('button', { name: 'ダイスを振る' })).toBeTruthy();
+    expect(panel.queryByRole('button', { name: /次へ/ })).toBeNull();
 
     const callsBeforeReroll = onRunChange.mock.calls.length;
     const stateBeforeReroll = onRunChange.mock.lastCall?.[0].state;
@@ -193,7 +222,7 @@ describe('TestPlay', () => {
     render(<TestPlay {...playProps(scenario)} />);
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
     expect(screen.queryByRole('button', { name: 'ダイスを振る' })).toBeNull();
-    expect(document.querySelector('.scene-dice-scope')).toBeNull();
+    expect(screen.queryByRole('tab', { name: '操作' })).toBeNull();
   });
 
   it('supports combat actions without saving preview results', () => {
@@ -207,9 +236,9 @@ describe('TestPlay', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '最初から試遊' }));
-    expect(screen.getByText('状態').closest('details')?.classList.contains('card')).toBe(true);
-
-    const enemyElement = screen.getByRole('region', { name: '敵：魔物' });
+    const panel = within(screen.getByRole('region', { name: '試遊の状態と操作' }));
+    expect(panel.getByRole('tab', { name: '状態' })).toBeTruthy();
+    const enemyElement = panel.getByRole('region', { name: '敵：魔物' });
     const enemy = within(enemyElement);
     expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('10');
     expect(screen.getAllByRole('img', { name: /ダイス/ })).toHaveLength(2);
@@ -218,7 +247,7 @@ describe('TestPlay', () => {
     const initialHp = Number(onRunChange.mock.lastCall?.[0].state.chara.hp);
     fireEvent.click(enemy.getByRole('button', { name: '敵の攻撃' }));
     expect(Number(onRunChange.mock.lastCall?.[0].state.chara.hp)).toBeLessThan(initialHp);
-    expect(screen.getByText(/現在値：/)).toBeTruthy();
+    expect(panel.getByRole('status').textContent).toContain('現在値：');
     fireEvent.click(enemy.getByRole('button', { name: '攻撃する' }));
     expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('0');
     expect(enemy.getByRole('button', { name: '攻撃する' }).hasAttribute('disabled')).toBe(true);

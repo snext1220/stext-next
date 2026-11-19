@@ -15,7 +15,7 @@ import {
   type SceneView,
 } from '@stext/core';
 import type { Enemy, Scenario } from '@stext/schema';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { statusLabel } from './Panels.js';
 import { SceneText } from './SceneText.js';
 import { Die, EnemyCard } from './Battle.js';
@@ -51,6 +51,8 @@ export interface BattlePanelProps {
   onStateChange: (state: GameState, events: GameEvent[], feedback?: BattleFeedback) => void;
   onFeedback: (feedback: BattleFeedback) => void;
   resolveImage?: (src: string) => string;
+  sceneInputs?: ReactNode;
+  inActionPanel?: boolean;
 }
 
 function initializeBattle(
@@ -144,9 +146,12 @@ export function BattlePanel({
   onStateChange,
   onFeedback,
   resolveImage,
+  sceneInputs,
+  inActionPanel = false,
 }: BattlePanelProps) {
   const [battle, setBattle] = useState(() => initializeBattle(engine, state, view));
   const [rolling, setRolling] = useState(false);
+  const [notice, setNotice] = useState<BattleFeedback['notice']>();
   const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasEnemies = battle.enemies.length > 0;
   const sceneDiceOnly = !hasEnemies && Boolean(view.dice);
@@ -179,6 +184,10 @@ export function BattlePanel({
     onFeedback({ sound: 'dice' });
   };
 
+  const report = (next: GameState, events: GameEvent[], feedback?: BattleFeedback) => {
+    if (inActionPanel) setNotice(feedback?.notice);
+    onStateChange(next, events, feedback);
+  };
   const receive = (index: number) => {
     const target = battle.enemies[index]!;
     const next = copyState(state);
@@ -191,7 +200,7 @@ export function BattlePanel({
       battle.dice,
       battle.multiplier,
     );
-    onStateChange(next, events, attackFeedback(result, next, scenario));
+    report(next, events, attackFeedback(result, next, scenario));
   };
 
   const attack = (index: number) => {
@@ -212,7 +221,7 @@ export function BattlePanel({
         i === index ? { ...enemy, hp: result.hp } : enemy,
       ),
     }));
-    onStateChange(next, events, {
+    report(next, events, {
       sound: 'damage',
       notice: { kind: 'info', title: '敵へのダメージ', message: `${result.damage} Hit!` },
     });
@@ -231,7 +240,7 @@ export function BattlePanel({
         i === index ? { ...enemy, dropTaken: true } : enemy,
       ),
     }));
-    onStateChange(next, events, {
+    report(next, events, {
       sound: 'drop',
       notice: { kind: 'item', title: '戦利品', message: `${target.drop.name}を手に入れた。` },
     });
@@ -259,6 +268,9 @@ export function BattlePanel({
       <button type="button" className="btn" onClick={roll}>
         ダイスを振る
       </button>
+      {inActionPanel && (
+        <span aria-live="polite">合計 {battle.dice.reduce((sum, die) => sum + die, 0)}</span>
+      )}
       {hasEnemies && (
         <label className="verdict">
           ダメージ倍率{' '}
@@ -274,6 +286,11 @@ export function BattlePanel({
             <option value={0.25}>×1/4</option>
           </select>
         </label>
+      )}
+      {inActionPanel && (
+        <div className="scene-action-notice" role="status">
+          {notice && `${notice.title}：${notice.message}`}
+        </div>
       )}
     </div>
   );
@@ -306,6 +323,17 @@ export function BattlePanel({
         : {})}
     />
   ));
+
+  if (inActionPanel) {
+    return (
+      <>
+        {diceControls}
+        {sceneInputs}
+        {ruleBox}
+        {enemyCards}
+      </>
+    );
+  }
 
   return (
     <>

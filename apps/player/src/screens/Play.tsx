@@ -15,11 +15,13 @@ import {
   MagicPanel,
   Parchment,
   RecordPanel,
-  SceneDiceScope,
+  SceneActionInputs,
   SceneText,
   StatusEditor,
   Toasts,
   createCookieRandomCache,
+  useSceneInputFocus,
+  useSceneInputs,
   type BattleFeedback,
   type HistoryEntry,
   type Toast,
@@ -50,7 +52,12 @@ const PANEL_TABS = [
     icon: 'M7 4h11v13a3 3 0 0 1-3 3H6a2 2 0 0 1-2-2v-1h11M7 4a2 2 0 0 0-2 2v11',
   },
 ] as const;
-type PanelTab = (typeof PANEL_TABS)[number]['id'];
+const ACTION_TAB = {
+  id: 'action',
+  ja: '操作',
+  icon: 'M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM8 8h1m6 0h1m-5 4h1m-4 4h1m6 0h1',
+} as const;
+type PanelTab = (typeof PANEL_TABS)[number]['id'] | 'action';
 
 const FONT_SIZES = { small: '0.9375rem', medium: '1.0625rem', large: '1.25rem' } as const;
 
@@ -83,6 +90,7 @@ export function Play({
   const [history, setHistory] = useState<{ state: GameState; entry: HistoryEntry }[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [tab, setTab] = useState<PanelTab>('hero');
+  const [actionTabOverride, setActionTabOverride] = useState<string | null>(null);
   const [sheet, setSheet] = useState<PanelTab | null>(null);
   const [editing, setEditing] = useState(false);
   const [saveDialog, setSaveDialog] = useState(false);
@@ -90,6 +98,7 @@ export function Play({
   const closeSaveDialog = useCallback(() => setSaveDialog(false), []);
   const toastId = useRef(0);
   const pendingSceneScroll = useRef(false);
+  const actionOpener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     loadIndex().then(
@@ -251,6 +260,13 @@ export function Play({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (saveDialog) return;
+      if (sheet === 'action' && window.matchMedia?.('(max-width: 900px)').matches) {
+        if (e.key === 'Escape') {
+          setSheet(null);
+          actionOpener.current?.focus({ preventScroll: true });
+        }
+        return;
+      }
       const target = e.target as HTMLElement | null;
       if (target?.closest('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
       const go = view.choices.filter((c) => c.kind === 'go');
@@ -274,7 +290,35 @@ export function Play({
           : null;
 
   const shareUrl = shareLink(view.tweet ?? scenario.meta.description ?? DEFAULT_SHARE_TEXT);
-  const sceneDiceOnly = view.enemies.length === 0 && Boolean(view.dice);
+  const hasActions = view.enemies.length > 0 || Boolean(view.dice);
+  const inputs = useSceneInputs(view.markdown, hasActions);
+  const { prefix, focusInput } = useSceneInputFocus();
+  const tabs = hasActions ? [...PANEL_TABS, ACTION_TAB] : PANEL_TABS;
+  const activeTab =
+    hasActions && (tab === 'action' || actionTabOverride !== sceneKey)
+      ? 'action'
+      : tab === 'action'
+        ? 'hero'
+        : tab;
+  const activeSheet = sheet === 'action' && !hasActions ? null : sheet;
+  const actionSheet = activeSheet === 'action';
+  const selectTab = (next: PanelTab) => {
+    setTab(next);
+    setActionTabOverride(sceneKey);
+  };
+  const openInput = (index: number) => {
+    selectTab('action');
+    if (window.matchMedia?.('(max-width: 900px)').matches) {
+      actionOpener.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setSheet('action');
+    }
+    focusInput(index);
+  };
+  const closeActionSheet = () => {
+    setSheet(null);
+    actionOpener.current?.focus({ preventScroll: true });
+  };
   const sceneBody = (
     <SceneText
       key={`${sceneKey}:body`}
@@ -282,6 +326,7 @@ export function Play({
       markdown={view.markdown}
       resolveImage={resolveImage}
       onParamChange={onParamChange}
+      {...(inputs.length > 0 ? { onOpenInput: openInput } : {})}
     />
   );
   const battlePanel = (
@@ -295,10 +340,21 @@ export function Play({
       onStateChange={(next, events, feedback) => {
         setState(next);
         showEvents(events);
-        if (feedback) handleBattleFeedback(feedback);
+        if (feedback)
+          handleBattleFeedback(
+            hasActions ? { ...(feedback.sound ? { sound: feedback.sound } : {}) } : feedback,
+          );
       }}
       onFeedback={handleBattleFeedback}
       resolveImage={resolveImage}
+      inActionPanel={hasActions}
+      {...(inputs.length > 0
+        ? {
+            sceneInputs: (
+              <SceneActionInputs inputs={inputs} prefix={prefix} onParamChange={onParamChange} />
+            ),
+          }
+        : {})}
     />
   );
 
@@ -394,17 +450,8 @@ export function Play({
         <button type="button" className="chip-btn" onClick={() => setSaveDialog(true)}>
           セーブ／ロード
         </button>
-        {sceneDiceOnly ? (
-          <SceneDiceScope key={`${sceneKey}:dice-scope`}>
-            {battlePanel}
-            {sceneBody}
-          </SceneDiceScope>
-        ) : (
-          <>
-            {sceneBody}
-            {battlePanel}
-          </>
-        )}
+        {sceneBody}
+        {!hasActions && view.rule && battlePanel}
         <div className="rule" aria-hidden="true">
           <svg viewBox="0 0 20 20">
             <path d="M10 1 12.4 7.6 19 10 12.4 12.4 10 19 7.6 12.4 1 10 7.6 7.6z" />
@@ -441,27 +488,68 @@ export function Play({
         )}
       </Parchment>
 
-      <aside className="panel" aria-label="冒険者パネル">
-        <div className="tabs" role="tablist">
-          {PANEL_TABS.map((t) => (
+      {actionSheet && <div className="sheet-backdrop" onClick={closeActionSheet} />}
+      <aside className="panel" data-action-sheet={actionSheet} aria-label="冒険者パネル">
+        <div className={`tabs desktop-panel-tabs${hasActions ? ' tabs-five' : ''}`} role="tablist">
+          {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               role="tab"
-              aria-selected={tab === t.id}
-              onClick={() => setTab(t.id)}
+              aria-selected={activeTab === t.id}
+              onClick={() => selectTab(t.id)}
             >
               {t.ja}
             </button>
           ))}
         </div>
-        <div className="card">{panelBody(tab)}</div>
-        <ReadingSettings settings={settings} onSettings={onSettings} />
+        {activeTab !== 'action' && (
+          <div className="card desktop-panel-content">{panelBody(activeTab)}</div>
+        )}
+        {hasActions && (
+          <section
+            className="card player-action-card"
+            data-selected={activeTab === 'action'}
+            aria-label="シーン操作"
+          >
+            {actionSheet && (
+              <div className="action-sheet-tabs">
+                <div className="tabs tabs-five" role="tablist">
+                  {tabs.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={t.id === 'action'}
+                      onClick={() => setSheet(t.id)}
+                    >
+                      {t.ja}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="chip-btn" onClick={closeActionSheet}>
+                  本文に戻る
+                </button>
+              </div>
+            )}
+            <div className="scene-action-scroll">{battlePanel}</div>
+          </section>
+        )}
+        <div className="desktop-panel-content">
+          <ReadingSettings settings={settings} onSettings={onSettings} />
+        </div>
       </aside>
 
-      <nav className="mtabs" aria-label="冒険者メニュー">
-        {PANEL_TABS.map((t) => (
-          <button key={t.id} type="button" onClick={() => setSheet(t.id)}>
+      <nav className={`mtabs${hasActions ? ' tabs-five' : ''}`} aria-label="冒険者メニュー">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={(event) => {
+              actionOpener.current = event.currentTarget;
+              setSheet(t.id);
+            }}
+          >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d={t.icon} />
             </svg>
@@ -469,30 +557,34 @@ export function Play({
           </button>
         ))}
       </nav>
-      {sheet && (
+      {activeSheet && activeSheet !== 'action' && (
         <div>
           <div className="sheet-backdrop" onClick={() => setSheet(null)} />
           <div
             className="sheet"
             role="dialog"
-            aria-label={PANEL_TABS.find((t) => t.id === sheet)!.ja}
+            aria-label={tabs.find((t) => t.id === activeSheet)!.ja}
           >
             <div className="grab" />
-            <div className="tabs" role="tablist" style={{ marginBottom: 14 }}>
-              {PANEL_TABS.map((t) => (
+            <div
+              className={`tabs${hasActions ? ' tabs-five' : ''}`}
+              role="tablist"
+              style={{ marginBottom: 14 }}
+            >
+              {tabs.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   role="tab"
-                  aria-selected={sheet === t.id}
+                  aria-selected={activeSheet === t.id}
                   onClick={() => setSheet(t.id)}
                 >
                   {t.ja}
                 </button>
               ))}
             </div>
-            {panelBody(sheet)}
-            {sheet === 'hero' && !editing && (
+            {panelBody(activeSheet)}
+            {activeSheet === 'hero' && !editing && (
               <section className="mobile-readset">
                 <h3>表示設定</h3>
                 <ReadingSettings settings={settings} onSettings={onSettings} />

@@ -12,9 +12,11 @@ import {
   BattlePanel,
   ChoiceList,
   HeroPanel,
-  SceneDiceScope,
+  SceneActionInputs,
   SceneText,
   createCookieRandomCache,
+  useSceneInputFocus,
+  useSceneInputs,
   type BattleFeedback,
 } from '@stext/ui';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -437,11 +439,30 @@ export function TestPlay({
     setError(null);
   };
 
-  const sceneDiceOnly = Boolean(view && view.enemies.length === 0 && view.dice);
+  const sceneKey = `${run?.state.scene}:${run?.state.ellapsed_scene}:${battleResetId}`;
+  const hasActions = Boolean(view && (view.enemies.length > 0 || view.dice));
+  const inputs = useSceneInputs(view?.markdown, hasActions);
+  const { prefix, focusInput } = useSceneInputFocus();
+  const [actionTab, setActionTab] = useState<{ key: string; tab: 'action' | 'status' }>();
+  const actionOpen = actionTab?.key === sceneKey;
+  const showActions = !actionOpen || actionTab.tab === 'action';
+  const selectActionTab = (tab: 'action' | 'status') => setActionTab({ key: sceneKey, tab });
+  const changeParam = (id: string, value: string) => {
+    if (run) setRun({ ...run, state: engine.setParam(run.state, id, value) });
+  };
+  const previewStatus = run && (
+    <>
+      <HeroPanel scenario={scenario} state={run.state} portraitUrl={portraitUrl} />
+      <p className="pg-hint">
+        アイテム：{run.state.items.join(', ') || 'なし'} ／ フラグ：
+        {run.state.flags.join(', ') || 'なし'} ／ 星：{run.state.stars.join(' ')}
+      </p>
+    </>
+  );
   const battlePanel =
     run && view ? (
       <BattlePanel
-        key={`${run.state.scene}:${run.state.ellapsed_scene}:${battleResetId}`}
+        key={sceneKey}
         engine={engine}
         scenario={scenario}
         state={run.state}
@@ -460,6 +481,14 @@ export function TestPlay({
           if (feedback) handleBattleFeedback(feedback);
         }}
         onFeedback={handleBattleFeedback}
+        inActionPanel={hasActions}
+        {...(inputs.length > 0
+          ? {
+              sceneInputs: (
+                <SceneActionInputs inputs={inputs} prefix={prefix} onParamChange={changeParam} />
+              ),
+            }
+          : {})}
         resolveImage={(src) => {
           const path = src.startsWith('capture/') ? src : `capture/${src}`;
           return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
@@ -473,6 +502,15 @@ export function TestPlay({
           key={`scene-body:${run.state.scene}:${run.state.ellapsed_scene}`}
           className="prose"
           markdown={view.markdown}
+          {...(hasActions
+            ? {
+                onParamChange: changeParam,
+                onOpenInput: (index: number) => {
+                  selectActionTab('action');
+                  focusInput(index);
+                },
+              }
+            : {})}
           resolveImage={(src) => {
             const path = src.startsWith('capture/') ? src : `capture/${src}`;
             return resourceUrls[path] ?? imageUrl(scenario.meta.id, src);
@@ -513,7 +551,7 @@ export function TestPlay({
   return (
     <div
       ref={playRef}
-      className="pg-play"
+      className={`pg-play${hasActions ? ' pg-play-with-actions' : ''}`}
       onClick={() => {
         bgmAudio.retry();
         seAudio.retry();
@@ -716,7 +754,7 @@ export function TestPlay({
         </p>
       )}
       {run && view && (
-        <>
+        <div className={hasActions ? 'pg-action-layout' : 'pg-preview-scene'}>
           <div className="pg-play-page page">
             <div className="page-head">
               <span className="title">{scenario.meta.title}</span>
@@ -727,19 +765,8 @@ export function TestPlay({
                 {scenario.meta.showSummary && view.summary ? view.summary : view.id}
               </span>
             </div>
-            {sceneDiceOnly ? (
-              <SceneDiceScope
-                key={`scene-dice-scope:${run.state.scene}:${run.state.ellapsed_scene}:${battleResetId}`}
-              >
-                {battlePanel}
-                {sceneBody}
-              </SceneDiceScope>
-            ) : (
-              <>
-                {sceneBody}
-                {battlePanel}
-              </>
-            )}
+            {sceneBody}
+            {!hasActions && view.rule && battlePanel}
             <ChoiceList choices={view.choices} onChoose={choose} />
             {view.afterText && (
               <SceneText
@@ -749,14 +776,53 @@ export function TestPlay({
               />
             )}
           </div>
-          <details className="pg-play-status card">
-            <summary>状態</summary>
-            <HeroPanel scenario={scenario} state={run.state} portraitUrl={portraitUrl} />
-            <p className="pg-hint">
-              アイテム：{run.state.items.join(', ') || 'なし'} ／ フラグ：
-              {run.state.flags.join(', ') || 'なし'} ／ 星：{run.state.stars.join(' ')}
-            </p>
-          </details>
+          {hasActions ? (
+            <section
+              className="card pg-action-panel"
+              data-open={actionOpen}
+              aria-label="試遊の状態と操作"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && actionOpen) setActionTab(undefined);
+              }}
+            >
+              <div className="tabs pg-action-tabs" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={!showActions}
+                  onClick={() => selectActionTab('status')}
+                >
+                  状態
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={showActions}
+                  onClick={() => selectActionTab('action')}
+                >
+                  操作
+                </button>
+              </div>
+              <button
+                type="button"
+                className="chip-btn pg-action-close"
+                onClick={() => setActionTab(undefined)}
+              >
+                本文に戻る
+              </button>
+              <div className="scene-action-scroll" hidden={!showActions}>
+                {battlePanel}
+              </div>
+              <div className="pg-action-status" hidden={showActions}>
+                {previewStatus}
+              </div>
+            </section>
+          ) : (
+            <details className="pg-play-status card">
+              <summary>状態</summary>
+              {previewStatus}
+            </details>
+          )}
           {run.log.length > 0 && (
             <ul className="pg-log">
               {run.log.map((l, i) => (
@@ -764,7 +830,7 @@ export function TestPlay({
               ))}
             </ul>
           )}
-        </>
+        </div>
       )}
     </div>
   );

@@ -17,6 +17,7 @@ export interface SceneTextProps {
   resolveImage?: (src: string) => string;
   /** ${input?p01} の入力欄で値が変わったとき */
   onParamChange?: (id: string, value: string) => void;
+  onOpenInput?: (index: number) => void;
   /** 段落にせず、行内の文として描画する（選択肢のラベルなど） */
   inline?: boolean;
   className?: string;
@@ -50,14 +51,43 @@ export function renderMarkdown(markdown: string, inline = false): string {
   return DOMPurify.sanitize(html, PURIFY);
 }
 
+function movableInput(node: Element) {
+  for (let parent = node.parent; parent instanceof Element; parent = parent.parent) {
+    if (
+      ['a', 'button', 'details', 'label'].includes(parent.name) ||
+      parent.attribs['class'] === 'stext-secret' ||
+      'hidden' in parent.attribs
+    )
+      return false;
+  }
+  return true;
+}
+
+export function useSceneInputs(markdown: string | undefined, enabled: boolean) {
+  return useMemo(() => {
+    const inputs: { param: string | undefined; value: string }[] = [];
+    if (!enabled || !markdown) return inputs;
+    parse(renderMarkdown(markdown), {
+      replace(node) {
+        if (node instanceof Element && node.name === 'stext-input' && movableInput(node)) {
+          inputs.push({ param: node.attribs['param'], value: node.attribs['value'] ?? '' });
+        }
+      },
+    });
+    return inputs;
+  }, [markdown, enabled]);
+}
+
 export function SceneText({
   markdown,
   resolveImage,
   onParamChange,
+  onOpenInput,
   inline = false,
   className,
 }: SceneTextProps) {
   const content = useMemo(() => {
+    let inputIndex = 0;
     const options: HTMLReactParserOptions = {
       replace(node) {
         if (!(node instanceof Element)) return undefined;
@@ -83,6 +113,14 @@ export function SceneText({
           return <Secret>{domToReact(node.children as DOMNode[], options)}</Secret>;
         }
         if (node.name === 'stext-input') {
+          if (onOpenInput && movableInput(node)) {
+            const index = inputIndex++;
+            return (
+              <button type="button" className="chip-btn" onClick={() => onOpenInput(index)}>
+                シーン操作で入力
+              </button>
+            );
+          }
           return (
             <ParamInput
               param={node.attribs['param']}
@@ -95,7 +133,7 @@ export function SceneText({
       },
     };
     return parse(renderMarkdown(markdown, inline), options);
-  }, [markdown, inline, resolveImage, onParamChange]);
+  }, [markdown, inline, resolveImage, onParamChange, onOpenInput]);
   return inline ? (
     <span className={className}>{content as ReactNode}</span>
   ) : (
@@ -130,14 +168,18 @@ function Secret({ children }: { children: ReactNode }) {
 }
 
 /** ${input?p01} はゲームパラメーター、それ以外はシーン内だけの数値メモ */
-function ParamInput({
+export function ParamInput({
   param,
   value,
   onChange,
+  id,
+  label,
 }: {
   param: string | undefined;
   value: string;
   onChange?: (id: string, value: string) => void;
+  id?: string;
+  label?: string;
 }) {
   const [memo, setMemo] = useState(value);
   const currentValue = param ? value : memo;
@@ -152,10 +194,11 @@ function ParamInput({
         −
       </button>
       <input
+        id={id}
         type="text"
         inputMode="numeric"
         value={currentValue}
-        aria-label={param ? `パラメーター ${param}` : '値'}
+        aria-label={label ?? (param ? `パラメーター ${param}` : '値')}
         onChange={(e) => set(e.target.value)}
       />
       <button type="button" onClick={() => step(1)} aria-label="1増やす">

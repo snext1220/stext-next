@@ -7,7 +7,14 @@
 export { BrandTitle } from './BrandTitle.js';
 export type { BrandTitleProps } from './BrandTitle.js';
 export { Parchment, Pentagram, tornPath, type ParchmentProps } from './Parchment.js';
-export { SceneText, legacyMarkdown, renderMarkdown, type SceneTextProps } from './SceneText.js';
+export {
+  SceneText,
+  legacyMarkdown,
+  renderMarkdown,
+  useSceneInputs,
+  type SceneTextProps,
+} from './SceneText.js';
+export { SceneActionInputs, useSceneInputFocus } from './SceneActionInputs.js';
 export { SceneDiceScope } from './SceneDiceScope.js';
 export { ChoiceList, type ChoiceListProps } from './Choices.js';
 export {
