@@ -54,6 +54,142 @@ function EditableChoiceSceneEditor({ initial }: { initial: DraftScenario }) {
 }
 
 describe('SceneEditor settings', () => {
+  it('sets one selected achievement and still allows manual editing and clearing', () => {
+    const initial: DraftScenario = {
+      ...scenario,
+      results: [
+        { id: 'r01', name: '冒険者', text: '冒険を始めた' },
+        { id: 'r02', name: '達成' },
+        { id: '', name: '作成途中' },
+      ],
+      scenes: [{ ...scenario.scenes[0]!, effects: { result: 'r02', hp: 5 } }],
+    };
+    const onChange = vi.fn();
+    const scene = initial.scenes[0]!;
+    const { unmount } = render(
+      <SceneEditor
+        scenario={initial}
+        scene={scene}
+        onChange={onChange}
+        onRenamed={vi.fn()}
+        onDelete={vi.fn()}
+        onAddScene={vi.fn()}
+      />,
+    );
+    const picker = screen.getByRole<HTMLSelectElement>('combobox', { name: '実績を効果に設定' });
+    expect(screen.getByRole('option', { name: '冒険者（冒険を始めた）（r01）' })).toBeTruthy();
+    expect(picker.options).toHaveLength(3);
+    fireEvent.change(picker, { target: { value: 'r01' } });
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        scenes: [expect.objectContaining({ effects: { result: 'r01', hp: 5 } })],
+      }),
+      '0:effects.result',
+    );
+    unmount();
+
+    render(<EditableChoiceSceneEditor initial={initial} />);
+    const input = screen.getByLabelText<HTMLInputElement>('実績');
+    fireEvent.change(screen.getByRole('combobox', { name: '実績を効果に設定' }), {
+      target: { value: 'r01' },
+    });
+    expect(input.value).toBe('r01');
+    fireEvent.change(input, { target: { value: 'r99' } });
+    expect(input.value).toBe('r99');
+    fireEvent.change(input, { target: { value: '' } });
+    expect(input.value).toBe('');
+  });
+
+  it('disables the achievement picker when no achievement ID is defined', () => {
+    render(
+      <EditableChoiceSceneEditor
+        initial={{ ...scenario, results: [{ id: '', name: '作成途中' }] }}
+      />,
+    );
+    expect(
+      screen.getByRole<HTMLSelectElement>('combobox', { name: '実績を効果に設定' }).disabled,
+    ).toBe(true);
+  });
+
+  it('inserts basic item, flag and parameter effects without replacing existing effects', () => {
+    const effectScenario: DraftScenario = {
+      ...scenario,
+      items: [{ id: 'i01', name: '鍵', text: '古い鍵' }],
+      flags: [{ id: 'f01', text: '扉を開いた' }],
+      params: [{ id: 'p01', text: '得点' }],
+      scenes: [
+        {
+          ...scenario.scenes[0]!,
+          effects: { items: ['-i02'], flags: ['-f02'], params: ['p02:@5'] },
+        },
+      ],
+    };
+    render(<EditableChoiceSceneEditor initial={effectScenario} />);
+
+    for (const [label, selected, expected] of [
+      ['アイテム', 'i01', '-i02, i01'],
+      ['フラグ', 'f01', '-f02, f01'],
+      ['パラメーター', 'p01:1', 'p02:@5, p01:1'],
+    ] as const) {
+      const picker = screen.getByRole<HTMLSelectElement>('combobox', {
+        name: `${label}を効果に追加`,
+      });
+      fireEvent.change(picker, { target: { value: selected } });
+      expect(screen.getByLabelText<HTMLInputElement>(label).value).toBe(expected);
+      expect(picker.value).toBe('');
+    }
+
+    expect(screen.getByRole('option', { name: 'p01（得点）（1増やす）' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('パラメーター'), {
+      target: { value: 'p01:@10' },
+    });
+    expect(screen.getByLabelText<HTMLInputElement>('パラメーター').value).toBe('p01:@10');
+  });
+
+  it('disables effect pickers when definitions have no ID', () => {
+    const draft: DraftScenario = {
+      ...scenario,
+      items: [{ id: '', name: '作成途中' }],
+      flags: [{ id: '', text: '作成途中' }],
+      params: [{ id: '', text: '作成途中' }],
+    };
+    render(<EditableChoiceSceneEditor initial={draft} />);
+
+    for (const label of ['アイテム', 'フラグ', 'パラメーター']) {
+      expect(
+        screen.getByRole<HTMLSelectElement>('combobox', { name: `${label}を効果に追加` }).disabled,
+      ).toBe(true);
+    }
+  });
+
+  it('inserts selected enemy IDs while preserving existing and repeated enemies', () => {
+    const enemyScenario: DraftScenario = {
+      ...scenario,
+      enemies: [{ id: 'm01', name: '森の狼', text: '森に住む狼' }],
+      scenes: [{ ...scenario.scenes[0]!, enemies: ['m02'] }],
+    };
+    render(<EditableChoiceSceneEditor initial={enemyScenario} />);
+
+    const enemyInput = screen.getByLabelText<HTMLInputElement>('敵');
+    const enemyPicker = screen.getByRole<HTMLSelectElement>('combobox', { name: '敵を差し込む' });
+    expect(Array.from(enemyPicker.options).map((option) => option.value)).toContain('m01');
+    expect(screen.queryByText('定義済み：m01')).toBeNull();
+
+    fireEvent.change(enemyPicker, { target: { value: 'm01' } });
+    expect(enemyInput.value).toBe('m02, m01');
+
+    fireEvent.change(enemyPicker, { target: { value: 'm01' } });
+    expect(enemyInput.value).toBe('m02, m01, m01');
+  });
+
+  it('shows guidance when no enemies are defined', () => {
+    render(<EditableChoiceSceneEditor initial={scenario} />);
+    expect(screen.getByText('敵は「定義」の「敵」で作ります')).toBeTruthy();
+    expect(screen.getByRole<HTMLSelectElement>('combobox', { name: '敵を差し込む' }).disabled).toBe(
+      true,
+    );
+  });
+
   it('distinguishes restoring the normal BGM from clearing a scene override', () => {
     const onChange = vi.fn();
     const scene = scenario.scenes[0]!;

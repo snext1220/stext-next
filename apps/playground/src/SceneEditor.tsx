@@ -252,34 +252,65 @@ export function SceneEditor({
           <HelpButton topic="scene.effects" />
         </div>
         <div className="pg-grid">
-          <TextField
+          <ListPickerField
             label="アイテム"
             help="effects.items"
-            value={fromList(e.items)}
-            onChange={(v) => setEffects({ items: toList(v) }, 'items')}
+            pickerLabel="アイテムを効果に追加"
+            value={e.items}
+            onChange={(items) => setEffects({ items }, 'items')}
             placeholder="i01, -i02, i03:2"
+            options={scenario.items
+              .filter((item) => item.id.trim())
+              .map((item) => [
+                item.id,
+                `${describe(item.name || item.id, item.text)}${item.name ? `（${item.id}）` : ''}`,
+              ])}
           />
-          <TextField
+          <ListPickerField
             label="フラグ"
             help="effects.flags"
-            value={fromList(e.flags)}
-            onChange={(v) => setEffects({ flags: toList(v) }, 'flags')}
+            pickerLabel="フラグを効果に追加"
+            value={e.flags}
+            onChange={(flags) => setEffects({ flags }, 'flags')}
             placeholder="f01, -f02"
+            options={scenario.flags
+              .filter((flag) => flag.id.trim())
+              .map((flag) => [flag.id, describe(flag.id, flag.text)])}
           />
-          <TextField
+          <ListPickerField
             label="パラメーター"
             help="effects.params"
-            value={fromList(e.params)}
-            onChange={(v) => setEffects({ params: toList(v) }, 'params')}
+            pickerLabel="パラメーターを効果に追加"
+            value={e.params}
+            onChange={(params) => setEffects({ params }, 'params')}
             placeholder="p01:1, p02:@5"
+            options={scenario.params
+              .filter((param) => param.id.trim())
+              .map((param) => [`${param.id}:1`, `${describe(param.id, param.text)}（1増やす）`])}
           />
-          <TextField
-            label="実績"
-            help="effects.result"
-            value={e.result}
-            onChange={(v) => setEffects({ result: v }, 'result')}
-            placeholder="r01"
-          />
+          <Field label="実績" help="effects.result">
+            {(id) => (
+              <>
+                <input
+                  id={id}
+                  value={e.result ?? ''}
+                  onChange={(event) => setEffects({ result: event.target.value }, 'result')}
+                  placeholder="r01"
+                />
+                <Picker
+                  label="実績"
+                  pickerLabel="実績を効果に設定"
+                  options={scenario.results
+                    .filter((result) => result.id.trim())
+                    .map((result) => [
+                      result.id,
+                      `${describe(result.name || result.id, result.text)}${result.name ? `（${result.id}）` : ''}`,
+                    ])}
+                  onSelect={(result) => setEffects({ result }, 'result')}
+                />
+              </>
+            )}
+          </Field>
           <TextField
             label="HP"
             help="effects.hp"
@@ -357,17 +388,19 @@ export function SceneEditor({
       <section className="pg-section">
         <h3>そのほか</h3>
         <div className="pg-grid">
-          <TextField
+          <ListPickerField
             label="敵"
             help="scene.enemies"
-            value={fromList(scene.enemies)}
-            onChange={(v) => set({ enemies: toList(v).length ? toList(v) : undefined }, 'enemies')}
-            placeholder="m01, m02"
-            hint={
-              scenario.enemies.length
-                ? `定義済み：${scenario.enemies.map((m) => m.id).join(', ')}`
-                : '敵は「定義」の「敵」で作ります'
+            pickerLabel="敵を差し込む"
+            value={scene.enemies}
+            onChange={(enemies) =>
+              set({ enemies: enemies.length ? enemies : undefined }, 'enemies')
             }
+            placeholder="m01, m02"
+            options={scenario.enemies
+              .filter((enemy) => enemy.id.trim())
+              .map((enemy) => [enemy.id, `${describe(enemy.name, enemy.text)}（${enemy.id}）`])}
+            hint={scenario.enemies.length ? undefined : '敵は「定義」の「敵」で作ります'}
           />
           <SelectField
             label="エンディング"
@@ -457,6 +490,79 @@ export function SceneEditor({
           このシーンを削除
         </button>
       </div>
+    </div>
+  );
+}
+
+function ListPickerField({
+  label,
+  help,
+  pickerLabel,
+  value,
+  onChange,
+  placeholder,
+  options,
+  hint,
+}: {
+  label: string;
+  help: string;
+  pickerLabel: string;
+  value: readonly string[] | undefined;
+  onChange: (value: string[]) => void;
+  placeholder: string;
+  options: readonly (readonly [string, string])[];
+  hint?: string | undefined;
+}) {
+  return (
+    <Field label={label} help={help} hint={hint}>
+      {(id) => (
+        <>
+          <input
+            id={id}
+            value={fromList(value)}
+            onChange={(event) => onChange(toList(event.target.value))}
+            placeholder={placeholder}
+          />
+          <Picker
+            label={label}
+            pickerLabel={pickerLabel}
+            options={options}
+            onSelect={(token) => onChange([...(value ?? []), token])}
+          />
+        </>
+      )}
+    </Field>
+  );
+}
+
+function Picker({
+  label,
+  pickerLabel,
+  options,
+  onSelect,
+}: {
+  label: string;
+  pickerLabel: string;
+  options: readonly (readonly [string, string])[];
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div className="pg-toolbar">
+      <select
+        aria-label={pickerLabel}
+        value=""
+        disabled={options.length === 0}
+        onChange={(event) => {
+          if (event.target.value) onSelect(event.target.value);
+        }}
+      >
+        <option value="">{label}を選択…</option>
+        {options.map(([token, text], index) => (
+          <option key={`${token}:${index}`} value={token} title={token}>
+            {text}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
