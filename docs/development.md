@@ -65,6 +65,10 @@ Playgroundでは受付・メール送信の完了を判定しません。実際�
 
 CI（`.github/workflows/ci.yml`）は、プルリクエストと `main` への push で format:check → lint → typecheck → test → build を実行します。
 
+### 手編集後のPush前チェック
+
+シナリオや非プレイ画面を手で編集した後は、Copilotで [`/pre-push-check`](../.github/skills/pre-push-check/SKILL.md) を呼び出せます。未コミットの差分から関連テストを確認し、意図した変更だけをテストに反映したうえで、対象ファイルの整形と検証を行います。ステージング・コミット・Pushは行いません。
+
 ### Copilot の仕様承認と権限確認
 
 [個別改善のスキル](../.github/skills/individual-improvement/SKILL.md)では、実装への着手を承認した後、合意範囲内の通常の読み書き・実装・文書更新・検証について作業確認を繰り返しません。仕様書なしで進める確認も、その範囲の着手承認として扱います。実装を待つ指定や、仕様・対象範囲の変更がある場合は別途確認します。
