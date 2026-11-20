@@ -22,7 +22,7 @@ function choose(engine: Engine, step: Step, label: string): Step {
 
 describe('トラベラーズ☆イン v2', () => {
   it('organizes every scene with a summary and one non-overlapping group', () => {
-    expect(scenario.scenes).toHaveLength(31);
+    expect(scenario.scenes).toHaveLength(30);
     expect(scenario.groups).toHaveLength(8);
     for (const [index, group] of scenario.groups.entries()) {
       expect(Object.keys(group).sort()).toEqual(['end', 'start', 'title']);
@@ -49,7 +49,7 @@ describe('トラベラーズ☆イン v2', () => {
   it('validates references and identifies money without changing internal names', () => {
     expect(checkScenario(scenario).filter((issue) => issue.severity === 'error')).toEqual([]);
     expect(scenario.meta.labels?.free1).toBe('所持金');
-    expect(scenario.enemies.find((enemy) => enemy.id === 'm14')?.drop).toBe('free1/70/70Gold');
+    expect(scenario.enemies.find((enemy) => enemy.id === 'm14')?.drop).toBe('free1/100/100Gold');
   });
 
   it.each([
@@ -78,11 +78,11 @@ describe('トラベラーズ☆イン v2', () => {
     const room = engine.enterScene(start.state, start.global, '6000');
     expect(room.state.chara.free1).toBe(20);
     const paid = choose(engine, room, '（脳内で）フェードアウト／インして次へ');
+    expect(paid.state.scene).toBe('6100');
     expect(paid.state.chara.free1).toBe(0);
     expect(paid.state.chara.hp).toBe(Math.min(room.state.chara.hp + 15, paid.state.chara.hp_m));
     expect(paid.state.chara.mp).toBe(Math.min(room.state.chara.mp + 15, paid.state.chara.mp_m));
     expect(paid.state.chara.state).toBe('');
-    expect(choose(engine, paid, '次へ').state.scene).toBe('6100');
   });
 
   it('sends an unaffordable stay to exchange without deducting or healing', () => {
