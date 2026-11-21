@@ -288,6 +288,21 @@ export function BattlePanel({
         </label>
       )}
       {inActionPanel && (
+        <div className="battle-status" role="group" aria-label="簡易ステータス">
+          {(['hp', 'mp', 'str', 'int', 'dex', 'krm', 'free1', 'free2', 'free3'] as const).map(
+            (key) => (
+              <span className="battle-status-item" key={key}>
+                <span>{statusLabel(scenario, key)}</span> <b>{state.chara[key]}</b>
+              </span>
+            ),
+          )}
+          <span className="battle-status-item">
+            <span>{statusLabel(scenario, 'state')}</span>{' '}
+            <b>{STATE_NAMES[state.chara.state] ?? state.chara.state}</b>
+          </span>
+        </div>
+      )}
+      {inActionPanel && (
         <div className="scene-action-notice" role="status">
           {notice && `${notice.title}：${notice.message}`}
         </div>

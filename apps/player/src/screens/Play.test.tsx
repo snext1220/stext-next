@@ -174,6 +174,7 @@ describe('scene scrolling', () => {
     expect(article.queryByRole('button', { name: '敵の攻撃' })).toBeNull();
     const action = within(screen.getByRole('region', { name: 'シーン操作' }));
     expect(action.getByRole('button', { name: '敵の攻撃' })).toBeTruthy();
+    expect(action.getByRole('group', { name: '簡易ステータス' }).textContent).toContain('HP');
     const memo = action.getByRole<HTMLInputElement>('textbox', { name: 'シーン内メモ' });
     expect(memo.value).toBe('0');
     fireEvent.change(memo, { target: { value: '7' } });

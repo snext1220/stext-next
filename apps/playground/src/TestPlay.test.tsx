@@ -240,6 +240,7 @@ describe('TestPlay', () => {
     expect(panel.getByRole('tab', { name: '状態' })).toBeTruthy();
     const enemyElement = panel.getByRole('region', { name: '敵：魔物' });
     const enemy = within(enemyElement);
+    const status = panel.getByRole('group', { name: '簡易ステータス' });
     expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('10');
     expect(screen.getAllByRole('img', { name: /ダイス/ })).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'ダイスを振る' }));
@@ -247,6 +248,7 @@ describe('TestPlay', () => {
     const initialHp = Number(onRunChange.mock.lastCall?.[0].state.chara.hp);
     fireEvent.click(enemy.getByRole('button', { name: '敵の攻撃' }));
     expect(Number(onRunChange.mock.lastCall?.[0].state.chara.hp)).toBeLessThan(initialHp);
+    expect(status.textContent).toContain(`HP ${onRunChange.mock.lastCall?.[0].state.chara.hp}`);
     expect(panel.getByRole('status').textContent).toContain('現在値：');
     fireEvent.click(enemy.getByRole('button', { name: '攻撃する' }));
     expect(enemyElement.querySelector('.enemy-hp b')?.textContent).toBe('0');

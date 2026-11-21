@@ -182,6 +182,47 @@ describe('scene rules', () => {
   });
 });
 
+describe('action panel status', () => {
+  it('shows all current values with scenario labels and updates after state changes', () => {
+    const labeledScenario: Scenario = {
+      ...scenario,
+      meta: { ...scenario.meta, labels: { hp: '体力', free1: '所持金', state: '状態' } },
+    };
+    const engine = createEngine(labeledScenario);
+    const global = emptyGlobalState();
+    const { state } = engine.start(global);
+    const view = engine.view(state, global);
+    const props = {
+      engine,
+      scenario: labeledScenario,
+      global,
+      view,
+      onStateChange: vi.fn(),
+      onFeedback: vi.fn(),
+      inActionPanel: true,
+    };
+    const { rerender } = render(<BattlePanel {...props} state={state} />);
+    const status = screen.getByRole('group', { name: '簡易ステータス' });
+    expect(status.textContent).toContain(`体力 ${state.chara.hp}`);
+    expect(status.textContent).toContain(`MP ${state.chara.mp}`);
+    for (const key of ['str', 'int', 'dex', 'krm', 'free2', 'free3'] as const) {
+      expect(status.textContent).toContain(`${key.toUpperCase()} ${state.chara[key]}`);
+    }
+    expect(status.textContent).toContain('所持金 0');
+    expect(status.textContent).toContain('状態 正常');
+    expect(status.closest('.battle-dice.sticky')).toBeTruthy();
+
+    const next = {
+      ...state,
+      chara: { ...state.chara, hp: 12, free1: 50, state: 'curse' },
+    };
+    rerender(<BattlePanel {...props} state={next} />);
+    expect(status.textContent).toContain('体力 12');
+    expect(status.textContent).toContain('所持金 50');
+    expect(status.textContent).toContain('状態 呪い');
+  });
+});
+
 describe('non-battle dice', () => {
   it('keeps the dice controls floating in a non-battle scene', () => {
     const diceScenario: Scenario = {
