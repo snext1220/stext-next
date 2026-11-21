@@ -137,6 +137,18 @@ describe('guide and toolbox pages', () => {
     const { container } = render(<Links />);
     expect(screen.getByRole('heading', { name: 'リリース当日の様子' })).toBeTruthy();
     expect(screen.getAllByRole('link', { name: 'SORCERIAN Next 2020' })).toHaveLength(2);
+    expect(
+      screen
+        .getAllByRole('link', { name: 'ソーサリアン Text（SText）' })
+        .map((link) => link.getAttribute('href')),
+    ).toEqual([
+      'https://www.web-deli.com/sorcerian/text/',
+      'https://www.web-deli.com/sorcerian/text/',
+    ]);
+    expect(
+      screen.getByRole('img', { name: 'ソーサリアン Text（SText）' }).getAttribute('src'),
+    ).toBe('https://www.web-deli.com/sorcerian/text/image/banner/begin.png');
+    expect(screen.getByText(/35本のシナリオが公開されました/)).toBeTruthy();
     expect(screen.getByRole('img', { name: 'SORCERIAN Next' }).getAttribute('src')).toBe(
       'https://www.web-deli.com/sorcerian/next/images2/snext_banner_1.png',
     );
@@ -154,6 +166,7 @@ describe('guide and toolbox pages', () => {
         .parentElement?.getAttribute('href'),
     ).toBe('https://d.hatena.ne.jp/sorcerian/');
     expect(screen.getByText(/2020は独立したゲーム作品/)).toBeTruthy();
+    expect(screen.getByText(/7本のシナリオを遊べます/)).toBeTruthy();
     expect(screen.getByText(/NTextは、STextのシナリオとセーブデータ/)).toBeTruthy();
     expect(container.querySelector('.doc-banner-links')?.children).toHaveLength(2);
     expect(

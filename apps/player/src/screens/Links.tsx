@@ -273,14 +273,35 @@ export function Links() {
           </a>
         </div>
         <p>
-          そして、NextチームではSText以降も「
+          Next企画の後、「嘘（ネタ）に留まりたくない！」「自分の物語を遊べる形にしたい」という思いからスタートしたのが、「
+          <ExtLink href="https://www.web-deli.com/sorcerian/text/">
+            ソーサリアン Text（SText）
+          </ExtLink>
+          」。ソーサリアンの世界をゲームブックで再現する企画です。「テキストを即座に遊べる世界へ」をモットーに、スタッフや有志の皆さまの手によって、35本のシナリオが公開されました。
+        </p>
+        <div className="doc-banner-links">
+          <a
+            className="doc-banner-link"
+            href="https://www.web-deli.com/sorcerian/text/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://www.web-deli.com/sorcerian/text/image/banner/begin.png"
+              alt="ソーサリアン Text（SText）"
+              loading="lazy"
+            />
+          </a>
+        </div>
+        <p>
+          SText以降も「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/allabout.aspx">
             All About 計画
           </ExtLink>
-          」の名のもとで、ソーサリアン関連の創作を展開中です。2020～21年には MV ツクール版「
+          」の名のもとで、ソーサリアン関連の創作を続けています。2020～21年には、MV ツクール版「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/2020">SORCERIAN Next 2020</ExtLink>
           」を発表しました。Next
-          2020は独立したゲーム作品で、プレイヤーを刷新したNTextとは別の展開です。
+          2020は独立したゲーム作品で、STextとは別の、「遊べる」企画のもうひとつの柱です。執筆時点で7本のシナリオを遊べます。
         </p>
         <div className="doc-banner-links">
           <a
