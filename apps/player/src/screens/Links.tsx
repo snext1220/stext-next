@@ -108,6 +108,27 @@ export function Links() {
           width={660}
           height={80}
         />
+        <h3>謝辞</h3>
+        <p>ソーサリアン NText の開発にあたり、多くの皆さまにご協力いただきました。</p>
+        <p>
+          Next チームの
+          <ExtLink href="https://x.com/toki_s1">ときのじさん</ExtLink>、
+          <ExtLink href="https://x.com/mail74446386">Salvador さん</ExtLink>、
+          <ExtLink href="https://x.com/cocotori_twit">cocotori さん</ExtLink>、
+          <ExtLink href="https://x.com/VENUS_AZ">AZ さん</ExtLink>はもちろん。
+        </p>
+        <p>
+          魅力的なシナリオを寄稿いただいたちゃなさん、RYUさん、山田さん、咲華さん、鏡読みさんら、ゲストの皆さま。そして、ソーサリアン
+          Textを遊覧、詳細なレポートにまとめていただいた
+          <ExtLink href="https://sakuhindb.com/pj/6_A5ABA5A4A5CDA5EBA1A6A5C9A5A5A1A6A5E9A5D5A5A1A5C6A5A3/28/7__E3_82_BD_E3_83_BC_E3_82_B5_E3_83_AA_E3_82_A2_E3_83_B3Text/">
+            カイネルさん
+          </ExtLink>
+          。
+        </p>
+        <p>
+          そのほか、SText（NText）に関わってくださったすべての皆さまがいなければ、この作品が世に出ることはありませんでした。この場を借りて心より感謝いたします。
+        </p>
+        <p>システム・企画担当：Rio</p>
       </DocSheet>
     </DocPage>
   );

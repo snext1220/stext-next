@@ -186,6 +186,21 @@ describe('guide and toolbox pages', () => {
         .getByRole('img', { name: 'ソーサリアン NText。遊ぶ。創る。無限の冒険譚へ。' })
         .getAttribute('src'),
     ).toBe('/assets/site/banner/ntext-660x80.png');
+    expect(screen.getByRole('heading', { name: '謝辞' })).toBeTruthy();
+    const acknowledgementLinks = [
+      ['ときのじさん', 'https://x.com/toki_s1'],
+      ['Salvador さん', 'https://x.com/mail74446386'],
+      ['cocotori さん', 'https://x.com/cocotori_twit'],
+      ['AZ さん', 'https://x.com/VENUS_AZ'],
+      [
+        'カイネルさん',
+        'https://sakuhindb.com/pj/6_A5ABA5A4A5CDA5EBA1A6A5C9A5A5A1A6A5E9A5D5A5A1A5C6A5A3/28/7__E3_82_BD_E3_83_BC_E3_82_B5_E3_83_AA_E3_82_A2_E3_83_B3Text/',
+      ],
+    ] as const;
+    expect(
+      acknowledgementLinks.map(([name]) => screen.getByRole('link', { name }).getAttribute('href')),
+    ).toEqual(acknowledgementLinks.map(([, href]) => href));
+    expect(screen.getByText(/システム・企画担当/)).toBeTruthy();
   });
 
   it('explains how to post and points to the creator materials', () => {
