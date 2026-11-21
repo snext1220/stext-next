@@ -13,13 +13,12 @@ export const MENU: readonly { label: string; items: readonly MenuEntry[] }[] = [
     items: [
       { page: 'about', label: 'ソーサリアン NTextとは？' },
       { page: 'records', label: '冒険の記録' },
-      { page: 'music', label: '音楽室' },
       {
-        label: '資料室',
+        label: '資料館',
         items: [
+          { page: 'music', label: '音楽室' },
+          { page: 'links', label: '歴史展示室' },
           { page: 'gallery', label: '画廊' },
-          { page: 'staff', label: '作り手たち' },
-          { page: 'links', label: '関連リンク' },
         ],
       },
     ],

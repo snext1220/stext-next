@@ -41,11 +41,11 @@ export function Footer() {
         <nav className="footer-nav" aria-label="サイトの案内">
           <a href={href({ name: 'about' })}>ソーサリアン NText とは</a>
           <a href={href({ name: 'about', section: 'sorcerian' })}>ソーサリアンとは</a>
+          <a href={href({ name: 'records' })}>冒険の記録</a>
           <a href={href({ name: 'post' })}>シナリオを投稿する</a>
-          <a href={href({ name: 'links' })}>関連リンク</a>
-          <a href={href({ name: 'gallery' })}>画廊</a>
-          <a href={href({ name: 'staff' })}>作り手たち</a>
           <a href={href({ name: 'music' })}>音楽室</a>
+          <a href={href({ name: 'links' })}>歴史展示室</a>
+          <a href={href({ name: 'gallery' })}>画廊</a>
         </nav>
         <p className="footer-copy">2017–, SORCERIAN Next Team</p>
       </div>

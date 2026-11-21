@@ -50,7 +50,7 @@ export function Gallery() {
       page="gallery"
       eyebrow="Gallery"
       title="画廊"
-      lede="記念ロゴやスタート画面、シナリオの紹介イラストなど、SText を彩ってきた絵を集めました。画像を押すと、拡大表示します。"
+      lede="現在掲載しているのは、ソーサリアン Text（v1）の画像です。今後、NTextの画像も追加する予定です。画像を押すと、拡大表示します。"
     >
       <DocSheet seed={43}>
         {GALLERY.map((g) => (
