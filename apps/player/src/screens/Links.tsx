@@ -14,7 +14,7 @@ export function Links() {
       <DocSheet seed={47}>
         <h3>起源（オリジン）、そして更なる展開（ステージ）へ</h3>
         <p>
-          2013年のエイプリルフール企画として公開された「
+          創まりは、2013年のエイプリルフール企画として公開された「
           <ExtLink href="https://www.web-deli.com/sorcerian/next/">SORCERIAN Next</ExtLink>
           」。その発想の源をたどると、iOS版ソーサリアンのシナリオコンテストに行き着きます。当時の作品を紹介するブログ「
           <ExtLink href="https://d.hatena.ne.jp/sorcerian/">新時代のソーサリアンを提案する</ExtLink>
@@ -133,7 +133,9 @@ export function Links() {
         <p>
           そのほか、SText（NText）に関わってくださったすべての皆さまがいなければ、この作品が世に出ることはありませんでした。この場を借りて心より感謝いたします。
         </p>
-        <p>システム・企画担当：Rio</p>
+        <p>
+          システム・企画担当：<ExtLink href="https://x.com/yy7512">Rio</ExtLink>
+        </p>
       </DocSheet>
     </DocPage>
   );

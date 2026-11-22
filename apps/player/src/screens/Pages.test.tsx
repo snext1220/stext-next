@@ -193,6 +193,7 @@ describe('guide and toolbox pages', () => {
       ['cocotori さん', 'https://x.com/cocotori_twit'],
       ['AZ さん', 'https://x.com/VENUS_AZ'],
       ['ユーフルカさん', 'https://youfulca.com/'],
+      ['Rio', 'https://x.com/yy7512'],
       [
         'カイネルさん',
         'https://sakuhindb.com/pj/6_A5ABA5A4A5CDA5EBA1A6A5C9A5A5A1A6A5E9A5D5A5A1A5C6A5A3/28/7__E3_82_BD_E3_83_BC_E3_82_B5_E3_83_AA_E3_82_A2_E3_83_B3Text/',
