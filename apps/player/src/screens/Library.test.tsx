@@ -88,10 +88,12 @@ describe('Library', () => {
       fireEvent.click(helpSummary);
       expect(help.open).toBe(true);
       expect(help.textContent).toContain(
-        '「NT純正シナリオ」とは、NText最新の仕様に沿って戦闘システム、パラメーターの自動更新などが調整されたシナリオのことです。',
+        '戦闘システムやパラメーターの自動更新などをNTextの最新仕様に合わせて調整した「NT純正シナリオ」',
       );
+      expect(help.textContent).toContain('NT勲章が付いていないシナリオでもNTextはプレイできます');
+      expect(help.textContent).toContain('勲章がないことは「NText非対応」という意味ではありません');
       expect(help.textContent).toContain(
-        '純正マークのないシナリオでもNTextは動作しますが、一部のシーンに不自然な操作が混じる場合があります。',
+        '旧版（v1）とNTextとのUIの違いにより、一部の操作や表示が異なる場合があります。',
       );
       const opener = await screen.findByRole('button', {
         name: '「新・消えた王様の杖」の詳細を表示',

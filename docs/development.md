@@ -130,7 +130,7 @@ node packages/cli/dist/bin.js --help
 | `stext validate <scenario.json>...` | スキーマと整合性を検査する（エラーがあれば終了コード 1） |
 | `stext play <scenario.json> [--auto <手数>] [--seed <数値>]` | シナリオをコマンドラインで遊ぶ（`--auto` は選択肢を自動で選ぶ） |
 
-`scenarios/index.json` の `v2: true` は、書庫でシナリオにNT勲章アイコンを表示するフラグです。NText向けに対応済みのシナリオにだけ設定します。書庫では「NT勲章は、NText向けに対応したシナリオの目印です。」を折り畳みパネルのタイトルとして常時表示し、開くとNT純正シナリオの定義と、純正マークのないシナリオでもNTextは動作することを説明します。
+`scenarios/index.json` の `v2: true` は、書庫でシナリオにNT勲章アイコンを表示するフラグです。NText向けに対応済みのシナリオにだけ設定します。書庫では「NT勲章は、NText向けに対応したシナリオの目印です。」を折り畳みパネルのタイトルとして常時表示し、開くとNT純正シナリオの定義と、勲章がないシナリオもNTextでプレイできること、仕様の違いによる一部の差異を説明します。
 
 シナリオ形式の詳細は [scenario-format.md](scenario-format.md)、書庫一覧の項目は [scenario-index-format.md](scenario-index-format.md)、エンジンの使い方は [engine.md](engine.md) を参照してください。
 
