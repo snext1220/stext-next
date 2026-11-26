@@ -797,27 +797,65 @@ h3 {
   margin-top: 8px;
   font-size: var(--step--1);
   color: var(--on-desk-soft);
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-.hero-bonus > span {
-  flex: none;
-}
-.hero-bonus > div {
-  text-align: right;
-  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 12px;
 }
 .hero-bonus b {
   color: var(--gold);
   font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.hero-bonus > p,
+.hero-bonus > .bonus-detail {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.hero-bonus > p {
+  text-align: right;
 }
 .hero-bonus p {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 0.75rem;
   line-height: 1.5;
 }
-
+.bonus-detail {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.bonus-detail p {
+  margin-top: 2px;
+  text-align: left;
+}
+.bonus-detail summary {
+  cursor: pointer;
+  list-style-position: inside;
+  text-align: right;
+}
+.effect-mode {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.effect-help {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--on-desk-soft);
+  text-align: left;
+}
+.effect-help summary {
+  cursor: pointer;
+}
+.effect-help p {
+  margin: 4px 0;
+}
 .stars {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -877,6 +915,13 @@ h3 {
   grid-column: 1 / -1;
   font-size: 0.75rem;
   color: var(--on-desk-soft);
+}
+.spell-detail summary {
+  cursor: pointer;
+}
+.spell-detail p {
+  margin: 4px 0 0;
+  line-height: 1.5;
 }
 .spell .cost {
   display: flex;

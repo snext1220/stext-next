@@ -124,6 +124,7 @@ npm run build
 ```
 
 - ブラウザでの確認（`scripts/difftest.mjs`、`scripts/e2e-player.mjs`、`scripts/e2e-playground.mjs`）には Chromium と playwright が必要で、CI では動かさない。playwright がグローバルにしかないときは `PLAYWRIGHT_PATH` を指定する。
+- 自動ブラウザー確認では、再生を伴う画面を開く前に対象ブラウザーの音声出力をミュートする。Playwright の Chromium は `--mute-audio` を指定し、ほかの操作ツールでは対象タブをミュートする。ミュートできない場合は音声が流れる操作を避け、ユーザーに相談する。音の実聴が必要な確認は別途ユーザーに確認する。アプリの音声機能や共有設定は変更しない。
 - `npm i -w <workspace>` で依存が追加されないときは、先に `npm install` を実行する。
 - GitHub Pages への公開は `.github/workflows/pages.yml`（test → build → `scripts/build-site.mjs`）が行う。
 

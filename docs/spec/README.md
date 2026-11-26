@@ -15,6 +15,7 @@
 | [scene-dice-ui.md](./scene-dice-ui.md) | 敵のいないシーンでのダイス表示仕様（実装済み） |
 | [battle-panel-usability.md](./battle-panel-usability.md) | 戦闘欄の撃破済み折りたたみ・ダイス操作帯の追従仕様（実装済み） |
 | [scene-action-panel.md](./scene-action-panel.md) | ダイス・数値入力・戦闘操作をまとめるシーン操作パネル仕様（実装済み） |
+| [player-effect-automation.md](./player-effect-automation.md) | 魔法・ボーナス効果の自動／手動表示仕様（実装済み） |
 | [player-elapsed-scene-count.md](./player-elapsed-scene-count.md) | プレイヤー画面の経過シーン数表示仕様（実装済み） |
 | [scepter-v2-migration.md](./scepter-v2-migration.md) | 「新・消えた王さまの杖」の v2 移行仕様（実装済み） |
 | [playground-markdown-editor.md](./playground-markdown-editor.md) | Playground 本文エディターの Markdown 入力補助仕様（実装済み） |

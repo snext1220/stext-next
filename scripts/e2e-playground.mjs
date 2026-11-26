@@ -25,7 +25,7 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? '✓' : '✗'} ${name}${detail ? `（${detail}）` : ''}`);
 };
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--mute-audio'] });
 const ctx = await browser.newContext({
   viewport: { width: 1440, height: 900 },
   acceptDownloads: true,

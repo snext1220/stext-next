@@ -106,7 +106,7 @@ const plain = (s) =>
     .replace(/&nbsp;/g, '')
     .replace(/\s+/g, '');
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--mute-audio'] });
 const summary = [];
 for (const id of ids) {
   const scenario = JSON.parse(readFileSync(new URL(`${id}/scenario.json`, root), 'utf8'));

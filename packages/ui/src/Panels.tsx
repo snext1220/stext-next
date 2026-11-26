@@ -11,6 +11,7 @@ import {
 } from '@stext/core';
 import type { Scenario } from '@stext/schema';
 import { useState } from 'react';
+import { BONUS_AUTOMATION, MAGIC_AUTOMATION } from './effectAutomation.js';
 
 const STAR_COLORS = [
   '--star-mon',
@@ -63,11 +64,13 @@ export function HeroPanel({
   scenario,
   state,
   portraitUrl,
+  showBonusAutomation = false,
 }: {
   scenario: Scenario;
   state: GameState;
   /** 顔画像の URL（省略時は種族の紋章） */
   portraitUrl?: string | undefined;
+  showBonusAutomation?: boolean | undefined;
 }) {
   const c = state.chara;
   const pct = (a: number, b: number) => `${Math.max(0, Math.min(100, (a / b) * 100))}%`;
@@ -76,6 +79,7 @@ export function HeroPanel({
     (k) => scenario.meta.labels?.[k] || c[k] !== 0,
   );
   const bonus = state.bonus ? bonusItem(state.bonus) : undefined;
+  const bonusAutomation = state.bonus ? BONUS_AUTOMATION[state.bonus] : undefined;
   return (
     <div>
       <div className={'hero' + (portraitUrl ? ' with-portrait' : '')}>
@@ -133,10 +137,22 @@ export function HeroPanel({
       {state.bonus && (
         <div className="hero-bonus">
           <span>ボーナス</span>
-          <div>
-            <b>{bonus?.name ?? state.bonus}</b>
-            {bonus && <p>{bonus.desc}</p>}
-          </div>
+          <b>{bonus?.name ?? state.bonus}</b>
+          {bonus && showBonusAutomation && bonusAutomation?.detail ? (
+            <details key={state.bonus} className="bonus-detail">
+              <summary>
+                {bonus.desc} <span className="effect-mode">{bonusAutomation.mode}</span>
+              </summary>
+              <p>{bonusAutomation.detail}</p>
+            </details>
+          ) : bonus || showBonusAutomation ? (
+            <p>
+              {bonus?.desc}
+              {showBonusAutomation && (
+                <span className="effect-mode">{bonusAutomation?.mode ?? '効果未確認'}</span>
+              )}
+            </p>
+          ) : null}
         </div>
       )}
     </div>
@@ -169,9 +185,19 @@ export function MagicPanel({
           </div>
         ))}
       </div>
+      <details className="effect-help">
+        <summary>自動・手動の説明</summary>
+        <p>
+          自動は［唱える］と効果を反映、手動は効果を自分で扱います。
+          自動でも手動で管理する条件がある場合は、その魔法の説明に記載します。
+          どの魔法も［唱える］と星を消費します。
+        </p>
+        <p>シナリオの選択肢からの魔法は星を消費し、効果は移動先のシーンの設定に従います。</p>
+      </details>
       <ul className="spells">
         {(Object.keys(MAGIC) as MagicName[]).map((name) => {
           const ok = canCast(name, state.stars, state.chara.state);
+          const automation = MAGIC_AUTOMATION[name];
           return (
             <li key={name} className={'spell' + (ok ? ' ok' : '')}>
               <span className="sn">{name}</span>
@@ -192,7 +218,21 @@ export function MagicPanel({
                   )}
                 </span>
               )}
-              <span className="sd">{MAGIC[name].description}</span>
+              <div className="sd">
+                {automation.detail ? (
+                  <details className="spell-detail">
+                    <summary>
+                      {MAGIC[name].description}{' '}
+                      <span className="effect-mode">{automation.mode}</span>
+                    </summary>
+                    <p>{automation.detail}</p>
+                  </details>
+                ) : (
+                  <>
+                    {MAGIC[name].description} <span className="effect-mode">{automation.mode}</span>
+                  </>
+                )}
+              </div>
             </li>
           );
         })}

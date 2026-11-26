@@ -1,6 +1,6 @@
 # 開発ガイド
 
-SORCERIAN Text v2 の開発環境の使い方です。全体の方針は [移行計画書](migration-plan.md) を参照してください。
+SORCERIAN Text v2 の開発環境の使い方です。現在の決定事項・進捗は[プロジェクトノート](project-notes.md)、移行開始時の計画と検討経緯は[移行計画書](migration-plan.md)を参照してください。
 
 ## 必要なもの
 
@@ -155,6 +155,8 @@ node packages/cli/dist/bin.js --help
 ## 旧エンジンとの差分テスト
 
 `scripts/difftest.mjs` は、旧エンジン（jQuery 版）をヘッドレス Chromium で動かし、新エンジンと同じ選択を続けて毎手比べます。Chromium と playwright が必要なので CI では動かしません。エンジンや変換器を変えたときに手元で実行してください。
+
+`scripts/difftest.mjs`、`scripts/e2e-player.mjs`、`scripts/e2e-playground.mjs` は Chromium を `--mute-audio` 付きで起動し、テスト中の音声出力を抑えます。アプリの音声設定や再生処理は変更しません。音を実際に聞く確認は別途行ってください。
 
 ```bash
 # 旧リポジトリを ../stext に clone し、そこで HTTP サーバーを起動しておく

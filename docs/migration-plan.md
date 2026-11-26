@@ -2,8 +2,8 @@
 
 > 本書の旧シナリオ再変換に関する記述は当時の計画です。現在は `scenarios/` の v2 JSON を原本として扱い、既存作品の更新のために再変換しません。現行の手順は [開発手順](development.md) を参照してください。
 
-> ステータス: **Phase 5（並行公開・検証）進行中**。プレイヤーを GitHub Pages で公開する仕組みを用意した（§5.4）。開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md)
-> 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。現行 jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext) で稼働を継続
+> 本書は移行開始時の計画と検討経緯を記録したものです。フェーズ表・当時の「次のアクション」は現在の進捗や未完了タスクを示しません。現行の決定事項・進捗は [`project-notes.md`](project-notes.md)、開発手順は [`development.md`](development.md)、シナリオ形式は [`scenario-format.md`](scenario-format.md)、エンジンの使い方は [`engine.md`](engine.md) を参照してください。
+> 対象リポジトリ: `snext1220/stext-next`（v2 開発用）。移行前の jQuery 版は [`snext1220/stext`](https://github.com/snext1220/stext)（参照用）
 > 本書の `stext/sgml.js` などのパスは、現行リポジトリ `snext1220/stext` 内のパスです
 > デザインプロトタイプ: [`prototype/design/index.html`](../prototype/design/index.html)（ブラウザで直接開けます）
 
@@ -329,9 +329,9 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 
 ---
 
-## 5. 移行フェーズとスケジュール案
+## 5. 当初の移行フェーズとスケジュール案
 
-各フェーズ完了時点で現行版は稼働を継続し、**ビッグバン切り替えはしない**。
+以下は計画作成時の案です。表中の期間・状態・将来形の記述は当時の計画を示し、現在の進捗は冒頭に記載した資料を参照してください。各フェーズ完了時点で現行版は稼働を継続し、**ビッグバン切り替えはしない**という当初の方針を記録しています。
 
 | Phase | 内容 | 成果物 | 目安 |
 |-------|------|--------|------|
@@ -472,9 +472,11 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 
 ---
 
-## 8. 次のアクション
+## 8. 計画当時の決定事項と次のアクション
 
-決定済み:
+以下は計画作成時点の記録であり、現在のタスク一覧ではありません。後から更新された決定事項は[プロジェクトノート](project-notes.md)を参照してください。
+
+当時の決定事項:
 
 - 条件式は「条件ASTを正式な内部形式とし、文字列記法も受け付ける」（§2.3）
 - デザインの方向性は「夜の書見台」（羊皮紙の欠け・めくれ・汚れ、古びた五芒星を反映済み）
@@ -484,7 +486,4 @@ Playgroundが生成している現行JSON（`playground/template/*.json`）を�
 - Phase 1〜3 完了、Phase 4 は β 完了
 - Phase 6 の Playground を作った（§5.6）
 
-次:
-
-1. `scenarios/REPORT.md` のエラー12件を、旧リポジトリのシナリオで直すかどうかの判断（直す場合は `npm run convert:legacy` で変換し直す）
-2. Phase 5（並行公開・検証）の残り：旧版からの導線、実際に遊んでの確認
+当時の次のアクションは現状に合わないため、現在の作業手順としては使用しません。特に既存シナリオの問題を修正するときは、旧XMLを再変換せず、v2 JSON の原本を直接確認・更新します。

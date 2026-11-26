@@ -1,6 +1,6 @@
 # stext-next プロジェクトノート（決定事項・開発ルール・進捗）
 
-2026-10-31 時点の、これまでの作業で決まったことと進み具合のまとめです。経緯の詳しい記録は [migration-plan.md](migration-plan.md)、開発の手順は [development.md](development.md) を見てください。
+2026-11-26 時点の、これまでの作業で決まったことと進み具合のまとめです。移行当初の計画・経緯は [migration-plan.md](migration-plan.md)、現在の開発手順は [development.md](development.md) を見てください。
 
 追加の改定計画：[BGM設定の改定計画](spec/bgm-revision-plan.md)（2026-11-10、未実装。従来モードのエンディングは現状維持）。
 
@@ -185,18 +185,11 @@
 
 ---
 
-## 6. 残っている課題
+## 6. 課題と改善候補
 
-1. Playground の PR（[snext1220/stext-next#9](https://github.com/snext1220/stext-next/pull/9)）のレビューとマージ。
-2. **`scenarios/REPORT.md` の過去の変換エラー**：現行シナリオを検査し、必要な修正があれば v2 JSON の原本で対応する。
-3. **Phase 5 の残り**：旧版からの導線、実際に遊んでの確認。
-4. **GitHub Pages の設定**：Source を「GitHub Actions」にする（未設定なら）。
-5. **ヘルプの移行メモの確認**：`apps/playground/src/help/reference.md` の `@mark 要確認`（4項目・5件）と `@mark 未実装`（`imageSet`、`randomCacheDays`、`${result?id}`、ライセンス表示など）を見て、仕様を決めるか実装する。Playground の目次で「移行メモ：要確認」などに絞り込める。
-6. **改善できること（任意）**：
-   - Playground からプレイヤーへリンクする（プレイヤーからは、投稿の画面から Playground を開ける）。
-   - 元に戻したことで選択中のシーンが消えたとき、選択を外すのではなく別のシーンを選ぶ。
-   - 保存するファイル名を工夫する（いまは `meta.id`、なければ `scenario.json`）。
-   - Playground の JS が大きい（約800KB）ので、分割する。
+このノートでは、現在の未解決タスクを一覧管理しません。以前の課題一覧には、移行当初の作業項目や確認時点が古い項目が混在していたため、現行の課題として読めないよう取り除きました。v1に向けた評価基準・改善候補・確認状況は[画面改善の分析レポート](v1-improvement-review.md)を参照してください。
+
+既存シナリオの更新では、旧形式から再変換して上書きせず、`scenarios/<id>/scenario.json` を原本として扱います。
 
 ---
 
