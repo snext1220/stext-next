@@ -29,6 +29,20 @@ const RACE_ICONS: Record<string, string> = {
   ELF: 'M6 22C14 22 22 14 26 6M8 6c0 10 6 16 18 18',
 };
 
+const STATE_EFFECTS = [
+  { id: 'poison', text: 'シーンに入るたびにHPが1減ります。' },
+  { id: 'frozen', text: '戦闘の計算でSTR・INT・DEX・KRMが2低下します。' },
+  {
+    id: 'stone',
+    text: '戦闘の計算でSTR・INT・DEX・KRMが1低下します。30シーン経過すると死亡の通知が出ます。',
+  },
+  { id: 'curse', text: '呪い解除以外の魔法を唱えられません。' },
+  {
+    id: 'forget',
+    text: '戦闘の計算でSTRとINTの高い方が0になります。同値ならSTRが0になります。20シーン経過で解除されます。',
+  },
+] as const;
+
 /** ステータス欄の表示名（シナリオの labels で置き換えられる） */
 export function statusLabel(scenario: Scenario, key: string): string {
   return scenario.meta.labels?.[key] ?? key.toUpperCase();
@@ -65,12 +79,14 @@ export function HeroPanel({
   state,
   portraitUrl,
   showBonusAutomation = false,
+  showStateEffects = false,
 }: {
   scenario: Scenario;
   state: GameState;
   /** 顔画像の URL（省略時は種族の紋章） */
   portraitUrl?: string | undefined;
   showBonusAutomation?: boolean | undefined;
+  showStateEffects?: boolean | undefined;
 }) {
   const c = state.chara;
   const pct = (a: number, b: number) => `${Math.max(0, Math.min(100, (a / b) * 100))}%`;
@@ -80,8 +96,20 @@ export function HeroPanel({
   );
   const bonus = state.bonus ? bonusItem(state.bonus) : undefined;
   const bonusAutomation = state.bonus ? BONUS_AUTOMATION[state.bonus] : undefined;
+  const stateEffect = STATE_EFFECTS.find((effect) => effect.id === c.state);
+  const affectedStats =
+    c.state === 'frozen' || c.state === 'stone'
+      ? ['str', 'int', 'dex', 'krm']
+      : c.state === 'forget'
+        ? [c.str < c.int ? 'int' : 'str']
+        : [];
+  const impactMark = (
+    <span className="state-impact-mark" aria-label="状態異常の影響">
+      !
+    </span>
+  );
   return (
-    <div>
+    <div data-state-effect={showStateEffects ? stateEffect?.id : undefined}>
       <div className={'hero' + (portraitUrl ? ' with-portrait' : '')}>
         <CharaPortrait src={portraitUrl} race={c.race} />
         <div>
@@ -93,8 +121,13 @@ export function HeroPanel({
         </div>
       </div>
       <div className="gauges" aria-live="polite">
-        <div className="gauge">
-          <span className="lbl">{label('hp')}</span>
+        <div
+          className={`gauge${showStateEffects && c.state === 'poison' ? ' state-affected' : ''}`}
+        >
+          <span className="lbl">
+            {label('hp')}
+            {showStateEffects && c.state === 'poison' && impactMark}
+          </span>
           <div className="bar hp">
             <span style={{ width: pct(c.hp, c.hp_m) }} />
           </div>
@@ -114,8 +147,14 @@ export function HeroPanel({
       </div>
       <div className="stats">
         {(['str', 'int', 'dex', 'krm'] as const).map((k) => (
-          <div className="stat" key={k}>
-            <div className="k">{label(k)}</div>
+          <div
+            className={`stat${showStateEffects && affectedStats.includes(k) ? ' state-affected' : ''}`}
+            key={k}
+          >
+            <div className="k">
+              {label(k)}
+              {showStateEffects && affectedStats.includes(k) && impactMark}
+            </div>
             <div className="v">{c[k]}</div>
           </div>
         ))}
@@ -130,10 +169,15 @@ export function HeroPanel({
           ))}
         </div>
       )}
-      <div className="state">
+      <div className={`state${showStateEffects && stateEffect ? ' state-abnormal' : ''}`}>
         <span>{label('state')}</span>
         <b>{STATE_NAMES[c.state] ?? c.state}</b>
       </div>
+      {showStateEffects && stateEffect && (
+        <div className="state-effects">
+          <p>{stateEffect.text}</p>
+        </div>
+      )}
       {state.bonus && (
         <div className="hero-bonus">
           <span>ボーナス</span>

@@ -24,6 +24,11 @@
   --blood: #a8322a;
   --mana: #2f6fae;
   --good: #3c7d4a;
+  --state-poison: #704080;
+  --state-frozen: #1e5d89;
+  --state-stone: #75501c;
+  --state-curse: #a12e32;
+  --state-forget: #276049;
   --page-back: #f7eed6; /* めくれた紙の裏面 */
   --page-fold: #c7a96c; /* めくれの折り目の陰 */
   --stain: #7a4a14; /* 汚れ・焼けの色 */
@@ -68,6 +73,11 @@
     --blood: #d65a4e;
     --mana: #5d9ee0;
     --good: #68b47a;
+    --state-poison: #d4a3e6;
+    --state-frozen: #88c8f2;
+    --state-stone: #e4bc75;
+    --state-curse: #f1837d;
+    --state-forget: #91d7b4;
     --drop: rgba(0, 0, 0, 0.7);
     color-scheme: dark;
   }
@@ -90,6 +100,11 @@
   --blood: #d65a4e;
   --mana: #5d9ee0;
   --good: #68b47a;
+  --state-poison: #d4a3e6;
+  --state-frozen: #88c8f2;
+  --state-stone: #e4bc75;
+  --state-curse: #f1837d;
+  --state-forget: #91d7b4;
   --drop: rgba(0, 0, 0, 0.7);
   color-scheme: dark;
 }
@@ -792,6 +807,51 @@ h3 {
 .state b {
   color: var(--good);
   font-weight: 700;
+}
+[data-state-effect='poison'] {
+  --state-color: var(--state-poison);
+}
+[data-state-effect='frozen'] {
+  --state-color: var(--state-frozen);
+}
+[data-state-effect='stone'] {
+  --state-color: var(--state-stone);
+}
+[data-state-effect='curse'] {
+  --state-color: var(--state-curse);
+}
+[data-state-effect='forget'] {
+  --state-color: var(--state-forget);
+}
+.state.state-abnormal b {
+  color: var(--state-color);
+}
+.state-affected {
+  color: var(--state-color);
+}
+.stat.state-affected {
+  border-color: var(--state-color);
+  background: color-mix(in srgb, var(--state-color) 12%, transparent);
+}
+.state-affected .k,
+.state-affected .lbl {
+  color: var(--state-color);
+}
+.state-impact-mark {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--state-color);
+  font-family: var(--f-ui);
+  font-weight: 700;
+}
+.state-effects {
+  margin-top: 6px;
+  color: var(--on-desk-soft);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.state-effects p {
+  margin: 0 0 4px;
 }
 .hero-bonus {
   margin-top: 8px;

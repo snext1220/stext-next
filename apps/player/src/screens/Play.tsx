@@ -389,6 +389,7 @@ export function Play({
           scenario={scenario}
           state={state}
           showBonusAutomation
+          showStateEffects
           portraitUrl={charaImageUrl(id, scenario.meta.imageSet, state.chara)}
         />
         <label className="section-h" htmlFor="memo" style={{ marginTop: 14 }}>

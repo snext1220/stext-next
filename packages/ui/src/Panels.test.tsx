@@ -44,6 +44,72 @@ describe('panels', () => {
     expect(getByText('50')).toBeTruthy();
   });
 
+  it('shows only the current state effect and updates the affected HP', () => {
+    const s = state();
+    const { container, queryByText, rerender } = render(
+      <HeroPanel scenario={scenario} state={s} showStateEffects />,
+    );
+    expect(queryByText('状態異常の効果')).toBeNull();
+    expect(container.querySelector('.state-effects')).toBeNull();
+    expect(container.querySelector('.state-affected')).toBeNull();
+
+    s.chara.state = 'poison';
+    rerender(<HeroPanel scenario={scenario} state={s} showStateEffects />);
+    expect(container.querySelector('[data-state-effect="poison"]')).toBeTruthy();
+    expect(container.querySelector('.gauge.state-affected .lbl')?.textContent).toBe('HP!');
+    expect(container.querySelector('.state-effects > p')?.textContent).toContain(
+      'シーンに入るたびにHPが1減ります',
+    );
+
+    s.chara.state = 'curse';
+    rerender(<HeroPanel scenario={scenario} state={s} showStateEffects />);
+    expect(container.querySelector('[data-state-effect="curse"]')).toBeTruthy();
+    expect(container.querySelector('.state-affected')).toBeNull();
+    expect(container.querySelector('.state-effects > p')?.textContent).toContain(
+      '呪い解除以外の魔法を唱えられません',
+    );
+
+    s.chara.state = '';
+    rerender(<HeroPanel scenario={scenario} state={s} showStateEffects />);
+    expect(container.querySelector('.state-effects')).toBeNull();
+    expect(container.querySelector('[data-state-effect]')).toBeNull();
+  });
+
+  it.each(['poison', 'frozen', 'stone', 'curse', 'forget'])(
+    'omits recovery spell names from the %s state description',
+    (condition) => {
+      const s = state();
+      s.chara.state = condition;
+      const { container } = render(<HeroPanel scenario={scenario} state={s} showStateEffects />);
+      const description = container.querySelector('.state-effects > p')?.textContent;
+      expect(description).toBeTruthy();
+      expect(description).not.toMatch(/CURE|MELT|STONE-FLESH|UN-CURCE|AIR-HAND/);
+    },
+  );
+
+  it.each([
+    ['frozen', 5, 3, ['STR', 'INT', 'DEX', 'KRM']],
+    ['stone', 5, 3, ['STR', 'INT', 'DEX', 'KRM']],
+    ['forget', 5, 3, ['STR']],
+    ['forget', 3, 5, ['INT']],
+    ['forget', 0, 0, ['STR']],
+  ])('marks the correct battle stats for %s (%i, %i)', (condition, str, int, expected) => {
+    const s = state();
+    s.chara.state = condition;
+    s.chara.str = str;
+    s.chara.int = int;
+    const { container } = render(<HeroPanel scenario={scenario} state={s} showStateEffects />);
+    expect(container.querySelector(`[data-state-effect="${condition}"]`)).toBeTruthy();
+    const labels = Array.from(container.querySelectorAll('.stat.state-affected .k'), (element) =>
+      element.textContent?.replace('!', ''),
+    );
+    expect(labels).toEqual(expected);
+    expect(container.querySelectorAll('[aria-label="状態異常の影響"]')).toHaveLength(
+      expected.length,
+    );
+    expect(container.querySelector('.stats .stat .v')?.textContent).toBe(String(str));
+  });
+
   it('shows the applied bonus item with its effect', () => {
     const s = state();
     s.bonus = 'gi23';
