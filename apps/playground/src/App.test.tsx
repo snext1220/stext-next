@@ -107,12 +107,14 @@ it('keeps the scene search query after closing and reopening the dialog', async 
   render(<App />);
   await screen.findByDisplayValue('シーン検索');
 
-  fireEvent.click(screen.getAllByRole('button', { name: 'シーンを検索…' })[0]);
+  const searchButton = screen.getAllByRole('button', { name: 'シーンを検索…' })[0];
+  if (!searchButton) throw new Error('シーン検索ボタンが見つかりません');
+  fireEvent.click(searchButton);
   const search = screen.getByRole('searchbox', { name: 'サマリー・本文・選択肢を検索' });
   fireEvent.change(search, { target: { value: '森' } });
   fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
 
-  fireEvent.click(screen.getAllByRole('button', { name: 'シーンを検索…' })[0]);
+  fireEvent.click(searchButton);
   expect(
     (
       screen.getByRole('searchbox', {
