@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { Scenario } from '@stext/schema';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SceneSearchDialog } from './SceneSearchDialog.js';
 
@@ -32,11 +33,30 @@ const scenario = {
   ],
 } satisfies Scenario;
 
+function SceneSearchDialogHarness({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState('');
+  return (
+    <SceneSearchDialog
+      scenario={scenario}
+      query={query}
+      onQueryChange={setQuery}
+      onSelect={onSelect}
+      onClose={onClose}
+    />
+  );
+}
+
 describe('SceneSearchDialog', () => {
   it('searches and selects a scene, and reports empty results', () => {
     const onSelect = vi.fn();
     const onClose = vi.fn();
-    render(<SceneSearchDialog scenario={scenario} onSelect={onSelect} onClose={onClose} />);
+    render(<SceneSearchDialogHarness onSelect={onSelect} onClose={onClose} />);
 
     const input = screen.getByRole('searchbox', { name: 'サマリー・本文・選択肢を検索' });
     expect(document.activeElement).toBe(input);
@@ -54,7 +74,7 @@ describe('SceneSearchDialog', () => {
 
   it('closes on Escape', () => {
     const onClose = vi.fn();
-    render(<SceneSearchDialog scenario={scenario} onSelect={vi.fn()} onClose={onClose} />);
+    render(<SceneSearchDialogHarness onSelect={vi.fn()} onClose={onClose} />);
 
     fireEvent.keyDown(screen.getByRole('searchbox'), { key: 'Escape' });
     expect(onClose).toHaveBeenCalledOnce();

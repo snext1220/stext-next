@@ -86,6 +86,7 @@ export function App() {
   } | null>(null);
   const [showProjects, setShowProjects] = useState(false);
   const [showSceneSearch, setShowSceneSearch] = useState(false);
+  const [sceneSearchQuery, setSceneSearchQuery] = useState('');
   const [resourceUrls, setResourceUrls] = useState<Record<string, string>>({});
   const [zipProgress, setZipProgress] = useState<{
     phase: 'preparing' | 'creating';
@@ -772,6 +773,8 @@ export function App() {
       {showSceneSearch && (
         <SceneSearchDialog
           scenario={scenario}
+          query={sceneSearchQuery}
+          onQueryChange={setSceneSearchQuery}
           onClose={() => setShowSceneSearch(false)}
           onSelect={(id) => {
             setSelected(id);

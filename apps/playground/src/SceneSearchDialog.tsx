@@ -1,18 +1,21 @@
 import type { DraftScenario as Scenario } from '@stext/schema';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { searchScenes } from './sceneSearch.js';
 
 export function SceneSearchDialog({
   scenario,
+  query,
+  onQueryChange,
   onSelect,
   onClose,
 }: {
   scenario: Scenario;
+  query: string;
+  onQueryChange: (query: string) => void;
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState('');
   const matches = useMemo(() => searchScenes(scenario.scenes, query), [scenario.scenes, query]);
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export function SceneSearchDialog({
               ref={input}
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => onQueryChange(event.target.value)}
             />
           </label>
           <p className="pg-hint" aria-live="polite">

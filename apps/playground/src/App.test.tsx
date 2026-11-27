@@ -96,6 +96,32 @@ it('prevents Backspace navigation only outside editable fields in the editor', a
   expect(keyIsPrevented(document.body)).toBe(true);
 });
 
+it('keeps the scene search query after closing and reopening the dialog', async () => {
+  await seedProjects([
+    {
+      ...emptyScenario('シーン検索'),
+      scenes: [{ id: '0', summary: '森の入口', text: '', choices: [] }],
+    },
+  ]);
+  const { App } = await import('./App.js');
+  render(<App />);
+  await screen.findByDisplayValue('シーン検索');
+
+  fireEvent.click(screen.getAllByRole('button', { name: 'シーンを検索…' })[0]);
+  const search = screen.getByRole('searchbox', { name: 'サマリー・本文・選択肢を検索' });
+  fireEvent.change(search, { target: { value: '森' } });
+  fireEvent.click(screen.getByRole('button', { name: '閉じる' }));
+
+  fireEvent.click(screen.getAllByRole('button', { name: 'シーンを検索…' })[0]);
+  expect(
+    (
+      screen.getByRole('searchbox', {
+        name: 'サマリー・本文・選択肢を検索',
+      }) as HTMLInputElement
+    ).value,
+  ).toBe('森');
+});
+
 it('keeps the editor open while either group boundary is cleared and re-entered', async () => {
   await seedProjects([emptyScenario('グループを編集中')]);
   const { App } = await import('./App.js');
