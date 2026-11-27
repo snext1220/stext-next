@@ -33,7 +33,7 @@ describe('序：黒船来航', () => {
       ['10', 'prologue', 'group'],
       ['110', 'main', 'group'],
       ['380', 'bad', 'implicit'],
-      ['1610', 'boss', 'group'],
+      ['1610', 'battle', 'group'],
       ['1800', 'battle', 'scene'],
       ['1950', 'bad', 'implicit'],
       ['2010', 'rest', 'group'],
