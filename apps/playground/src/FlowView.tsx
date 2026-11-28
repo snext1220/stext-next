@@ -15,7 +15,7 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import type { DraftScenario as Scenario } from '@stext/schema';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { NODE_WIDTH } from './layout.js';
 import { toGraph, type GraphNode } from './model.js';
 
@@ -61,7 +61,7 @@ export interface FlowViewProps {
   onConnect: (from: string, to: string) => void;
 }
 
-export function FlowView({
+export const FlowView = memo(function FlowView({
   scenario,
   selected,
   playingScene,
@@ -166,4 +166,4 @@ export function FlowView({
       </ReactFlow>
     </div>
   );
-}
+});

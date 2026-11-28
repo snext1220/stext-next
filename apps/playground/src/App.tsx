@@ -4,9 +4,28 @@ import {
   validateScenarioDraft,
   type DraftScenario as Scenario,
 } from '@stext/schema';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type CSSProperties,
+  type FocusEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from 'react';
 import { createScenarioArchive, findMissingResources, validateArchiveId } from './archive.js';
-import { findProblems, problemsByScene } from './checks.js';
+import {
+  findCombatProblems,
+  findImmediateProblems,
+  findProblems,
+  problemsByScene,
+  type Problem,
+} from './checks.js';
+import { loadPlaygroundSettings, savePlaygroundSettings } from './settings.js';
 import { SCENARIO_BASE, TEMPLATE_BASE } from './config.js';
 import { Definitions } from './Definitions.js';
 import { FlowView } from './FlowView.js';
@@ -49,7 +68,10 @@ type Tab = 'scene' | 'defs' | 'resources' | 'problems' | 'play';
 
 export function App() {
   const store = useScenarioStore();
+  const { update: storeUpdate, undo: storeUndo, redo: storeRedo } = store;
   const { scenario } = store;
+  const [settingsLoad] = useState(loadPlaygroundSettings);
+  const [autoInspection, setAutoInspection] = useState(settingsLoad.settings.autoInspection);
   const localFile = useLocalFileSync(store.projectId, scenario);
   const [readingFile, setReadingFile] = useState(false);
   const fileReading = useRef(false);
@@ -65,7 +87,11 @@ export function App() {
   } | null>(null);
   const [tab, setTab] = useState<Tab>('scene');
   const [previewAudioEnabled, setPreviewAudioEnabled] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(() =>
+    settingsLoad.storageError
+      ? '設定を読み込めませんでした。利用可能な既定値で続けています。'
+      : null,
+  );
   // 開き直したときはフロー図を作り直して全体が見えるようにする
   const [flowKey, setFlowKey] = useState(0);
   const [templates, setTemplates] = useState<WorkMenuTemplate[]>([]);
@@ -75,7 +101,7 @@ export function App() {
     number
   > | null>(null);
   const [scenarioIndexError, setScenarioIndexError] = useState<string | null>(null);
-  const [sideWidth, setSideWidth] = useSideWidth();
+  const [sideWidth, setSideWidth] = useSideWidth(settingsLoad.settings.sideWidth);
   const [showWorkMenu, setShowWorkMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -98,12 +124,198 @@ export function App() {
   const workspaceLocked = preparingSnapshot || localFile.busy || readingFile;
   const openHelp = useHelp();
 
-  const problems = useMemo(() => findProblems(scenario), [scenario]);
+  const [combatCheckResult, setCombatCheckResult] = useState<{
+    scenario: Scenario;
+    problems: Problem[];
+  } | null>(() => (autoInspection ? { scenario, problems: findCombatProblems(scenario) } : null));
+  const [manualInspectionResult, setManualInspectionResult] = useState<{
+    projectId: string | undefined;
+    scenario: Scenario;
+    problems: Problem[];
+  } | null>(null);
+  const textInputChangeRef = useRef(false);
+  const checkModeRef = useRef<'immediate' | 'debounced'>('immediate');
+  const combatCheckTimerRef = useRef<number | null>(null);
+  const lastCheckedProjectIdRef = useRef(store.projectId);
+  const immediateProblems = useMemo(
+    () => (autoInspection ? findImmediateProblems(scenario) : []),
+    [autoInspection, scenario],
+  );
+  const combatResultsCurrent = autoInspection && combatCheckResult?.scenario === scenario;
+  const hasPendingCombatCheck = autoInspection && !combatResultsCurrent;
+  const manualResultsCurrent =
+    !autoInspection &&
+    manualInspectionResult?.scenario === scenario &&
+    manualInspectionResult.projectId === store.projectId;
+  const problems = useMemo(
+    () =>
+      autoInspection
+        ? [...immediateProblems, ...(combatResultsCurrent ? combatCheckResult.problems : [])]
+        : manualResultsCurrent
+          ? manualInspectionResult.problems
+          : [],
+    [
+      autoInspection,
+      combatCheckResult,
+      combatResultsCurrent,
+      immediateProblems,
+      manualInspectionResult,
+      manualResultsCurrent,
+    ],
+  );
+  const updateScenario = useCallback(
+    (next: Scenario, mergeKey?: string) => {
+      checkModeRef.current = textInputChangeRef.current ? 'debounced' : 'immediate';
+      storeUpdate(next, mergeKey);
+    },
+    [storeUpdate],
+  );
   const playable = useMemo(
     () => (tab === 'play' ? validateScenario(scenario) : null),
     [scenario, tab],
   );
   const byScene = useMemo(() => problemsByScene(problems), [problems]);
+  const scenarioRef = useRef(scenario);
+  const updateScenarioRef = useRef(updateScenario);
+  const bySceneRef = useRef(byScene);
+  useLayoutEffect(() => {
+    scenarioRef.current = scenario;
+    updateScenarioRef.current = updateScenario;
+    bySceneRef.current = byScene;
+  }, [byScene, scenario, updateScenario]);
+  useEffect(() => {
+    if (combatCheckTimerRef.current !== null) {
+      window.clearTimeout(combatCheckTimerRef.current);
+      combatCheckTimerRef.current = null;
+    }
+    if (!autoInspection || !store.ready || store.transitioning) {
+      checkModeRef.current = 'immediate';
+      return;
+    }
+    const projectChanged = lastCheckedProjectIdRef.current !== store.projectId;
+    lastCheckedProjectIdRef.current = store.projectId;
+    const mode = projectChanged ? 'immediate' : checkModeRef.current;
+    checkModeRef.current = 'immediate';
+    if (mode === 'debounced') {
+      combatCheckTimerRef.current = window.setTimeout(() => {
+        combatCheckTimerRef.current = null;
+        const latestScenario = scenarioRef.current;
+        setCombatCheckResult({
+          scenario: latestScenario,
+          problems: findCombatProblems(latestScenario),
+        });
+      }, 300);
+    } else {
+      setCombatCheckResult({ scenario, problems: findCombatProblems(scenario) });
+    }
+    return () => {
+      if (combatCheckTimerRef.current !== null) {
+        window.clearTimeout(combatCheckTimerRef.current);
+        combatCheckTimerRef.current = null;
+      }
+    };
+  }, [autoInspection, scenario, store.projectId, store.ready, store.transitioning]);
+  const [flowSnapshot, setFlowSnapshot] = useState(() => ({ scenario, problems: byScene }));
+  const flowSnapshotRef = useRef(flowSnapshot);
+  const flowSyncTimer = useRef<number | null>(null);
+  const commitFlowSnapshot = useCallback(() => {
+    const next = { scenario: scenarioRef.current, problems: bySceneRef.current };
+    const current = flowSnapshotRef.current;
+    if (current.scenario === next.scenario && current.problems === next.problems) return;
+    flowSnapshotRef.current = next;
+    setFlowSnapshot(next);
+  }, []);
+  const scheduleFlowSnapshot = useCallback(() => {
+    if (flowSyncTimer.current !== null) window.clearTimeout(flowSyncTimer.current);
+    flowSyncTimer.current = window.setTimeout(() => {
+      flowSyncTimer.current = null;
+      commitFlowSnapshot();
+    }, 0);
+  }, [commitFlowSnapshot]);
+
+  useEffect(() => {
+    if (store.ready && !store.transitioning) commitFlowSnapshot();
+  }, [commitFlowSnapshot, flowKey, store.projectId, store.ready, store.transitioning]);
+  useEffect(
+    () => () => {
+      if (flowSyncTimer.current !== null) window.clearTimeout(flowSyncTimer.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    const onWindowBlur = () => commitFlowSnapshot();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') commitFlowSnapshot();
+    };
+    window.addEventListener('blur', onWindowBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('blur', onWindowBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [commitFlowSnapshot]);
+
+  const onFlowBlurCapture = (event: FocusEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (
+      target instanceof HTMLTextAreaElement ||
+      (target instanceof HTMLInputElement &&
+        /^(text|search|url|tel|email|password|number)$/.test(target.type))
+    ) {
+      scheduleFlowSnapshot();
+    }
+  };
+  const onFlowChangeCapture = (event: ChangeEvent<HTMLDivElement>) => {
+    const target = event.target;
+    textInputChangeRef.current =
+      target instanceof HTMLTextAreaElement ||
+      (target instanceof HTMLInputElement &&
+        /^(text|search|url|tel|email|password|number)$/.test(target.type));
+    if (
+      target instanceof HTMLSelectElement ||
+      (target instanceof HTMLInputElement && /^(checkbox|radio|range)$/.test(target.type))
+    ) {
+      scheduleFlowSnapshot();
+    }
+  };
+  const onFlowChange = () => {
+    textInputChangeRef.current = false;
+  };
+  const undo = useCallback(() => {
+    textInputChangeRef.current = false;
+    checkModeRef.current = 'immediate';
+    storeUndo();
+  }, [storeUndo]);
+  const redo = useCallback(() => {
+    textInputChangeRef.current = false;
+    checkModeRef.current = 'immediate';
+    storeRedo();
+  }, [storeRedo]);
+  const onFlowClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest('button')) {
+      scheduleFlowSnapshot();
+    }
+  };
+  const onFlowPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.target instanceof Element && event.target.closest('.react-flow')) {
+      scheduleFlowSnapshot();
+    }
+  };
+  const onFlowSelect = useCallback(
+    (id: string) => {
+      setSelected(id);
+      if (tab !== 'play') setTab('scene');
+    },
+    [tab],
+  );
+  const onFlowMove = useCallback((id: string, x: number, y: number) => {
+    updateScenarioRef.current(setPosition(scenarioRef.current, id, x, y));
+  }, []);
+  const onFlowConnect = useCallback((from: string, to: string) => {
+    updateScenarioRef.current(addChoice(scenarioRef.current, from, to));
+    setSelected(from);
+    setTab('scene');
+  }, []);
   const scene = selected ? findScene(scenario, selected) : undefined;
   const sceneGroups = useMemo(() => sceneSelectionGroups(scenario), [scenario]);
   const [focusRequest, setFocusRequest] = useState<{ id: string }>();
@@ -187,12 +399,13 @@ export function App() {
       if (workspaceLocked) return;
       if ((e.target as HTMLElement | null)?.closest('input, textarea, select')) return;
       e.preventDefault();
-      if (e.shiftKey) store.redo();
-      else store.undo();
+      if (e.shiftKey) redo();
+      else undo();
+      scheduleFlowSnapshot();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [store, workspaceLocked]);
+  }, [redo, scheduleFlowSnapshot, undo, workspaceLocked]);
 
   if (!store.ready || store.transitioning)
     return (
@@ -206,6 +419,36 @@ export function App() {
   const flash = (text: string) => {
     setMessage(text);
     setTimeout(() => setMessage((m) => (m === text ? null : m)), 4000);
+  };
+
+  const setInspectionEnabled = (enabled: boolean) => {
+    if (combatCheckTimerRef.current !== null) {
+      window.clearTimeout(combatCheckTimerRef.current);
+      combatCheckTimerRef.current = null;
+    }
+    checkModeRef.current = 'immediate';
+    setManualInspectionResult(
+      !enabled && combatResultsCurrent ? { projectId: store.projectId, scenario, problems } : null,
+    );
+    setAutoInspection(enabled);
+    if (!savePlaygroundSettings({ autoInspection: enabled })) {
+      flash('設定を保存できませんでした。変更はこのタブを閉じるまで有効です。');
+    }
+  };
+
+  const runManualInspection = () => {
+    if (combatCheckTimerRef.current !== null) {
+      window.clearTimeout(combatCheckTimerRef.current);
+      combatCheckTimerRef.current = null;
+    }
+    const immediate = findImmediateProblems(scenario);
+    const combat = findCombatProblems(scenario);
+    setCombatCheckResult({ scenario, problems: combat });
+    setManualInspectionResult({
+      projectId: store.projectId,
+      scenario,
+      problems: [...immediate, ...combat],
+    });
   };
 
   const open = async (s: Scenario, note: string) => {
@@ -379,7 +622,7 @@ export function App() {
 
   const newScene = (from?: string) => {
     const r = addScene(scenario, from ? { from } : {});
-    store.update(autoLayout(r.scenario));
+    updateScenario(autoLayout(r.scenario));
     setSelected(r.id);
     setTab('scene');
   };
@@ -387,7 +630,14 @@ export function App() {
   const errors = problems.filter((p) => p.severity === 'error').length;
 
   return (
-    <div className="pg">
+    <div
+      className="pg"
+      onBlurCapture={onFlowBlurCapture}
+      onChange={onFlowChange}
+      onChangeCapture={onFlowChangeCapture}
+      onClick={onFlowClick}
+      onPointerUp={onFlowPointerUp}
+    >
       <header className="pg-bar">
         <strong className="stext-brand">
           SORCERIAN NText <small>Playground</small>
@@ -398,7 +648,7 @@ export function App() {
           value={scenario.meta.title}
           disabled={workspaceLocked}
           onChange={(e) =>
-            store.update(
+            updateScenario(
               { ...scenario, meta: { ...scenario.meta, title: e.target.value } },
               'meta.title',
             )
@@ -414,17 +664,12 @@ export function App() {
           <button type="button" onClick={() => void preparePost()}>
             提出…
           </button>
-          <button
-            type="button"
-            onClick={store.undo}
-            disabled={!store.canUndo}
-            title="元に戻す（Ctrl+Z）"
-          >
+          <button type="button" onClick={undo} disabled={!store.canUndo} title="元に戻す（Ctrl+Z）">
             ↶
           </button>
           <button
             type="button"
-            onClick={store.redo}
+            onClick={redo}
             disabled={!store.canRedo}
             title="やり直す（Ctrl+Shift+Z）"
           >
@@ -521,7 +766,7 @@ export function App() {
             <button
               type="button"
               onClick={() => {
-                store.update(autoLayout(scenario, true));
+                updateScenario(autoLayout(scenario, true));
                 setFlowKey((k) => k + 1);
               }}
             >
@@ -533,24 +778,23 @@ export function App() {
           </div>
           <FlowView
             key={flowKey}
-            scenario={scenario}
+            scenario={flowSnapshot.scenario}
             selected={selected}
             playingScene={previewScene}
             focusRequest={focusRequest}
-            problems={byScene}
-            onSelect={(id) => {
-              setSelected(id);
-              if (tab !== 'play') setTab('scene');
-            }}
-            onMove={(id, x, y) => store.update(setPosition(scenario, id, x, y))}
-            onConnect={(from, to) => {
-              store.update(addChoice(scenario, from, to));
-              setSelected(from);
-              setTab('scene');
-            }}
+            problems={flowSnapshot.problems}
+            onSelect={onFlowSelect}
+            onMove={onFlowMove}
+            onConnect={onFlowConnect}
           />
         </section>
-        <Splitter width={sideWidth} onChange={setSideWidth} />
+        <Splitter
+          width={sideWidth}
+          onChange={setSideWidth}
+          onSettingsError={() =>
+            flash('設定を保存できませんでした。変更はこのタブを閉じるまで有効です。')
+          }
+        />
         <aside className="pg-side">
           <div className="tabs pg-tabs" role="tablist">
             <button
@@ -607,11 +851,11 @@ export function App() {
                   key={scene.id}
                   scenario={scenario}
                   scene={scene}
-                  onChange={store.update}
+                  onChange={updateScenario}
                   onRenamed={setSelected}
                   onAddScene={() => newScene(scene.id)}
                   onDelete={() => {
-                    store.update(deleteScene(scenario, scene.id));
+                    updateScenario(deleteScene(scenario, scene.id));
                     setSelected(scenario.scenes[0]?.id);
                     flash(`§${scene.id} を削除しました（元に戻せます）`);
                   }}
@@ -619,7 +863,7 @@ export function App() {
               ) : (
                 <p className="pg-hint">フロー図でシーンを選んでください。</p>
               ))}
-            {tab === 'defs' && <Definitions scenario={scenario} onChange={store.update} />}
+            {tab === 'defs' && <Definitions scenario={scenario} onChange={updateScenario} />}
             {tab === 'resources' && (
               <ResourcesPanel
                 scenario={scenario}
@@ -632,13 +876,39 @@ export function App() {
               />
             )}
             {tab === 'problems' && (
-              <Problems
-                problems={problems}
-                onSelect={(id) => {
-                  setSelected(id);
-                  setTab('scene');
-                }}
-              />
+              <>
+                <div className="pg-inline">
+                  <label className="pg-inline">
+                    <input
+                      type="checkbox"
+                      checked={autoInspection}
+                      onChange={(event) => setInspectionEnabled(event.currentTarget.checked)}
+                    />
+                    自動検査
+                  </label>
+                  <button type="button" onClick={runManualInspection}>
+                    今すぐ検査
+                  </button>
+                </div>
+                {hasPendingCombatCheck && (
+                  <p className="pg-hint" role="status">
+                    戦闘バランス検査を待機中です。完了するまで関連する指摘は一時的に非表示です。
+                  </p>
+                )}
+                {!autoInspection && !manualResultsCurrent ? (
+                  <p className="pg-hint" role="status">
+                    自動検査はオフです。最新の結果を確認するには「今すぐ検査」を実行してください。
+                  </p>
+                ) : (
+                  <Problems
+                    problems={problems}
+                    onSelect={(id) => {
+                      setSelected(id);
+                      setTab('scene');
+                    }}
+                  />
+                )}
+              </>
             )}
             {tab === 'play' && playable && !playable.ok && (
               <p className="pg-error" role="alert">

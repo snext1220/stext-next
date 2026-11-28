@@ -21,6 +21,7 @@
 | [playground-markdown-editor.md](./playground-markdown-editor.md) | Playground 本文エディターの Markdown 入力補助仕様（実装済み） |
 | [playground-backspace-navigation.md](./playground-backspace-navigation.md) | Playground 編集中の Backspace によるページ離脱の防止仕様（実装済み） |
 | [playground-choice-condition-options.md](./playground-choice-condition-options.md) | Playground 選択肢条件の入力候補拡充仕様（実装済み） |
+| [playground-large-scenario-performance.md](./playground-large-scenario-performance.md) | Playground 大規模シナリオの入力応答改善仕様（第1〜3段階実装済み、追加の入力・描画改善は後続段階） |
 | [playground-flow-group-filter.md](./playground-flow-group-filter.md) | Playground フロー図のグループ絞り込み仕様案（未承認・未実装、実装保留） |
 | [site-banner-placement.md](./site-banner-placement.md) | サイト紹介イラスト・バナーの配置仕様（実装済み） |
 | [library-native-mark-help.md](./library-native-mark-help.md) | 書庫のNT勲章アイコンの説明仕様（実装済み） |

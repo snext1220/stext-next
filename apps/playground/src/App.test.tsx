@@ -12,7 +12,20 @@ import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { emptyScenario } from './model.js';
 
-vi.mock('./FlowView.js', () => ({ FlowView: () => null }));
+vi.mock('./FlowView.js', () => ({
+  FlowView: ({
+    scenario,
+  }: {
+    scenario: { meta: { title: string }; scenes: { text?: string }[] };
+  }) => (
+    <div
+      data-testid="flow-snapshot"
+      data-scenario-title={scenario.meta.title}
+      data-scene-count={scenario.scenes.length}
+      data-first-scene-text={scenario.scenes[0]?.text}
+    />
+  ),
+}));
 vi.mock('./Splitter.js', () => ({
   Splitter: () => null,
   useSideWidth: () => [undefined, vi.fn()],
@@ -25,6 +38,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   localStorage.clear();
@@ -94,6 +108,141 @@ it('prevents Backspace navigation only outside editable fields in the editor', a
   expect(keyIsPrevented(document.body)).toBe(false);
   fireEvent.click(screen.getByRole('tab', { name: 'シーン' }));
   expect(keyIsPrevented(document.body)).toBe(true);
+});
+
+it('refreshes the flow after text blur and immediately after a structural action', async () => {
+  await seedProjects([emptyScenario('大きな作品')]);
+  const { App } = await import('./App.js');
+  render(<App />);
+
+  const title = await screen.findByDisplayValue<HTMLInputElement>('大きな作品');
+  const flow = await screen.findByTestId('flow-snapshot');
+  expect(flow.getAttribute('data-scenario-title')).toBe('大きな作品');
+
+  fireEvent.change(title, { target: { value: '編集した作品' } });
+  expect(title.value).toBe('編集した作品');
+  expect(flow.getAttribute('data-scenario-title')).toBe('大きな作品');
+
+  fireEvent.blur(title);
+  await waitFor(() => expect(flow.getAttribute('data-scenario-title')).toBe('編集した作品'));
+
+  const body = screen.getByLabelText<HTMLTextAreaElement>('本文');
+  body.focus();
+  fireEvent.change(body, { target: { value: '編集した本文' } });
+  expect(flow.getAttribute('data-first-scene-text')).not.toBe('編集した本文');
+  fireEvent.blur(body);
+  await waitFor(() => expect(flow.getAttribute('data-first-scene-text')).toBe('編集した本文'));
+
+  fireEvent.click(screen.getByRole('button', { name: '見出し' }));
+  await waitFor(() => expect(flow.getAttribute('data-first-scene-text')).toBe('# 編集した本文'));
+
+  const sceneCount = Number(flow.getAttribute('data-scene-count'));
+  fireEvent.click(screen.getByRole('button', { name: '＋ シーン' }));
+  await waitFor(() => expect(flow.getAttribute('data-scene-count')).toBe(String(sceneCount + 1)));
+});
+
+it('debounces combat checks during text editing and runs them immediately for structural changes', async () => {
+  await seedProjects([emptyScenario('戦闘検査の遅延')]);
+  const combatChecks = await import('./combatChecks.js');
+  const checkCombatScenario = vi.spyOn(combatChecks, 'checkCombatScenario');
+  const { App } = await import('./App.js');
+  render(<App />);
+
+  await screen.findByDisplayValue('戦闘検査の遅延');
+  checkCombatScenario.mockClear();
+  vi.useFakeTimers();
+
+  const body = screen.getByLabelText('本文');
+  fireEvent.change(body, { target: { value: '入力1' } });
+  expect(checkCombatScenario).not.toHaveBeenCalled();
+  expect(screen.queryByText(/戦闘バランス検査を待機中/)).toBeNull();
+
+  act(() => {
+    vi.advanceTimersByTime(299);
+  });
+  expect(checkCombatScenario).not.toHaveBeenCalled();
+
+  fireEvent.change(body, { target: { value: '入力2' } });
+  act(() => {
+    vi.advanceTimersByTime(299);
+  });
+  expect(checkCombatScenario).not.toHaveBeenCalled();
+  act(() => {
+    vi.advanceTimersByTime(1);
+  });
+  expect(checkCombatScenario).toHaveBeenCalledOnce();
+  expect(screen.queryByText(/戦闘バランス検査を待機中/)).toBeNull();
+
+  fireEvent.change(body, { target: { value: '入力3' } });
+  act(() => {
+    vi.advanceTimersByTime(299);
+  });
+  fireEvent.click(screen.getByRole('button', { name: '＋ シーン' }));
+  expect(checkCombatScenario).toHaveBeenCalledTimes(2);
+  act(() => {
+    vi.advanceTimersByTime(300);
+  });
+  expect(checkCombatScenario).toHaveBeenCalledTimes(2);
+});
+
+it('disables automatic inspection, keeps manual inspection available, and persists the setting', async () => {
+  await seedProjects([emptyScenario('自動検査設定')]);
+  const checks = await import('./checks.js');
+  const checkImmediateProblems = vi.spyOn(checks, 'findImmediateProblems');
+  const combatChecks = await import('./combatChecks.js');
+  const checkCombatScenario = vi.spyOn(combatChecks, 'checkCombatScenario');
+  const { App } = await import('./App.js');
+  render(<App />);
+
+  await screen.findByDisplayValue('自動検査設定');
+  checkImmediateProblems.mockClear();
+  checkCombatScenario.mockClear();
+  vi.useFakeTimers();
+
+  fireEvent.change(screen.getByLabelText('本文'), { target: { value: '入力後に停止' } });
+  expect(checkImmediateProblems).toHaveBeenCalledOnce();
+  expect(checkCombatScenario).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('tab', { name: /検査/ }));
+  const toggle = screen.getByRole<HTMLInputElement>('checkbox', { name: '自動検査' });
+  expect(toggle.checked).toBe(true);
+  fireEvent.click(toggle);
+  expect(toggle.checked).toBe(false);
+  expect(
+    JSON.parse(localStorage.getItem('stext-next:playground:settings') ?? '{}').autoInspection,
+  ).toBe(false);
+  checkImmediateProblems.mockClear();
+  checkCombatScenario.mockClear();
+  act(() => {
+    vi.advanceTimersByTime(600);
+  });
+  expect(checkImmediateProblems).not.toHaveBeenCalled();
+  expect(checkCombatScenario).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('tab', { name: 'シーン' }));
+  fireEvent.change(screen.getByLabelText('本文'), { target: { value: '編集後の本文' } });
+  expect(checkImmediateProblems).not.toHaveBeenCalled();
+  expect(checkCombatScenario).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole('tab', { name: /検査/ }));
+  expect(screen.getByText(/自動検査はオフです/)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: '今すぐ検査' }));
+  expect(checkImmediateProblems).toHaveBeenCalledOnce();
+  expect(checkCombatScenario).toHaveBeenCalledOnce();
+  expect(screen.queryByText(/自動検査はオフです/)).toBeNull();
+
+  fireEvent.click(screen.getByRole('tab', { name: 'シーン' }));
+  fireEvent.change(screen.getByLabelText('本文'), { target: { value: 'もう一度編集' } });
+  fireEvent.click(screen.getByRole('tab', { name: /検査/ }));
+  expect(screen.getByText(/自動検査はオフです/)).toBeTruthy();
+  expect(checkCombatScenario).toHaveBeenCalledOnce();
+
+  fireEvent.click(screen.getByRole('checkbox', { name: '自動検査' }));
+  expect(checkImmediateProblems).toHaveBeenCalledTimes(2);
+  expect(checkCombatScenario).toHaveBeenCalledTimes(2);
+  expect(
+    JSON.parse(localStorage.getItem('stext-next:playground:settings') ?? '{}').autoInspection,
+  ).toBe(true);
 });
 
 it('keeps the scene search query after closing and reopening the dialog', async () => {

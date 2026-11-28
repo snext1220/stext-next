@@ -8,35 +8,17 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { savePlaygroundSettings } from './settings.js';
 
-const KEY = 'stext-next:playground:side-width';
 /** 右パネルの最小幅（playground.css の .pg-main と合わせる） */
 const SIDE_MIN = 360;
 /** フロー図に残す最小幅（playground.css の .pg-main と合わせる） */
 const FLOW_MIN = 280;
 const STEP = 16;
 
-function load(): number | undefined {
-  try {
-    const v = Number(localStorage.getItem(KEY));
-    return v >= SIDE_MIN ? v : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function save(width: number | undefined) {
-  try {
-    if (width === undefined) localStorage.removeItem(KEY);
-    else localStorage.setItem(KEY, String(Math.round(width)));
-  } catch {
-    // 覚えておけなくても幅は変えられる
-  }
-}
-
 /** 右パネルの幅（px）。undefined なら CSS の既定の幅 */
-export function useSideWidth() {
-  return useState<number | undefined>(load);
+export function useSideWidth(initialWidth?: number) {
+  return useState<number | undefined>(initialWidth);
 }
 
 function partsOf(el: HTMLElement | null) {
@@ -51,9 +33,11 @@ const maxOf = (main: Element, el: Element) =>
 export function Splitter({
   width,
   onChange,
+  onSettingsError,
 }: {
   width: number | undefined;
   onChange: (width: number | undefined) => void;
+  onSettingsError: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -82,7 +66,7 @@ export function Splitter({
   const resize = (w: number | undefined, done: boolean) => {
     const next = w === undefined ? undefined : clamp(w);
     onChange(next);
-    if (done) save(next);
+    if (done && !savePlaygroundSettings({ sideWidth: next })) onSettingsError();
   };
   const fromPointer = (e: ReactPointerEvent<HTMLDivElement>) => {
     const p = partsOf(ref.current);
@@ -142,7 +126,7 @@ export function Splitter({
       }}
       onPointerCancel={() => {
         setDragging(false);
-        save(width);
+        if (!savePlaygroundSettings({ sideWidth: width })) onSettingsError();
       }}
       onDoubleClick={() => resize(undefined, true)}
       onKeyDown={onKeyDown}

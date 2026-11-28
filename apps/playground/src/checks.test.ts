@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Scenario } from '@stext/schema';
-import { findProblems } from './checks.js';
+import type { DraftScenario, Scenario } from '@stext/schema';
+import { findCombatProblems, findImmediateProblems, findProblems } from './checks.js';
 
-function scenario(overrides: Partial<Scenario> = {}): Scenario {
+function scenario(overrides: Partial<DraftScenario> = {}): DraftScenario {
   return {
     format: 'stext/2',
     meta: { title: '検査テスト' },
@@ -20,6 +20,32 @@ function scenario(overrides: Partial<Scenario> = {}): Scenario {
 }
 
 describe('Playground scenario checks', () => {
+  it('separates immediate validation from combat balance analysis', () => {
+    const data = scenario({
+      enemies: [{ id: 'm01', name: '巨人', attack: 'physics', func: '20L' }],
+      scenes: [{ id: '0', text: '', choices: [], enemies: ['m01'], dice: '6:2' }],
+    });
+
+    expect(
+      findImmediateProblems(data).some((problem) => problem.path === 'scenes[0].enemies'),
+    ).toBe(false);
+    expect(findCombatProblems(data)).toContainEqual(
+      expect.objectContaining({ path: 'scenes[0].enemies', sceneId: '0' }),
+    );
+  });
+
+  it('leaves invalid-draft errors to the immediate validation result', () => {
+    const data = {
+      ...scenario(),
+      scenes: [{ id: '', text: '', choices: [] }],
+    };
+
+    expect(findImmediateProblems(data)).toContainEqual(
+      expect.objectContaining({ severity: 'error', path: 'scenes[0].id' }),
+    );
+    expect(findCombatProblems(data)).toEqual([]);
+  });
+
   it('checks the tagged gods scenario without calculation errors', () => {
     const data = JSON.parse(
       readFileSync(new URL('../../../scenarios/gods/scenario.json', import.meta.url), 'utf8'),
